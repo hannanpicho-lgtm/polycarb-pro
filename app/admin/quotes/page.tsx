@@ -105,9 +105,14 @@ function QuotesContent() {
           <h1 className="text-2xl font-bold text-slate-900">Quotes</h1>
           <p className="text-slate-500 text-sm mt-0.5">{total} total</p>
         </div>
-        <Link href="/admin/quotes/new" className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
-          + New Quote
-        </Link>
+        <div className="flex gap-2">
+          <a href="/api/admin/export?type=quotes" className="px-3 py-2 text-xs font-semibold bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors">
+            ↓ CSV
+          </a>
+          <Link href="/admin/quotes/new" className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
+            + New Quote
+          </Link>
+        </div>
       </div>
 
       {/* Filters */}
@@ -213,6 +218,11 @@ function QuotesContent() {
                                     Convert to Order →
                                   </button>
                                 )}
+                                <a href={`/print/quote/${q.id}`} target="_blank" rel="noopener noreferrer"
+                                  onClick={e => e.stopPropagation()}
+                                  className="px-3 py-1.5 text-xs font-medium bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors">
+                                  🖨 Quote PDF
+                                </a>
                               </div>
                             </div>
                           </div>

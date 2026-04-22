@@ -137,9 +137,14 @@ function OrdersContent() {
           <h1 className="text-2xl font-bold text-slate-900">Orders</h1>
           <p className="text-slate-500 text-sm mt-0.5">{total} total</p>
         </div>
-        <Link href="/admin/orders/new" className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
-          + New Order
-        </Link>
+        <div className="flex gap-2">
+          <a href="/api/admin/export?type=orders" className="px-3 py-2 text-xs font-semibold bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors">
+            ↓ CSV
+          </a>
+          <Link href="/admin/orders/new" className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
+            + New Order
+          </Link>
+        </div>
       </div>
 
       <div className="flex flex-wrap gap-2 items-center">
@@ -279,12 +284,16 @@ function OrdersContent() {
                                     Cancel
                                   </button>
                                 )}
-                                {invoiceResult?.id === o.id && (
-                                  <a href={invoiceResult.url} target="_blank" rel="noopener noreferrer"
-                                    className="px-3 py-1.5 text-xs font-medium bg-white border border-violet-200 text-violet-700 rounded-lg hover:bg-violet-50 transition-colors">
-                                    View Invoice →
+                                  {invoiceResult?.id === o.id && (
+                                    <a href={invoiceResult.url} target="_blank" rel="noopener noreferrer"
+                                      className="px-3 py-1.5 text-xs font-medium bg-white border border-violet-200 text-violet-700 rounded-lg hover:bg-violet-50 transition-colors">
+                                      View Invoice →
+                                    </a>
+                                  )}
+                                  <a href={`/print/order/${o.id}`} target="_blank" rel="noopener noreferrer"
+                                    className="px-3 py-1.5 text-xs font-medium bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors">
+                                    🖨 Proforma PDF
                                   </a>
-                                )}
                               </div>
                             </div>
                           </div>
