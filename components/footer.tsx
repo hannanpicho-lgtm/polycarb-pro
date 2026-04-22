@@ -22,6 +22,7 @@ const footerLinks = {
   company: [
     { label: 'About Us', href: '/about' },
     { label: 'Our Brands', href: '/brands' },
+    { label: 'Distributor program', href: '/distributors?source=footer-company' },
     { label: 'Resources & Blog', href: '/resources' },
     { label: 'FAQ', href: '/faq' },
     { label: 'Technical Support', href: '/contact' },
@@ -44,19 +45,28 @@ export function Footer() {
     <footer className="bg-steel-950 text-white" aria-label="Site footer">
       {/* Upper CTA strip */}
       <div className="bg-brand-500">
-        <div className="container mx-auto py-10 flex flex-col md:flex-row items-center justify-between gap-6">
-          <div>
+        <div className="container mx-auto py-10 flex flex-col lg:flex-row items-center justify-between gap-8">
+          <div className="text-center lg:text-left">
             <h2 className="text-2xl font-bold text-white font-display">Ready to specify your next project?</h2>
-            <p className="text-white/80 mt-1 text-sm">
-              Get technical support, datasheets, and pricing in one request.
+            <p className="text-white/80 mt-1 text-sm max-w-xl">
+              Get technical support, datasheets, and pricing in one request — or join our distributor network for volume
+              pricing.
             </p>
           </div>
-          <Link
-            href="/quote?source=footer-cta-strip"
-            className="inline-flex items-center gap-2 bg-white text-brand-600 font-bold px-7 py-3.5 rounded hover:bg-steel-50 transition-colors text-sm whitespace-nowrap flex-shrink-0"
-          >
-            Contact Sales <ArrowRight className="h-4 w-4" />
-          </Link>
+          <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
+            <Link
+              href="/quote?source=footer-cta-strip"
+              className="inline-flex items-center justify-center gap-2 bg-white text-brand-600 font-bold px-7 py-3.5 rounded hover:bg-steel-50 transition-colors text-sm whitespace-nowrap"
+            >
+              Contact Sales <ArrowRight className="h-4 w-4" />
+            </Link>
+            <Link
+              href="/distributors?source=footer-cta-strip"
+              className="inline-flex items-center justify-center gap-2 border-2 border-white/90 text-white font-bold px-7 py-3.5 rounded hover:bg-white/10 transition-colors text-sm whitespace-nowrap"
+            >
+              Become a distributor
+            </Link>
+          </div>
         </div>
       </div>
 

@@ -34,6 +34,7 @@ const navLinks = [
     ],
   },
   { label: 'Brands', href: '/brands' },
+  { label: 'Partners', href: '/distributors' },
   { label: 'About', href: '/about' },
   { label: 'Gallery', href: '/gallery' },
   {
@@ -42,6 +43,7 @@ const navLinks = [
     children: [
       { label: 'Technical Library', href: '/resources' },
       { label: 'FAQ', href: '/faq' },
+      { label: 'Distributor program', href: '/distributors?source=nav-resources' },
     ],
   },
   { label: 'Contact', href: '/contact' },
@@ -83,6 +85,12 @@ export function Navbar() {
           <span>{siteConfig.contact.businessHours}</span>
           <Link href="/track" className="hover:text-white transition-colors">
             Track Order
+          </Link>
+          <Link
+            href="/distributors?source=navbar-utility"
+            className="font-semibold text-amber-300/90 hover:text-amber-200 transition-colors"
+          >
+            Distributor program
           </Link>
           <Link href="/quote?source=navbar-utility" className="hover:text-white transition-colors">
             Request Quote

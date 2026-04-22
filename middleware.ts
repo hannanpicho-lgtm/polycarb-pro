@@ -89,7 +89,11 @@ export async function middleware(request: NextRequest) {
 
   // ── Portal auth guard ───────────────────────────────────────────────────────
   const isPortalDashboard = pathname.startsWith('/portal/dashboard') || pathname.startsWith('/portal/orders');
-  const isPortalApi = pathname.startsWith('/api/portal') && pathname !== '/api/portal/request-link' && pathname !== '/api/portal/verify';
+  // Use `/api/portal/` prefix so public routes like `/api/portal-offers` (hyphen) are never caught
+  const isPortalApi =
+    pathname.startsWith('/api/portal/') &&
+    pathname !== '/api/portal/request-link' &&
+    pathname !== '/api/portal/verify';
 
   if (isPortalDashboard || isPortalApi) {
     const portalCookie = request.cookies.get(PORTAL_COOKIE)?.value;
@@ -108,8 +112,11 @@ export async function middleware(request: NextRequest) {
   // ── Distributor portal guard ────────────────────────────────────────────────
   const isDistDashboard = pathname.startsWith('/distributor/dashboard') ||
     pathname.startsWith('/distributor/catalog') || pathname.startsWith('/distributor/quotes');
-  const isDistApi = pathname.startsWith('/api/distributor') &&
-    pathname !== '/api/distributor/request-link' && pathname !== '/api/distributor/verify';
+  // Use `/api/distributor/` prefix — `/api/distributor-signup` must NOT match (that was returning 401)
+  const isDistApi =
+    pathname.startsWith('/api/distributor/') &&
+    pathname !== '/api/distributor/request-link' &&
+    pathname !== '/api/distributor/verify';
 
   if (isDistDashboard || isDistApi) {
     const distCookie = request.cookies.get(DIST_COOKIE)?.value;

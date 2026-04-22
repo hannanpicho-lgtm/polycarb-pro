@@ -1,7 +1,7 @@
 import type { Metadata } from 'next';
 import Link from 'next/link';
 import { cookies } from 'next/headers';
-import { Phone, Mail, MapPin, Clock, MessageSquare, FileText, Users } from 'lucide-react';
+import { Phone, Mail, MapPin, Clock, MessageSquare, FileText, Users, Truck } from 'lucide-react';
 import { ContactForm } from '@/components/contact-form';
 import { ViewportVideo } from '@/components/viewport-video';
 import { siteConfig } from '@/lib/site-config';
@@ -48,6 +48,7 @@ const enquiryTypes = [
   { icon: MessageSquare, label: 'Request a Quote', desc: 'Get pricing for specific grades and volumes.' },
   { icon: FileText, label: 'Download Datasheets', desc: 'Access full TDS and MSDS documents.' },
   { icon: Users, label: 'Technical Consultation', desc: 'Talk to an applications engineer about your project.' },
+  { icon: Truck, label: 'Distributor partnership', desc: 'Apply for tiered pricing and partner support.', href: '/distributors?source=contact-enquiry' },
 ];
 
 interface ContactSearchParams {
@@ -147,12 +148,18 @@ export default async function ContactPage({ searchParams }: { searchParams: Prom
           <p className="text-white/60 text-base max-w-xl leading-relaxed">
             Quotes, datasheets, or material selection guidance — we'll connect you with the right engineer.
           </p>
-          <div className="mt-5">
+          <div className="mt-5 flex flex-wrap items-center gap-x-6 gap-y-2">
             <Link
               href="/quote?source=contact-header-cta"
               className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-brand-300 hover:text-brand-200 transition-colors"
             >
               Need formal pricing? Use the Quote Form →
+            </Link>
+            <Link
+              href="/distributors?source=contact-header"
+              className="inline-flex items-center gap-2 text-xs font-semibold uppercase tracking-[0.12em] text-amber-200 hover:text-amber-100 transition-colors"
+            >
+              Distributor &amp; volume partnership →
             </Link>
           </div>
         </div>
@@ -161,16 +168,29 @@ export default async function ContactPage({ searchParams }: { searchParams: Prom
       {/* Enquiry type cards */}
       <div className="bg-brand-500 py-8">
         <div className="container mx-auto">
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
             {enquiryTypes.map((t) => {
               const Icon = t.icon;
-              return (
-                <div key={t.label} className="flex items-start gap-4 bg-white/10 rounded-lg p-4">
+              const inner = (
+                <>
                   <Icon className="h-6 w-6 text-white/80 flex-shrink-0 mt-0.5" aria-hidden="true" />
                   <div>
                     <p className="font-bold text-white text-sm">{t.label}</p>
                     <p className="text-white/70 text-xs mt-0.5">{t.desc}</p>
                   </div>
+                </>
+              );
+              return 'href' in t && t.href ? (
+                <Link
+                  key={t.label}
+                  href={t.href}
+                  className="flex items-start gap-4 bg-white/10 hover:bg-white/15 rounded-lg p-4 transition-colors ring-1 ring-white/20"
+                >
+                  {inner}
+                </Link>
+              ) : (
+                <div key={t.label} className="flex items-start gap-4 bg-white/10 rounded-lg p-4">
+                  {inner}
                 </div>
               );
             })}
