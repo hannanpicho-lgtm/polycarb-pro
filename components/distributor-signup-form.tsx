@@ -11,6 +11,7 @@ import {
   volumeOptions,
   countryList,
 } from '@/lib/distributor-validation';
+import { distributorPromoMarkApplicationSubmitted } from '@/lib/distributor-promo';
 
 interface DistributorSignupFormProps {
   onSuccess: () => void;
@@ -71,6 +72,7 @@ export function DistributorSignupFormComponent({ onSuccess, onError }: Distribut
         throw new Error((result as { error?: string }).error || 'Submission failed');
       }
 
+      distributorPromoMarkApplicationSubmitted();
       reset();
       setSelectedCountries([]);
       setValue('countries', []);
