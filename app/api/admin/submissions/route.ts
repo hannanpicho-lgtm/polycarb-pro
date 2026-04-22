@@ -1,108 +1,82 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getDistributorSubmissions, getContactSubmissions, getSubmissionStats } from '@/lib/database';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
+import { getDistributorSubmissions, getContactSubmissions } from '@/lib/database';
+import type { D1Database } from '@cloudflare/workers-types';
 
 export async function GET(request: NextRequest) {
   try {
+    const { env } = await getCloudflareContext({ async: true });
+    const db = (env as Record<string, unknown>)['DB'] as D1Database | undefined;
+
+    if (!db) {
+      return NextResponse.json({ error: 'Database not available' }, { status: 503 });
+    }
+
     const url = new URL(request.url);
-    const action = url.searchParams.get('action');
-
-    // Access D1 database
-    const env = process.env as any;
-    if (!env.DB) {
-      return NextResponse.json(
-        { error: 'Database not available' },
-        { status: 503 }
-      );
-    }
-
-    // Handle stats action
-    if (action === 'stats') {
-      const stats = await getSubmissionStats(env.DB);
-      return NextResponse.json({
-        stats: {
-          distributorCount: stats.distributorSubmissions,
-          contactCount: stats.contactSubmissions,
-          totalCount: stats.totalSubmissions,
-        },
-      });
-    }
-
-    // Handle submissions listing
     const offset = parseInt(url.searchParams.get('offset') || '0');
-    const limit = parseInt(url.searchParams.get('limit') || '10');
-    const page = parseInt(url.searchParams.get('page') || '1');
-    const pageSize = parseInt(url.searchParams.get('pageSize') || '20');
+    const limit = parseInt(url.searchParams.get('limit') || '15');
     const type = url.searchParams.get('type') || '';
     const search = url.searchParams.get('search') || '';
 
-    // Use pagination if page/pageSize are provided, otherwise use offset/limit
-    const finalOffset = page > 1 ? (page - 1) * pageSize : offset;
-    const finalLimit = pageSize > 0 ? pageSize : limit;
-
-    let allSubmissions: any[] = [];
+    let allSubmissions: unknown[] = [];
     let total = 0;
 
     if (!type || type === 'distributor') {
-      const distributorResult = await getDistributorSubmissions(
-        env.DB,
-        finalLimit,
-        finalOffset,
-        search
-      );
+      const distributorResult = await getDistributorSubmissions(db, limit, offset, search);
 
       if (Array.isArray(distributorResult)) {
         allSubmissions.push(
-          ...distributorResult.map((sub: any) => ({
+          ...distributorResult.map((sub: Record<string, unknown>) => ({
             ...sub,
             type: 'distributor',
-            fullName: sub.fullName,
-            company: sub.companyName,
           }))
         );
-      }
 
-      // Get total count
-      let countQuery = 'SELECT COUNT(*) as count FROM distributor_submissions';
-      const countParams: any[] = [];
-      if (search) {
-        countQuery += ' WHERE email LIKE ?';
-        countParams.push(`%${search}%`);
+        const countParams: unknown[] = [];
+        let countQuery = 'SELECT COUNT(*) as count FROM distributor_submissions';
+        if (search) {
+          countQuery += ' WHERE email LIKE ?';
+          countParams.push(`%${search}%`);
+        }
+        const countResult = await db.prepare(countQuery).bind(...countParams).all();
+        total += ((countResult.results?.[0] as Record<string, unknown>)?.count as number) || 0;
       }
-      const countResult = await env.DB.prepare(countQuery).bind(...countParams).all();
-      total = (countResult.results?.[0] as any)?.count || 0;
     }
 
     if (!type || type === 'contact') {
-      const contactResult = await getContactSubmissions(env.DB, finalLimit, finalOffset);
+      const contactResult = await getContactSubmissions(db, limit, offset);
 
       if (contactResult.success && Array.isArray(contactResult.data)) {
         allSubmissions.push(
-          ...contactResult.data.map((sub: any) => ({
+          ...contactResult.data.map((sub: Record<string, unknown>) => ({
             ...sub,
             type: 'contact',
-            fullName: `${sub.firstName} ${sub.lastName}`,
+            fullName: `${sub['firstName'] ?? ''} ${sub['lastName'] ?? ''}`.trim(),
           }))
         );
-      }
 
-      if (!type) {
-        // Get total count for contact submissions
-        const countResult = await env.DB.prepare('SELECT COUNT(*) as count FROM contact_submissions').all();
-        total += (countResult.results?.[0] as any)?.count || 0;
+        const countResult = await db
+          .prepare('SELECT COUNT(*) as count FROM contact_submissions')
+          .all();
+        total += ((countResult.results?.[0] as Record<string, unknown>)?.count as number) || 0;
       }
     }
+
+    // Sort combined results by createdAt descending
+    allSubmissions.sort((a, b) => {
+      const aDate = String((a as Record<string, unknown>)['createdAt'] ?? '');
+      const bDate = String((b as Record<string, unknown>)['createdAt'] ?? '');
+      return bDate.localeCompare(aDate);
+    });
 
     return NextResponse.json({
       submissions: allSubmissions,
       total,
-      page: page > 0 ? page : Math.floor(finalOffset / finalLimit) + 1,
-      pageSize: finalLimit,
+      page: Math.floor(offset / limit) + 1,
+      pageSize: limit,
     });
   } catch (error) {
     console.error('Error fetching submissions:', error);
-    return NextResponse.json(
-      { error: 'Failed to fetch submissions' },
-      { status: 500 }
-    );
+    return NextResponse.json({ error: 'Failed to fetch submissions' }, { status: 500 });
   }
 }

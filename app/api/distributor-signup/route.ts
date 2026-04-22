@@ -1,6 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { distributorSignupSchema } from '@/lib/distributor-validation';
 import { sendDistributorConfirmationEmail, sendDistributorNotificationEmail } from '@/lib/email';
+import type { D1Database } from '@cloudflare/workers-types';
 
 export async function POST(request: NextRequest) {
   try {
@@ -24,36 +26,29 @@ export async function POST(request: NextRequest) {
     // Try to save to D1 database if available
     let dbSaveSuccess = false;
     try {
-      // Access D1 database from Cloudflare Worker context
-      // This will be available during production deployment
-      const env = process.env as any;
-      if (env.DB) {
+      const { env } = await getCloudflareContext({ async: true });
+      const db = (env as Record<string, unknown>)['DB'] as D1Database | undefined;
+
+      if (db) {
         const { saveDistributorSubmission } = await import('@/lib/database');
-        
-        // Extract IP address from headers
-        const ipAddress = 
+        const ipAddress =
           request.headers.get('x-forwarded-for')?.split(',')[0]?.trim() ||
           request.headers.get('x-real-ip') ||
           request.headers.get('cf-connecting-ip') ||
           undefined;
-        
+
         const saveResult = await saveDistributorSubmission(
-          env.DB,
+          db,
           data,
           referenceId,
           request.headers.get('user-agent') || undefined,
           ipAddress
         );
         dbSaveSuccess = saveResult.success;
-        if (!dbSaveSuccess) {
-          console.warn('Database save failed:', saveResult.error);
-        }
-      } else {
-        console.log('D1 database not available in this environment');
+        if (!dbSaveSuccess) console.warn('Database save failed:', (saveResult as { error?: string }).error);
       }
     } catch (dbError) {
       console.warn('Database operation failed:', dbError);
-      // Continue anyway - we have email as fallback
     }
 
     // Send confirmation email to applicant

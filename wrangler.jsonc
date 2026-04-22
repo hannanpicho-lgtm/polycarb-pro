@@ -18,6 +18,13 @@
   "observability": {
     "enabled": true
   },
+  "vars": {
+    "ADMIN_PASSWORD": "343499@Pc2026",
+    "PORTAL_SECRET": "portal-change-me-2026"
+    // STRIPE_SECRET_KEY and STRIPE_WEBHOOK_SECRET must be set as encrypted secrets:
+    // npx wrangler secret put STRIPE_SECRET_KEY
+    // npx wrangler secret put STRIPE_WEBHOOK_SECRET
+  },
   "routes": [
     { "pattern": "covestro.steadfastworkbench.org/*", "zone_name": "steadfastworkbench.org" },
     { "pattern": "covestroppc.com/*", "zone_name": "covestroppc.com" },

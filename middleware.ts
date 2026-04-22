@@ -1,4 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
+import { computeAdminToken, ADMIN_COOKIE } from '@/lib/admin-auth';
+import { verifySessionCookie, PORTAL_COOKIE } from '@/lib/portal-auth';
+import { verifyDistSessionCookie, DIST_COOKIE } from '@/lib/distributor-auth';
 
 const COOKIE_MAX_AGE_SECONDS = 60 * 60 * 24 * 90;
 
@@ -54,9 +57,75 @@ function externalReferrerHost(request: NextRequest) {
   }
 }
 
-export function middleware(request: NextRequest) {
-  const response = NextResponse.next();
+export async function middleware(request: NextRequest) {
   const { searchParams, pathname } = request.nextUrl;
+
+  // ── Admin auth guard ────────────────────────────────────────────────────────
+  const isAdminPage = pathname.startsWith('/admin');
+  const isAdminApi = pathname.startsWith('/api/admin');
+  const isAuthEndpoint = pathname === '/api/admin/auth';
+  const isLoginPage = pathname === '/admin/login';
+
+  if ((isAdminPage || isAdminApi) && !isAuthEndpoint && !isLoginPage) {
+    const adminPassword = process.env.ADMIN_PASSWORD;
+    const sessionCookie = request.cookies.get(ADMIN_COOKIE)?.value;
+
+    let isAuthed = false;
+    if (adminPassword && sessionCookie) {
+      const expectedToken = await computeAdminToken(adminPassword);
+      isAuthed = sessionCookie === expectedToken;
+    }
+
+    if (!isAuthed) {
+      if (isAdminApi) {
+        return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
+      }
+      const loginUrl = new URL('/admin/login', request.url);
+      loginUrl.searchParams.set('from', pathname);
+      return NextResponse.redirect(loginUrl);
+    }
+  }
+  // ── End admin guard ─────────────────────────────────────────────────────────
+
+  // ── Portal auth guard ───────────────────────────────────────────────────────
+  const isPortalDashboard = pathname.startsWith('/portal/dashboard') || pathname.startsWith('/portal/orders');
+  const isPortalApi = pathname.startsWith('/api/portal') && pathname !== '/api/portal/request-link' && pathname !== '/api/portal/verify';
+
+  if (isPortalDashboard || isPortalApi) {
+    const portalCookie = request.cookies.get(PORTAL_COOKIE)?.value;
+    let portalAuthed = false;
+    if (portalCookie) {
+      const email = await verifySessionCookie(portalCookie);
+      portalAuthed = !!email;
+    }
+    if (!portalAuthed) {
+      if (isPortalApi) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+      return NextResponse.redirect(new URL('/portal', request.url));
+    }
+  }
+  // ── End portal guard ────────────────────────────────────────────────────────
+
+  // ── Distributor portal guard ────────────────────────────────────────────────
+  const isDistDashboard = pathname.startsWith('/distributor/dashboard') ||
+    pathname.startsWith('/distributor/catalog') || pathname.startsWith('/distributor/quotes');
+  const isDistApi = pathname.startsWith('/api/distributor') &&
+    pathname !== '/api/distributor/request-link' && pathname !== '/api/distributor/verify';
+
+  if (isDistDashboard || isDistApi) {
+    const distCookie = request.cookies.get(DIST_COOKIE)?.value;
+    let distAuthed = false;
+    if (distCookie) {
+      const email = await verifyDistSessionCookie(distCookie);
+      distAuthed = !!email;
+    }
+    if (!distAuthed) {
+      if (isDistApi) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+      return NextResponse.redirect(new URL('/distributor', request.url));
+    }
+  }
+  // ── End distributor guard ───────────────────────────────────────────────────
+
+  const response = NextResponse.next();
   const cookieOptions = buildCookieOptions();
   const nowIso = new Date().toISOString();
   const currentPath = requestPath(request);

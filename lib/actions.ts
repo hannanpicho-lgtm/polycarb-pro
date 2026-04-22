@@ -6,6 +6,8 @@ import { quoteRequestSchema, contactSchema, newsletterSchema } from '@/lib/schem
 import { sendLeadEmail, sendLeadWebhook } from '@/lib/lead-delivery';
 import { checkRateLimit, getRateLimitKey } from '@/lib/rate-limit';
 import { sendContactConfirmationEmail } from '@/lib/email';
+import { saveContactSubmission } from '@/lib/database';
+import { getCloudflareContext } from '@opennextjs/cloudflare';
 
 type LeadKind = 'quote' | 'contact' | 'newsletter';
 
@@ -631,7 +633,31 @@ export async function submitContactForm(
 
   try {
     const delivery = await deliverLeadWithOptionalWebhook('contact', payloadWithMeta);
-    
+
+    // Persist to D1 (best-effort — failure does not block the user)
+    try {
+      const { env } = await getCloudflareContext({ async: true });
+      const db = (env as Record<string, unknown>)['DB'] as import('@cloudflare/workers-types').D1Database | undefined;
+      if (db) {
+        await saveContactSubmission(
+          db,
+          {
+            firstName: parsed.data.firstName,
+            lastName: parsed.data.lastName,
+            email: parsed.data.email,
+            company: parsed.data.company,
+            subject: parsed.data.subject,
+            message: parsed.data.message,
+          },
+          submissionId,
+          requestContext.userAgent ?? undefined,
+          requestContext.ip ?? undefined,
+        );
+      }
+    } catch (dbErr) {
+      console.warn('[contact] D1 write failed (non-fatal):', dbErr);
+    }
+
     // Send confirmation email to the person who submitted
     const fullName = `${parsed.data.firstName} ${parsed.data.lastName}`.trim();
     const emailResult = await sendContactConfirmationEmail(parsed.data.email, fullName);
