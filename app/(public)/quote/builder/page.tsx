@@ -4,15 +4,19 @@ import { useState, useMemo, useEffect, Suspense } from 'react';
 import { useSearchParams } from 'next/navigation';
 import Link from 'next/link';
 import {
-  productPrices, shippingRegions, convertPrice, formatPrice,
-  calcShipping, type Currency, type ProductPrice, type ShippingRegion,
+  productPrices, shippingRegions, formatPrice, catalogListUnit,
+  calcShipping, type Currency, type PublicCatalogProduct, type ShippingRegion,
 } from '@/lib/pricing';
+
+function catalogFallback(): PublicCatalogProduct[] {
+  return productPrices.map((p) => ({ ...p, unitPriceAUD: null, featured: false }));
+}
 
 // ── Types ─────────────────────────────────────────────────────────────────────
 
 interface LineItem {
   id: string;
-  product: ProductPrice;
+  product: PublicCatalogProduct;
   qty: number;
 }
 
@@ -50,13 +54,32 @@ function BuilderContent() {
   const searchParams = useSearchParams();
   const preloadSlug = searchParams.get('product') ?? '';
 
+  const [catalog, setCatalog] = useState<PublicCatalogProduct[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(true);
   const [items, setItems] = useState<LineItem[]>([]);
   const [currency, setCurrency] = useState<Currency>('USD');
   const [region, setRegion] = useState<ShippingRegion | null>(null);
   const [catFilter, setCatFilter] = useState('all');
   const [productSearch, setProductSearch] = useState('');
-  const [selectedProduct, setSelectedProduct] = useState<ProductPrice | null>(null);
+  const [selectedProduct, setSelectedProduct] = useState<PublicCatalogProduct | null>(null);
   const [pendingQty, setPendingQty] = useState('');
+
+  useEffect(() => {
+    let cancelled = false;
+    fetch('/api/catalog/prices')
+      .then((r) => r.json())
+      .then((d: { products?: PublicCatalogProduct[] }) => {
+        if (cancelled) return;
+        setCatalog(d.products?.length ? d.products : catalogFallback());
+      })
+      .catch(() => {
+        if (!cancelled) setCatalog(catalogFallback());
+      })
+      .finally(() => {
+        if (!cancelled) setCatalogLoading(false);
+      });
+    return () => { cancelled = true; };
+  }, []);
 
   // Contact form
   const [name, setName] = useState('');
@@ -72,21 +95,21 @@ function BuilderContent() {
 
   // Preload product from URL param
   useEffect(() => {
-    if (preloadSlug) {
-      const found = productPrices.find(p => p.slug === preloadSlug);
+    if (preloadSlug && catalog.length) {
+      const found = catalog.find(p => p.slug === preloadSlug);
       if (found) setSelectedProduct(found);
     }
-  }, [preloadSlug]);
+  }, [preloadSlug, catalog]);
 
   const filteredProducts = useMemo(() => {
-    let list = productPrices;
+    let list = catalog;
     if (catFilter !== 'all') list = list.filter(p => getCategory(p.slug) === catFilter);
     if (productSearch.trim()) {
       const q = productSearch.toLowerCase();
       list = list.filter(p => p.name.toLowerCase().includes(q));
     }
     return list;
-  }, [catFilter, productSearch]);
+  }, [catFilter, productSearch, catalog]);
 
   function addItem() {
     if (!selectedProduct) return;
@@ -110,8 +133,7 @@ function BuilderContent() {
 
   const subtotal = useMemo(() => {
     return items.reduce((s, i) => {
-      const lineUSD = i.product.unitPriceUSD * i.qty;
-      return s + convertPrice(lineUSD, currency);
+      return s + catalogListUnit(i.product, currency) * i.qty;
     }, 0);
   }, [items, currency]);
 
@@ -142,7 +164,7 @@ function BuilderContent() {
             qty: i.qty,
             unit: i.product.unit,
             unitPriceUSD: i.product.unitPriceUSD,
-            lineTotal: convertPrice(i.product.unitPriceUSD * i.qty, currency),
+            lineTotal: catalogListUnit(i.product, currency) * i.qty,
           })),
           message: message.trim() || undefined,
           source: 'web-builder',
@@ -231,7 +253,12 @@ function BuilderContent() {
 
               {/* Product list */}
               <div className="max-h-52 overflow-y-auto rounded-lg border border-slate-100 divide-y divide-slate-100">
-                {filteredProducts.length === 0 ? (
+                {catalogLoading ? (
+                  <div className="py-10 flex items-center justify-center gap-2 text-sm text-slate-400">
+                    <div className="w-4 h-4 border-2 border-brand-500 border-t-transparent rounded-full animate-spin" />
+                    Loading catalog…
+                  </div>
+                ) : filteredProducts.length === 0 ? (
                   <p className="py-6 text-center text-sm text-slate-400">No products match</p>
                 ) : filteredProducts.map(p => {
                   const cat = getCategory(p.slug);
@@ -241,7 +268,7 @@ function BuilderContent() {
                       className={`w-full flex items-center gap-3 px-3 py-2.5 text-left transition-colors ${isSelected ? 'bg-brand-50 border-l-2 border-brand-500' : 'hover:bg-slate-50'}`}>
                       <span className={`text-[10px] font-semibold uppercase px-1.5 py-0.5 rounded flex-shrink-0 ${CAT_COLORS[cat] ?? ''}`}>{cat}</span>
                       <span className="flex-1 text-sm font-medium text-slate-800 truncate">{p.name}</span>
-                      <span className="text-xs text-slate-400 flex-shrink-0 font-mono">{formatPrice(p.unitPriceUSD, 'USD')}/{p.unit}</span>
+                      <span className="text-xs text-slate-400 flex-shrink-0 font-mono">{formatPrice(catalogListUnit(p, currency), currency)}/{p.unit}</span>
                     </button>
                   );
                 })}
@@ -279,7 +306,7 @@ function BuilderContent() {
                 </div>
                 <div className="divide-y divide-slate-100">
                   {items.map(item => {
-                    const unitPrice = convertPrice(item.product.unitPriceUSD, currency);
+                    const unitPrice = catalogListUnit(item.product, currency);
                     const line = unitPrice * item.qty;
                     return (
                       <div key={item.id} className="flex items-center gap-4 px-6 py-3">
@@ -388,7 +415,7 @@ function BuilderContent() {
                 ) : (
                   <>
                     {items.map(item => {
-                      const line = convertPrice(item.product.unitPriceUSD * item.qty, currency);
+                      const line = catalogListUnit(item.product, currency) * item.qty;
                       return (
                         <div key={item.id} className="flex justify-between text-xs gap-2">
                           <span className="text-slate-600 truncate flex-1">{item.product.name}</span>

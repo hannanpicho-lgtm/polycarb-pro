@@ -94,13 +94,36 @@ export default function PortalDashboard() {
   const [data, setData] = useState<MeResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [tab, setTab] = useState<'orders' | 'quotes'>('orders');
+  const [actingOn, setActingOn] = useState<string | null>(null);
+  const [actionMsg, setActionMsg] = useState<{ quoteId: string; ok: boolean; msg: string } | null>(null);
 
-  useEffect(() => {
+  const reload = () => {
     fetch('/api/portal/me').then(async res => {
       if (res.status === 401) { router.replace('/portal'); return; }
       if (res.ok) setData(await res.json());
     }).finally(() => setLoading(false));
-  }, [router]);
+  };
+
+  useEffect(() => { reload(); }, [router]); // eslint-disable-line react-hooks/exhaustive-deps
+
+  async function handleQuoteAction(quoteId: string, action: 'accept' | 'decline') {
+    setActingOn(quoteId); setActionMsg(null);
+    try {
+      const res = await fetch('/api/portal/quotes/accept', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ quoteId, action }),
+      });
+      const d = await res.json() as { ok?: boolean; action?: string; orderReferenceId?: string; error?: string };
+      if (!res.ok) { setActionMsg({ quoteId, ok: false, msg: d.error ?? 'Failed' }); return; }
+      const msg = action === 'accept'
+        ? `✓ Quote accepted! Order ${d.orderReferenceId} created.`
+        : '✓ Quote declined.';
+      setActionMsg({ quoteId, ok: true, msg });
+      setTimeout(() => { setActionMsg(null); reload(); }, 3000);
+    } catch { setActionMsg({ quoteId, ok: false, msg: 'Network error' }); }
+    finally { setActingOn(null); }
+  }
 
   async function handleSignOut() {
     await fetch('/api/portal/me', { method: 'DELETE' });
@@ -244,14 +267,15 @@ export default function PortalDashboard() {
                     };
                     let products: Array<{ productName?: string; productSlug?: string; qty?: string }> = [];
                     try { products = JSON.parse(q.products); } catch {}
+                    const isPriced = q.status === 'quoted' && !!q.quotedAmount;
                     return (
-                      <div key={q.id} className="p-5 hover:bg-slate-50/50 transition-colors">
+                      <div key={q.id} className={`p-5 transition-colors ${isPriced ? 'bg-purple-50/40 hover:bg-purple-50/70' : 'hover:bg-slate-50/50'}`}>
                         <div className="flex items-start justify-between gap-4">
                           <div className="flex-1">
                             <div className="flex items-center gap-2 flex-wrap">
                               <span className="font-mono text-xs text-slate-500">{q.referenceId}</span>
                               <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${QUOTE_COLOR[q.status] ?? ''}`}>
-                                {q.status}
+                                {q.status === 'quoted' ? '💬 Price received' : q.status}
                               </span>
                             </div>
                             {products.length > 0 && (
@@ -260,11 +284,37 @@ export default function PortalDashboard() {
                               </p>
                             )}
                             <p className="text-xs text-slate-400 mt-1">Submitted {new Date(q.createdAt).toLocaleDateString()}</p>
+
+                            {/* Accept / Decline for priced quotes */}
+                            {isPriced && (
+                              <div className="mt-3 flex items-center gap-3 flex-wrap">
+                                <button
+                                  onClick={() => handleQuoteAction(q.id, 'accept')}
+                                  disabled={actingOn === q.id}
+                                  className="px-4 py-2 bg-emerald-600 text-white text-xs font-bold rounded-lg hover:bg-emerald-700 transition-colors disabled:opacity-50 flex items-center gap-1.5"
+                                >
+                                  {actingOn === q.id ? <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" /> : '✓'}
+                                  Accept &amp; Place Order
+                                </button>
+                                <button
+                                  onClick={() => handleQuoteAction(q.id, 'decline')}
+                                  disabled={actingOn === q.id}
+                                  className="px-4 py-2 bg-white border border-slate-200 text-slate-600 text-xs font-medium rounded-lg hover:bg-slate-50 transition-colors disabled:opacity-50"
+                                >
+                                  Decline
+                                </button>
+                                {actionMsg?.quoteId === q.id && (
+                                  <span className={`text-xs font-semibold ${actionMsg.ok ? 'text-emerald-600' : 'text-red-500'}`}>
+                                    {actionMsg.msg}
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </div>
                           {q.quotedAmount && (
-                            <div className="text-right">
-                              <p className="font-bold text-slate-900">{formatPrice(q.quotedAmount, q.currency as Currency)}</p>
-                              <p className="text-xs text-slate-400">Quoted</p>
+                            <div className="text-right flex-shrink-0">
+                              <p className="font-bold text-slate-900 text-xl">{formatPrice(q.quotedAmount, q.currency as Currency)}</p>
+                              <p className="text-xs text-slate-400">Quoted price</p>
                             </div>
                           )}
                         </div>

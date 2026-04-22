@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import type { D1Database } from '@cloudflare/workers-types';
 import { generateMagicToken, MAGIC_LINK_TTL_MINUTES } from '@/lib/portal-auth';
+import { sendPortalMagicLink } from '@/lib/email';
 
 async function getDB(): Promise<D1Database | null> {
   const { env } = await getCloudflareContext({ async: true });
@@ -38,32 +39,8 @@ export async function POST(request: NextRequest) {
         `INSERT INTO magic_links (id, email, token, expiresAt) VALUES (?, ?, ?, ?)`
       ).bind(id, normalised, token, expiresAt).run();
 
-      const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://covestroppc.com';
-      const link = `${siteUrl}/portal/verify?token=${token}`;
-
-      // Send via Resend
-      const resendKey = process.env.RESEND_API_KEY;
-      if (resendKey) {
-        await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            from: process.env.FROM_EMAIL ?? 'noreply@covestroppc.com',
-            to: normalised,
-            subject: 'Your Covestro PC portal login link',
-            html: `
-              <div style="font-family:sans-serif;max-width:480px;margin:0 auto;padding:32px 24px">
-                <img src="${siteUrl}/pictures/logo.png" alt="Covestro PC" style="height:40px;margin-bottom:24px" onerror="this.style.display='none'" />
-                <h1 style="font-size:20px;font-weight:700;color:#0f172a;margin:0 0 8px">Sign in to your portal</h1>
-                <p style="color:#475569;font-size:15px;margin:0 0 24px">Click the button below to access your orders and quotes. The link expires in ${MAGIC_LINK_TTL_MINUTES} minutes.</p>
-                <a href="${link}" style="display:inline-block;background:#0087C3;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;font-size:15px">Open my portal →</a>
-                <p style="color:#94a3b8;font-size:12px;margin-top:24px">If you didn't request this, you can safely ignore this email.</p>
-                <p style="color:#cbd5e1;font-size:11px;margin-top:8px">${link}</p>
-              </div>
-            `,
-          }),
-        });
-      }
+      // Send magic link email using shared template
+      await sendPortalMagicLink({ to: normalised, token, ttlMinutes: MAGIC_LINK_TTL_MINUTES });
     }
 
     // Always return the same response

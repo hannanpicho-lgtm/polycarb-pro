@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import type { D1Database } from '@cloudflare/workers-types';
 import { verifyDistSessionCookie, DIST_COOKIE, applyTierDiscount, type DiscountTier } from '@/lib/distributor-auth';
-import { getProductPrice, convertPrice, type Currency } from '@/lib/pricing';
+import { getProductPriceLive, catalogListUnit, type Currency } from '@/lib/pricing';
 
 async function getDB(): Promise<D1Database | null> {
   const { env } = await getCloudflareContext({ async: true });
@@ -41,20 +41,42 @@ export async function POST(request: NextRequest) {
 
   const currency = (body.currency ?? 'USD') as Currency;
 
-  const products = body.items.map(item => {
-    const priceInfo = getProductPrice(item.productSlug);
-    const listPriceUSD = priceInfo?.unitPriceUSD ?? 0;
-    const netPriceUSD = applyTierDiscount(listPriceUSD, tier);
-    return {
+  const products: Array<{
+    productSlug: string;
+    productName: string;
+    qty: number;
+    unit: string;
+    unitPriceList: number;
+    unitPriceNet: number;
+    lineTotal: number;
+  }> = [];
+
+  for (const item of body.items) {
+    const priceInfo = await getProductPriceLive(item.productSlug, db);
+    if (!priceInfo) {
+      return NextResponse.json(
+        { error: `Product is not available: ${item.productSlug}` },
+        { status: 400 }
+      );
+    }
+    if (item.qty < priceInfo.minQty) {
+      return NextResponse.json(
+        { error: `Minimum order for ${priceInfo.name} is ${priceInfo.minQty} ${priceInfo.unit}` },
+        { status: 400 }
+      );
+    }
+    const listInCur = catalogListUnit(priceInfo, currency);
+    const netInCur = applyTierDiscount(listInCur, tier);
+    products.push({
       productSlug: item.productSlug,
-      productName: priceInfo?.name ?? item.productSlug,
+      productName: priceInfo.name,
       qty: item.qty,
-      unit: priceInfo?.unit ?? 'kg',
-      unitPriceList: convertPrice(listPriceUSD, currency),
-      unitPriceNet: convertPrice(netPriceUSD, currency),
-      lineTotal: convertPrice(netPriceUSD * item.qty, currency),
-    };
-  });
+      unit: priceInfo.unit,
+      unitPriceList: Math.round(listInCur * 100) / 100,
+      unitPriceNet: Math.round(netInCur * 100) / 100,
+      lineTotal: Math.round(netInCur * item.qty * 100) / 100,
+    });
+  }
 
   const subtotalList = products.reduce((s, p) => s + p.unitPriceList * p.qty, 0);
   const subtotalNet = products.reduce((s, p) => s + p.lineTotal, 0);

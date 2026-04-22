@@ -12,7 +12,23 @@ export interface ProductPrice {
   unit: string;
   minQty: number;       // minimum order quantity (kg)
   leadTimeDays: number; // typical lead time
+  /** D1 override only — if set, AUD display uses this instead of USD × AUD_RATE */
+  unitPriceAUD?: number | null;
 }
+
+/** Public + distributor catalog entry (D1-merged, inactive products omitted). */
+export interface PublicCatalogProduct {
+  slug: string;
+  name: string;
+  unitPriceUSD: number;
+  unitPriceAUD: number | null;
+  unit: string;
+  minQty: number;
+  leadTimeDays: number;
+  featured: boolean;
+}
+
+export type LiveProductPrice = ProductPrice;
 
 export const productPrices: ProductPrice[] = [
   // ── Sheets ────────────────────────────────────────────────────────────────
@@ -71,38 +87,101 @@ export function getProductPrice(slug: string): ProductPrice | undefined {
 }
 
 /**
+ * Per-kg list price in the requested currency (uses custom AUD from D1 when set).
+ */
+export function catalogListUnit(p: PublicCatalogProduct | ProductPrice, currency: Currency): number {
+  if (currency === 'AUD' && p.unitPriceAUD != null && p.unitPriceAUD > 0) {
+    return p.unitPriceAUD;
+  }
+  return convertPrice(p.unitPriceUSD, currency);
+}
+
+/**
  * Server-only: fetch the live (D1-overridden) price for a product.
- * Falls back to the static pricing.ts entry when D1 has no override.
- * Import this only in Server Components or API routes.
+ * Returns undefined if the product is explicitly deactivated in D1.
  */
 export async function getProductPriceLive(
   slug: string,
   db: import('@cloudflare/workers-types').D1Database | null
-): Promise<ProductPrice | undefined> {
+): Promise<LiveProductPrice | undefined> {
   const staticPrice = productPriceMap.get(slug);
   if (!staticPrice) return undefined;
-  if (!db) return staticPrice;
+  if (!db) return { ...staticPrice, unitPriceAUD: undefined };
 
   try {
     const row = await db
-      .prepare('SELECT * FROM product_settings WHERE slug = ? AND isActive = 1')
+      .prepare('SELECT * FROM product_settings WHERE slug = ?')
       .bind(slug)
       .first<{
-        unitPriceUSD: number; unitPriceAUD: number | null;
-        unit: string; minQty: number; leadTimeDays: number;
+        unitPriceUSD: number;
+        unitPriceAUD: number | null;
+        unit: string;
+        minQty: number;
+        leadTimeDays: number;
+        isActive: number;
       }>();
-    if (!row) return staticPrice;
+    if (row && row.isActive === 0) return undefined;
+    if (!row) return { ...staticPrice, unitPriceAUD: undefined };
     return {
       slug,
       name: staticPrice.name,
       unitPriceUSD: row.unitPriceUSD,
+      unitPriceAUD: row.unitPriceAUD,
       unit: row.unit,
       minQty: row.minQty,
       leadTimeDays: row.leadTimeDays,
     };
   } catch {
-    return staticPrice;
+    return { ...staticPrice, unitPriceAUD: undefined };
   }
+}
+
+type SettingsRow = {
+  slug: string;
+  unitPriceUSD: number;
+  unitPriceAUD: number | null;
+  unit: string;
+  minQty: number;
+  leadTimeDays: number;
+  isActive: number;
+  featured: number;
+};
+
+/**
+ * All active products for public/distributor UIs (merged static + D1).
+ * Server / API only.
+ */
+export async function getActiveProductCatalog(
+  db: import('@cloudflare/workers-types').D1Database | null
+): Promise<PublicCatalogProduct[]> {
+  const out: PublicCatalogProduct[] = [];
+  if (!db) {
+    for (const p of productPrices) {
+      out.push({
+        ...p,
+        unitPriceAUD: null,
+        featured: false,
+      });
+    }
+    return out;
+  }
+  const { results: rows } = await db.prepare('SELECT * FROM product_settings').all<SettingsRow>();
+  const map = new Map((rows ?? []).map((r) => [r.slug, r]));
+  for (const p of productPrices) {
+    const s = map.get(p.slug);
+    if (s && s.isActive === 0) continue;
+    out.push({
+      slug: p.slug,
+      name: p.name,
+      unitPriceUSD: s?.unitPriceUSD ?? p.unitPriceUSD,
+      unitPriceAUD: s?.unitPriceAUD ?? null,
+      unit: s?.unit ?? p.unit,
+      minQty: s?.minQty ?? p.minQty,
+      leadTimeDays: s?.leadTimeDays ?? p.leadTimeDays,
+      featured: s ? s.featured === 1 : false,
+    });
+  }
+  return out;
 }
 
 export function convertPrice(amountUSD: number, currency: Currency): number {

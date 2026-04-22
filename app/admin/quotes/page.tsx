@@ -62,6 +62,9 @@ function QuotesContent() {
   const [statusFilter, setStatusFilter] = useState(searchParams.get('status') || '');
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
+  const [sendingQuoteId, setSendingQuoteId] = useState<string | null>(null);
+  const [sendForm, setSendForm] = useState({ amount: '', message: '', expiryDays: '14' });
+  const [sendResult, setSendResult] = useState<{ ok: boolean; msg: string } | null>(null);
   const page = 1;
   const pageSize = 20;
 
@@ -96,6 +99,29 @@ function QuotesContent() {
 
   async function convertToOrder(quote: Quote) {
     router.push(`/admin/orders/new?quoteId=${quote.id}&customerEmail=${encodeURIComponent(quote.customerEmail)}&customerName=${encodeURIComponent(quote.customerName)}&currency=${quote.currency}`);
+  }
+
+  async function handleSendQuote(quoteId: string) {
+    const amount = parseFloat(sendForm.amount);
+    if (!amount || amount <= 0) { setSendResult({ ok: false, msg: 'Enter a valid amount' }); return; }
+    setSendingQuoteId(quoteId); setSendResult(null);
+    try {
+      const res = await fetch('/api/admin/quotes/send', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          quoteId,
+          quotedAmount: amount,
+          adminMessage: sendForm.message || undefined,
+          expiresInDays: parseInt(sendForm.expiryDays) || 14,
+        }),
+      });
+      const data = await res.json();
+      if (!res.ok) { setSendResult({ ok: false, msg: data.error ?? 'Failed' }); return; }
+      setSendResult({ ok: true, msg: data.emailSent ? `Email sent to customer` : 'Quote saved (email not sent)' });
+      setTimeout(() => { setSendResult(null); setSendingQuoteId(null); setSendForm({ amount: '', message: '', expiryDays: '14' }); fetchQuotes(); }, 2500);
+    } catch { setSendResult({ ok: false, msg: 'Network error' }); }
+    finally { setSendingQuoteId(null); }
   }
 
   return (
@@ -220,6 +246,52 @@ function QuotesContent() {
                                   <p className="text-sm font-semibold text-slate-900 mt-1">{q.currency} {q.quotedAmount.toFixed(2)}</p>
                                 </div>
                               )}
+                              {/* Send Quote panel */}
+                              {['pending','reviewed','quoted'].includes(q.status) && (
+                                <div className="mt-3 border border-brand-200 rounded-xl bg-brand-50/40 p-4" onClick={e => e.stopPropagation()}>
+                                  <p className="text-xs font-bold text-brand-700 mb-3 uppercase tracking-wide">📧 Send Priced Quote to Customer</p>
+                                  <div className="flex flex-wrap gap-3 items-end">
+                                    <div>
+                                      <label className="block text-xs font-semibold text-slate-600 mb-1">Amount ({q.currency})</label>
+                                      <div className="relative">
+                                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">$</span>
+                                        <input type="number" step="0.01" placeholder="0.00"
+                                          value={sendForm.amount}
+                                          onChange={e => setSendForm(f => ({ ...f, amount: e.target.value }))}
+                                          className="pl-6 pr-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400 w-32 font-mono" />
+                                      </div>
+                                    </div>
+                                    <div>
+                                      <label className="block text-xs font-semibold text-slate-600 mb-1">Expires in (days)</label>
+                                      <input type="number" min="1" max="90"
+                                        value={sendForm.expiryDays}
+                                        onChange={e => setSendForm(f => ({ ...f, expiryDays: e.target.value }))}
+                                        className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400 w-20 font-mono" />
+                                    </div>
+                                    <div className="flex-1 min-w-[160px]">
+                                      <label className="block text-xs font-semibold text-slate-600 mb-1">Message to customer <span className="font-normal text-slate-400">(optional)</span></label>
+                                      <input type="text" placeholder="e.g. Price includes freight to Sydney…"
+                                        value={sendForm.message}
+                                        onChange={e => setSendForm(f => ({ ...f, message: e.target.value }))}
+                                        className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400" />
+                                    </div>
+                                    <button
+                                      onClick={() => handleSendQuote(q.id)}
+                                      disabled={!!sendingQuoteId}
+                                      className="flex items-center gap-1.5 px-4 py-1.5 bg-brand-600 text-white text-xs font-bold rounded-lg hover:bg-brand-700 transition-colors disabled:opacity-50 whitespace-nowrap"
+                                    >
+                                      {sendingQuoteId === q.id ? <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" /> : '📤'}
+                                      Send Quote Email
+                                    </button>
+                                  </div>
+                                  {sendResult && (
+                                    <p className={`mt-2 text-xs font-medium ${sendResult.ok ? 'text-emerald-600' : 'text-red-500'}`}>
+                                      {sendResult.ok ? '✓ ' : '✗ '}{sendResult.msg}
+                                    </p>
+                                  )}
+                                </div>
+                              )}
+
                               <div className="flex flex-wrap gap-2 pt-2">
                                 {q.status === 'pending' && (
                                   <button onClick={(e) => { e.stopPropagation(); updateStatus(q.id, 'reviewed'); }}
@@ -235,7 +307,7 @@ function QuotesContent() {
                                     Reject
                                   </button>
                                 )}
-                                {q.status !== 'converted' && q.status !== 'rejected' && (
+                                {q.status !== 'converted' && q.status !== 'rejected' && q.status !== 'accepted' && (
                                   <button onClick={(e) => { e.stopPropagation(); convertToOrder(q); }}
                                     className="px-3 py-1.5 text-xs font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors">
                                     Convert to Order →

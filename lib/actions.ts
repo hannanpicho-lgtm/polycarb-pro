@@ -661,7 +661,7 @@ export async function submitContactForm(
     // Send confirmation email to the person who submitted
     const fullName = `${parsed.data.firstName} ${parsed.data.lastName}`.trim();
     const emailResult = await sendContactConfirmationEmail(parsed.data.email, fullName);
-    if (!emailResult.success) {
+    if (!emailResult.ok) {
       console.warn('Failed to send contact confirmation email:', emailResult.error);
       // Don't fail the submission just because email failed
     }

@@ -1,9 +1,11 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo } from 'react';
 import { useRouter } from 'next/navigation';
 import Link from 'next/link';
-import { productPrices, convertPrice, formatPrice, type Currency } from '@/lib/pricing';
+import {
+  productPrices, catalogListUnit, formatPrice, type Currency, type PublicCatalogProduct,
+} from '@/lib/pricing';
 import { applyTierDiscount, TIER_CONFIG, type DiscountTier } from '@/lib/distributor-auth';
 
 type Category = 'all' | 'sheets' | 'rods' | 'resins' | 'specialty';
@@ -12,16 +14,13 @@ const CATEGORY_LABELS: Record<Category, string> = {
   all: 'All Products', sheets: 'Sheets', rods: 'Rods & Profiles', resins: 'Resins', specialty: 'Specialty',
 };
 
-const SLUG_TO_CATEGORY: Record<string, Category> = {};
 const SHEETS = ['sheet', 'twinwall', 'multiwall', 'architectural', 'solar'];
 const RODS = ['rod', 'tube', 'plate'];
 const RESINS = ['resin', 'gf30', 'fr-resin', 'gp1000', 'h3000', 'siloxane', 'l1225'];
-productPrices.forEach(p => {
-  if (SHEETS.some(k => p.slug.includes(k))) SLUG_TO_CATEGORY[p.slug] = 'sheets';
-  else if (RODS.some(k => p.slug.includes(k))) SLUG_TO_CATEGORY[p.slug] = 'rods';
-  else if (RESINS.some(k => p.slug.includes(k))) SLUG_TO_CATEGORY[p.slug] = 'resins';
-  else SLUG_TO_CATEGORY[p.slug] = 'specialty';
-});
+
+function catalogFallback(): PublicCatalogProduct[] {
+  return productPrices.map((p) => ({ ...p, unitPriceAUD: null, featured: false }));
+}
 
 export default function DistributorCatalogPage() {
   const router = useRouter();
@@ -30,6 +29,8 @@ export default function DistributorCatalogPage() {
   const [category, setCategory] = useState<Category>('all');
   const [search, setSearch] = useState('');
   const [loading, setLoading] = useState(true);
+  const [catalog, setCatalog] = useState<PublicCatalogProduct[]>([]);
+  const [catalogLoading, setCatalogLoading] = useState(true);
 
   useEffect(() => {
     fetch('/api/distributor/me').then(async res => {
@@ -42,15 +43,37 @@ export default function DistributorCatalogPage() {
     }).finally(() => setLoading(false));
   }, [router]);
 
+  useEffect(() => {
+    fetch('/api/catalog/prices')
+      .then(r => r.json())
+      .then((d: { products?: PublicCatalogProduct[] }) => {
+        setCatalog(d.products?.length ? d.products : catalogFallback());
+      })
+      .catch(() => setCatalog(catalogFallback()))
+      .finally(() => setCatalogLoading(false));
+  }, []);
+
+  const slugToCategory = useMemo(() => {
+    const m: Record<string, Category> = {};
+    for (const p of catalog) {
+      if (SHEETS.some(k => p.slug.includes(k))) m[p.slug] = 'sheets';
+      else if (RODS.some(k => p.slug.includes(k))) m[p.slug] = 'rods';
+      else if (RESINS.some(k => p.slug.includes(k))) m[p.slug] = 'resins';
+      else m[p.slug] = 'specialty';
+    }
+    return m;
+  }, [catalog]);
+
   const tierInfo = TIER_CONFIG[tier];
 
-  const filtered = productPrices.filter(p => {
-    const catMatch = category === 'all' || SLUG_TO_CATEGORY[p.slug] === category;
+  const filtered = useMemo(() => catalog.filter(p => {
+    const cat = slugToCategory[p.slug] ?? 'specialty';
+    const catMatch = category === 'all' || cat === category;
     const searchMatch = !search || p.name.toLowerCase().includes(search.toLowerCase()) || p.slug.includes(search.toLowerCase());
     return catMatch && searchMatch;
-  });
+  }), [catalog, category, search, slugToCategory]);
 
-  if (loading) {
+  if (loading || catalogLoading) {
     return (
       <div className="min-h-screen bg-slate-50 flex items-center justify-center">
         <div className="w-8 h-8 rounded-full border-2 border-brand-400 border-t-transparent animate-spin" />
@@ -120,12 +143,12 @@ export default function DistributorCatalogPage() {
         {/* Product rows */}
         <div className="bg-white border border-slate-200 rounded-xl overflow-hidden divide-y divide-slate-100">
           {filtered.map(p => {
-            const listUSD = p.unitPriceUSD;
-            const netUSD = applyTierDiscount(listUSD, tier);
-            const listDisplay = formatPrice(convertPrice(listUSD, currency), currency);
-            const netDisplay = formatPrice(convertPrice(netUSD, currency), currency);
+            const listInCur = catalogListUnit(p, currency);
+            const netInCur = applyTierDiscount(listInCur, tier);
+            const listDisplay = formatPrice(listInCur, currency);
+            const netDisplay = formatPrice(netInCur, currency);
             const saving = Math.round(tierInfo.discount * 100);
-            const cat = SLUG_TO_CATEGORY[p.slug] ?? 'specialty';
+            const cat = slugToCategory[p.slug] ?? 'specialty';
             const catColor: Record<Category, string> = {
               all: 'bg-slate-100 text-slate-500',
               sheets: 'bg-sky-50 text-sky-600',

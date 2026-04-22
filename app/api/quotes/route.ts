@@ -6,6 +6,8 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import type { D1Database } from '@cloudflare/workers-types';
+import { sendQuoteSubmittedConfirmation, sendNewQuoteAdminAlert } from '@/lib/email';
+import { catalogListUnit, getProductPriceLive, type Currency } from '@/lib/pricing';
 
 async function getDB(): Promise<D1Database | null> {
   const { env } = await getCloudflareContext({ async: true });
@@ -54,24 +56,54 @@ export async function POST(request: NextRequest) {
     const db = await getDB();
     if (!db) return NextResponse.json({ error: 'Database unavailable' }, { status: 503 });
 
+    const cur = (currency === 'AUD' ? 'AUD' : 'USD') as Currency;
+
+    // Re-check prices server-side (ignore client-reported $ — prevents tampering; respects D1 admin overrides)
+    const verified: QuoteItem[] = [];
+    for (const i of items) {
+      if (!i.productSlug || typeof i.qty !== 'number' || i.qty <= 0) {
+        return NextResponse.json({ error: 'Each line must include a product and positive quantity' }, { status: 400 });
+      }
+      const live = await getProductPriceLive(i.productSlug, db);
+      if (!live) {
+        return NextResponse.json({ error: `Product is not available: ${i.productSlug}` }, { status: 400 });
+      }
+      if (i.qty < live.minQty) {
+        return NextResponse.json(
+          { error: `Minimum order for ${live.name} is ${live.minQty} ${live.unit}` },
+          { status: 400 }
+        );
+      }
+      const unitInCur = catalogListUnit(live, cur);
+      verified.push({
+        productSlug: i.productSlug,
+        productName: live.name,
+        qty: i.qty,
+        unit: live.unit,
+        unitPriceUSD: live.unitPriceUSD,
+        lineTotal: Math.round(unitInCur * i.qty * 100) / 100,
+      });
+    }
+
     const id = crypto.randomUUID();
     const referenceId = `QT-${Date.now().toString(36).toUpperCase()}-${Math.random().toString(36).substring(2, 6).toUpperCase()}`;
     const now = new Date().toISOString();
 
     // Build products JSON array for storage
     const productsJSON = JSON.stringify(
-      items.map(i => ({
+      verified.map((i) => ({
         productSlug: i.productSlug,
         productName: i.productName,
         qty: i.qty,
         unit: i.unit,
         unitPrice: i.unitPriceUSD,
         lineTotal: i.lineTotal,
+        currency: cur,
       }))
     );
 
-    const productSummary = items
-      .map(i => `${i.productName} × ${i.qty}${i.unit}`)
+    const productSummary = verified
+      .map((i) => `${i.productName} × ${i.qty}${i.unit}`)
       .join(', ');
 
     const fullMessage = [
@@ -81,52 +113,46 @@ export async function POST(request: NextRequest) {
       `Products: ${productSummary}`,
     ].filter(Boolean).join('\n');
 
-    await db.prepare(
-      `INSERT INTO quotes
+    await db
+      .prepare(
+        `INSERT INTO quotes
          (id, referenceId, customerName, customerEmail, customerCompany,
           currency, products, message, source, status, submittedAt, createdAt, updatedAt)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)`
-    ).bind(
-      id, referenceId, customerName.trim(), customerEmail.trim().toLowerCase(),
-      customerCompany?.trim() ?? null,
-      currency ?? 'USD',
-      productsJSON,
-      fullMessage || null,
-      source ?? 'web-builder',
-      now, now, now
-    ).run();
+         VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'pending', ?, ?, ?)`
+      )
+      .bind(
+        id,
+        referenceId,
+        customerName.trim(),
+        customerEmail.trim().toLowerCase(),
+        customerCompany?.trim() ?? null,
+        cur,
+        productsJSON,
+        fullMessage || null,
+        source ?? 'web-builder',
+        now,
+        now,
+        now
+      )
+      .run();
 
-    // Try to send admin notification (best-effort)
-    try {
-      const resendKey = process.env.RESEND_API_KEY;
-      const adminEmail = process.env.ADMIN_EMAIL ?? 'admin@covestroppc.com';
-      if (resendKey) {
-        await fetch('https://api.resend.com/emails', {
-          method: 'POST',
-          headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
-          body: JSON.stringify({
-            from: process.env.FROM_EMAIL ?? 'noreply@covestroppc.com',
-            to: adminEmail,
-            subject: `New quote request ${referenceId} — ${customerName}`,
-            html: `<div style="font-family:sans-serif;max-width:500px;margin:0 auto;padding:24px">
-              <h2 style="font-size:18px;color:#0f172a;margin:0 0 12px">New Quote Request</h2>
-              <table style="width:100%;font-size:13px;border-collapse:collapse">
-                <tr><td style="padding:4px 0;color:#64748b;width:130px">Reference</td><td style="font-weight:700">${referenceId}</td></tr>
-                <tr><td style="padding:4px 0;color:#64748b">Customer</td><td>${customerName}${customerCompany ? ` · ${customerCompany}` : ''}</td></tr>
-                <tr><td style="padding:4px 0;color:#64748b">Email</td><td>${customerEmail}</td></tr>
-                <tr><td style="padding:4px 0;color:#64748b">Currency</td><td>${currency ?? 'USD'}</td></tr>
-                <tr><td style="padding:4px 0;color:#64748b">Region</td><td>${shippingRegion ?? 'Not specified'}</td></tr>
-                <tr><td style="padding:4px 0;color:#64748b">Products</td><td>${productSummary}</td></tr>
-              </table>
-              ${message ? `<p style="margin-top:12px;font-size:13px;color:#374151;font-style:italic">"${message}"</p>` : ''}
-              <a href="${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://covestroppc.com'}/admin/quotes" style="display:inline-block;margin-top:16px;background:#0087C3;color:#fff;text-decoration:none;padding:10px 20px;border-radius:6px;font-size:13px;font-weight:600">
-                View in Admin →
-              </a>
-            </div>`,
-          }),
-        });
-      }
-    } catch {}
+    // Fire confirmation + admin alert in parallel (best-effort — never block the 201)
+    await Promise.allSettled([
+      sendQuoteSubmittedConfirmation({
+        to: customerEmail.trim().toLowerCase(),
+        name: customerName.trim(),
+        referenceId,
+        products: verified.map((i) => ({ name: i.productName, qty: i.qty, unit: i.unit })),
+      }),
+      sendNewQuoteAdminAlert({
+        referenceId,
+        customerName: customerName.trim(),
+        customerEmail: customerEmail.trim().toLowerCase(),
+        customerCompany: customerCompany?.trim(),
+        products: verified.map((i) => ({ name: i.productName, qty: i.qty, unit: i.unit })),
+        message: message?.trim(),
+      }),
+    ]);
 
     return NextResponse.json({ ok: true, referenceId }, { status: 201 });
   } catch (err) {

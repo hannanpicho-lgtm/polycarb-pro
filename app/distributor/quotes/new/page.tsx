@@ -2,8 +2,14 @@
 
 import { useState, useEffect } from 'react';
 import { useRouter } from 'next/navigation';
-import { productPrices, shippingRegions, convertPrice, formatPrice, type Currency } from '@/lib/pricing';
+import {
+  productPrices, shippingRegions, catalogListUnit, formatPrice, type Currency, type PublicCatalogProduct,
+} from '@/lib/pricing';
 import { applyTierDiscount, TIER_CONFIG, type DiscountTier } from '@/lib/distributor-auth';
+
+function catalogFallback(): PublicCatalogProduct[] {
+  return productPrices.map((p) => ({ ...p, unitPriceAUD: null, featured: false }));
+}
 
 interface LineItem { productSlug: string; qty: number }
 
@@ -15,7 +21,8 @@ export default function NewDistributorQuote() {
   const [saving, setSaving] = useState(false);
   const [error, setError] = useState('');
 
-  const [items, setItems] = useState<LineItem[]>([{ productSlug: productPrices[0]?.slug ?? '', qty: 0 }]);
+  const [catalog, setCatalog] = useState<PublicCatalogProduct[]>([]);
+  const [items, setItems] = useState<LineItem[]>([]);
   const [endCustomerName, setEndCustomerName] = useState('');
   const [endCustomerCompany, setEndCustomerCompany] = useState('');
   const [endCustomerCountry, setEndCustomerCountry] = useState('');
@@ -23,27 +30,40 @@ export default function NewDistributorQuote() {
   const [message, setMessage] = useState('');
 
   useEffect(() => {
-    fetch('/api/distributor/me').then(async res => {
-      if (res.status === 401) { router.replace('/distributor'); return; }
-      if (res.ok) {
-        const data = await res.json();
-        if (data.profile?.status !== 'approved') { router.replace('/distributor/dashboard'); return; }
-        setTier((data.profile.discountTier || 'bronze') as DiscountTier);
-      }
-    }).finally(() => setLoading(false));
+    let cancelled = false;
+    Promise.all([
+      fetch('/api/distributor/me'),
+      fetch('/api/catalog/prices'),
+    ])
+      .then(async ([meRes, catRes]) => {
+        if (meRes.status === 401) { router.replace('/distributor'); return; }
+        if (meRes.ok) {
+          const data = await meRes.json();
+          if (data.profile?.status !== 'approved') { router.replace('/distributor/dashboard'); return; }
+          setTier((data.profile.discountTier || 'bronze') as DiscountTier);
+        }
+        const d = (await catRes.json()) as { products?: PublicCatalogProduct[] };
+        if (cancelled) return;
+        const list = d.products?.length ? d.products : catalogFallback();
+        setCatalog(list);
+        setItems([{ productSlug: list[0]?.slug ?? '', qty: 0 }]);
+      })
+      .finally(() => { if (!cancelled) setLoading(false); });
+    return () => { cancelled = true; };
   }, [router]);
 
   const tierInfo = TIER_CONFIG[tier];
 
   const previewTotal = items.reduce((sum, item) => {
-    const price = productPrices.find(p => p.slug === item.productSlug);
+    const price = catalog.find(p => p.slug === item.productSlug);
     if (!price || !item.qty) return sum;
-    const netUSD = applyTierDiscount(price.unitPriceUSD, tier);
-    return sum + convertPrice(netUSD * item.qty, currency);
+    const listInCur = catalogListUnit(price, currency);
+    const netInCur = applyTierDiscount(listInCur, tier);
+    return sum + netInCur * item.qty;
   }, 0);
 
   function addItem() {
-    setItems(prev => [...prev, { productSlug: productPrices[0]?.slug ?? '', qty: 0 }]);
+    setItems(prev => [...prev, { productSlug: catalog[0]?.slug ?? '', qty: 0 }]);
   }
 
   function updateItem(i: number, patch: Partial<LineItem>) {
@@ -111,18 +131,18 @@ export default function NewDistributorQuote() {
             </div>
 
             {items.map((item, i) => {
-              const price = productPrices.find(p => p.slug === item.productSlug);
-              const listUSD = price?.unitPriceUSD ?? 0;
-              const netUSD = applyTierDiscount(listUSD, tier);
-              const netDisplay = price ? formatPrice(convertPrice(netUSD, currency), currency) : '—';
-              const lineTotal = price && item.qty ? convertPrice(netUSD * item.qty, currency) : 0;
+              const price = catalog.find(p => p.slug === item.productSlug);
+              const listInCur = price ? catalogListUnit(price, currency) : 0;
+              const netInCur = price ? applyTierDiscount(listInCur, tier) : 0;
+              const netDisplay = price ? formatPrice(netInCur, currency) : '—';
+              const lineTotal = price && item.qty ? netInCur * item.qty : 0;
               return (
                 <div key={i} className="grid grid-cols-12 gap-2 items-end border-b border-slate-100 pb-4">
                   <div className="col-span-6">
                     <label className="block text-xs font-medium text-slate-600 mb-1">Product</label>
                     <select value={item.productSlug} onChange={e => updateItem(i, { productSlug: e.target.value })}
                       className="w-full px-2 py-2 text-xs border border-slate-200 rounded-lg focus:outline-none">
-                      {productPrices.map(p => <option key={p.slug} value={p.slug}>{p.name}</option>)}
+                      {catalog.map(p => <option key={p.slug} value={p.slug}>{p.name}</option>)}
                     </select>
                   </div>
                   <div className="col-span-2">

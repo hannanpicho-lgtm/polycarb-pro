@@ -1,7 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getCloudflareContext } from '@opennextjs/cloudflare';
 import { distributorSignupSchema } from '@/lib/distributor-validation';
-import { sendDistributorConfirmationEmail, sendDistributorNotificationEmail } from '@/lib/email';
+import { sendDistributorApplicationEmails } from '@/lib/email';
 import type { D1Database } from '@cloudflare/workers-types';
 
 export async function POST(request: NextRequest) {
@@ -51,22 +51,17 @@ export async function POST(request: NextRequest) {
       console.warn('Database operation failed:', dbError);
     }
 
-    // Send confirmation email to applicant
-    const confirmationResult = await sendDistributorConfirmationEmail(data);
-    
-    if (!confirmationResult.success) {
-      console.warn('Failed to send confirmation email:', confirmationResult.error);
-    }
-
-    // Send notification email to admin
-    const notificationResult = await sendDistributorNotificationEmail({
-      ...data,
+    // Send confirmation to applicant + alert to admin
+    await sendDistributorApplicationEmails({
+      to: data.email,
+      fullName: data.fullName,
+      companyName: data.companyName,
+      phone: data.phone,
+      businessType: data.businessType,
       countries: body.countries || [],
-    });
-
-    if (!notificationResult.success) {
-      console.warn('Failed to send admin notification:', notificationResult.error);
-    }
+      estimatedAnnualVolume: data.estimatedAnnualVolume,
+      message: data.message,
+    }).catch((e) => console.warn('Failed to send distributor emails:', e));
 
     // Log submission
     console.log('Distributor signup submission:', {
