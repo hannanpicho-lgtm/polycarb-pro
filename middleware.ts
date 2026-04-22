@@ -62,7 +62,7 @@ export async function middleware(request: NextRequest) {
 
   // ── Admin auth guard (also covers /print/* document pages) ──────────────────
   const isAdminPage = pathname.startsWith('/admin') || pathname.startsWith('/print');
-  const isAdminApi = pathname.startsWith('/api/admin');
+  const isAdminApi = pathname.startsWith('/api/admin') || pathname.startsWith('/api/admin/export');
   const isAuthEndpoint = pathname === '/api/admin/auth';
   const isLoginPage = pathname === '/admin/login';
 

@@ -53,18 +53,33 @@ export async function GET() {
         LIMIT 10
       `).all(),
 
-      // Distributor stats
-      db.prepare(`
-        SELECT
-          (SELECT COUNT(*) FROM distributor_submissions WHERE status='approved') as approved,
-          (SELECT COUNT(*) FROM distributor_submissions WHERE status='pending') as pending,
-          (SELECT COUNT(*) FROM distributor_quotes) as quotesSubmitted,
-          (SELECT COUNT(*) FROM distributor_quotes WHERE status='ordered') as quotesConverted,
-          (SELECT SUM(subtotalNet) FROM distributor_quotes WHERE status='ordered') as distRevenue
-      `).first<{
-        approved: number; pending: number;
-        quotesSubmitted: number; quotesConverted: number; distRevenue: number;
-      }>(),
+      // Distributor stats (resilient — distributor_quotes table may not exist yet)
+      (async () => {
+        try {
+          return await db.prepare(`
+            SELECT
+              (SELECT COUNT(*) FROM distributor_submissions WHERE status='approved') as approved,
+              (SELECT COUNT(*) FROM distributor_submissions WHERE status='pending') as pending,
+              (SELECT COUNT(*) FROM distributor_quotes) as quotesSubmitted,
+              (SELECT COUNT(*) FROM distributor_quotes WHERE status='ordered') as quotesConverted,
+              (SELECT SUM(subtotalNet) FROM distributor_quotes WHERE status='ordered') as distRevenue
+          `).first<{
+            approved: number; pending: number;
+            quotesSubmitted: number; quotesConverted: number; distRevenue: number;
+          }>();
+        } catch {
+          // Fall back to submissions-only stats if distributor_quotes table doesn't exist
+          return await db.prepare(`
+            SELECT
+              (SELECT COUNT(*) FROM distributor_submissions WHERE status='approved') as approved,
+              (SELECT COUNT(*) FROM distributor_submissions WHERE status='pending') as pending,
+              0 as quotesSubmitted, 0 as quotesConverted, 0 as distRevenue
+          `).first<{
+            approved: number; pending: number;
+            quotesSubmitted: number; quotesConverted: number; distRevenue: number;
+          }>();
+        }
+      })(),
 
       // Payment status breakdown
       db.prepare(`

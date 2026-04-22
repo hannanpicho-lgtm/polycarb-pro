@@ -168,8 +168,26 @@ function OrdersContent() {
         ) : error ? (
           <div className="py-16 text-center text-red-500 text-sm">{error}</div>
         ) : orders.length === 0 ? (
-          <div className="py-16 text-center text-slate-400 text-sm">No orders yet —
-            <Link href="/admin/orders/new" className="ml-1 text-brand-600 hover:underline">create one</Link>
+          <div className="py-16 text-center space-y-4">
+            <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mx-auto">
+              <svg className="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" d="M15.75 10.5V6a3.75 3.75 0 10-7.5 0v4.5m11.356-1.993l1.263 12c.07.665-.45 1.243-1.119 1.243H4.25a1.125 1.125 0 01-1.12-1.243l1.264-12A1.125 1.125 0 015.513 7.5h12.974c.576 0 1.059.435 1.119 1.007z" />
+              </svg>
+            </div>
+            <div>
+              <p className="text-sm font-semibold text-slate-700">No orders yet</p>
+              <p className="text-xs text-slate-400 mt-1">Create an order manually, or convert an approved quote to an order</p>
+            </div>
+            <div className="flex gap-3 justify-center">
+              <Link href="/admin/orders/new"
+                className="px-4 py-2 bg-brand-600 text-white text-sm font-semibold rounded-lg hover:bg-brand-700 transition-colors">
+                + Create Order
+              </Link>
+              <Link href="/admin/quotes"
+                className="px-4 py-2 border border-slate-200 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors">
+                View Quotes →
+              </Link>
+            </div>
           </div>
         ) : (
           <table className="w-full text-sm">
