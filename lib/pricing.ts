@@ -70,6 +70,41 @@ export function getProductPrice(slug: string): ProductPrice | undefined {
   return productPriceMap.get(slug);
 }
 
+/**
+ * Server-only: fetch the live (D1-overridden) price for a product.
+ * Falls back to the static pricing.ts entry when D1 has no override.
+ * Import this only in Server Components or API routes.
+ */
+export async function getProductPriceLive(
+  slug: string,
+  db: import('@cloudflare/workers-types').D1Database | null
+): Promise<ProductPrice | undefined> {
+  const staticPrice = productPriceMap.get(slug);
+  if (!staticPrice) return undefined;
+  if (!db) return staticPrice;
+
+  try {
+    const row = await db
+      .prepare('SELECT * FROM product_settings WHERE slug = ? AND isActive = 1')
+      .bind(slug)
+      .first<{
+        unitPriceUSD: number; unitPriceAUD: number | null;
+        unit: string; minQty: number; leadTimeDays: number;
+      }>();
+    if (!row) return staticPrice;
+    return {
+      slug,
+      name: staticPrice.name,
+      unitPriceUSD: row.unitPriceUSD,
+      unit: row.unit,
+      minQty: row.minQty,
+      leadTimeDays: row.leadTimeDays,
+    };
+  } catch {
+    return staticPrice;
+  }
+}
+
 export function convertPrice(amountUSD: number, currency: Currency): number {
   if (currency === 'AUD') return Math.round(amountUSD * AUD_RATE * 100) / 100;
   return amountUSD;
