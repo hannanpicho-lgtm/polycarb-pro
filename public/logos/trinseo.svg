@@ -1,0 +1,21 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Trinseo - Professional Blue -->
+  <defs>
+    <linearGradient id="printseoBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0052cc;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#003399;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <rect width="200" height="200" fill="url(#printseoBg)"/>
+  
+  <!-- Hexagonal tile pattern -->
+  <g fill="white" opacity="0.9">
+    <!-- Top hexagon -->
+    <polygon points="100,35 130,55 130,95 100,115 70,95 70,55"/>
+    <!-- Bottom left hexagon -->
+    <polygon points="55,120 85,140 85,180 55,200 25,180 25,140"/>
+    <!-- Bottom right hexagon -->
+    <polygon points="145,120 175,140 175,180 145,200 115,180 115,140"/>
+  </g>
+</svg>

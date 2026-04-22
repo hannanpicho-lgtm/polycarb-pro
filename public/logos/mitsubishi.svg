@@ -1,0 +1,21 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Mitsubishi - Industrial Red (their signature brand color) -->
+  <defs>
+    <linearGradient id="mitsuBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#e31837;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#c40000;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <rect width="200" height="200" fill="url(#mitsuBg)"/>
+  
+  <!-- Three-diamond motif (nod to Mitsubishi's 3-diamond logo) -->
+  <g fill="white" opacity="0.95">
+    <!-- Top diamond -->
+    <polygon points="100,30 120,50 100,70 80,50"/>
+    <!-- Bottom left diamond -->
+    <polygon points="60,110 80,130 60,150 40,130"/>
+    <!-- Bottom right diamond -->
+    <polygon points="140,110 160,130 140,150 120,130"/>
+  </g>
+</svg>

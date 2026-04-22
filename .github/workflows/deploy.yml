@@ -1,0 +1,88 @@
+name: Deploy to Cloudflare
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+    inputs:
+      reason:
+        description: 'Reason for manual deploy'
+        required: false
+        default: 'Manual trigger'
+
+concurrency:
+  group: deploy-production
+  cancel-in-progress: false
+
+jobs:
+  deploy:
+    name: Build & Deploy Worker
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    environment:
+      name: production
+      url: https://covestroppc.com
+
+    permissions:
+      contents: read
+      deployments: write
+
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 1
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Type-check
+        run: npm run type-check
+
+      - name: Build (OpenNext + Cloudflare)
+        env:
+          NODE_OPTIONS: --max-old-space-size=8192
+          NEXT_PUBLIC_GIT_SHA: ${{ github.sha }}
+          NEXT_PUBLIC_BUILD_TIME: ${{ github.event.head_commit.timestamp || github.event.repository.updated_at }}
+          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL || 'https://covestroppc.com' }}
+        run: npm run cf:build
+
+      - name: Deploy with Wrangler
+        uses: cloudflare/wrangler-action@v3
+        with:
+          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
+          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
+          command: deploy
+          wranglerVersion: '4.83.0'
+
+      - name: Smoke test /api/version
+        run: |
+          sleep 8
+          echo "Probing covestroppc.com..."
+          curl --fail --retry 5 --retry-delay 3 --max-time 15 \
+            https://covestroppc.com/api/version | tee /tmp/version.json
+          grep -q '"ok":true' /tmp/version.json
+
+      - name: Summary
+        if: always()
+        run: |
+          echo "### Deploy Summary" >> $GITHUB_STEP_SUMMARY
+          echo "" >> $GITHUB_STEP_SUMMARY
+          echo "- **Commit**: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Actor**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
+          echo "- **URL**: https://covestroppc.com" >> $GITHUB_STEP_SUMMARY
+          if [ -f /tmp/version.json ]; then
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "**/api/version response:**" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
+            cat /tmp/version.json >> $GITHUB_STEP_SUMMARY
+            echo "" >> $GITHUB_STEP_SUMMARY
+            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
+          fi

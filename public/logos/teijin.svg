@@ -1,0 +1,21 @@
+<svg viewBox="0 0 200 200" xmlns="http://www.w3.org/2000/svg">
+  <!-- Teijin - Japanese Green (authentic brand color) -->
+  <defs>
+    <linearGradient id="teijinBg" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#00aa66;stop-opacity:1" />
+      <stop offset="100%" style="stop-color:#007744;stop-opacity:1" />
+    </linearGradient>
+  </defs>
+  
+  <rect width="200" height="200" fill="url(#teijinBg)"/>
+  
+  <!-- Interlocking geometric forms -->
+  <g fill="white" opacity="0.95">
+    <!-- Upper left square -->
+    <rect x="30" y="30" width="50" height="50" rx="2"/>
+    <!-- Lower right square -->
+    <rect x="100" y="100" width="50" height="50" rx="2"/>
+    <!-- Center bridge -->
+    <rect x="75" y="75" width="50" height="50" rx="2" opacity="0.7"/>
+  </g>
+</svg>

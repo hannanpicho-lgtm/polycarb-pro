@@ -1,0 +1,12 @@
+name: Local Config
+version: 0.0.1
+schema: v1
+
+"models": [
+  {
+    "title": "Grok 4",
+    "provider": "xAI",
+    "model": "grok-4.20-reasoning",   // or whatever the latest Grok model is
+    "apiKey": "xai-c32711rp7CrD07cAiBvLILMROGPDUrQ1zE5UcBp6sgskUr00JvIhuFyPjgicSDZLocUTQXm6UQTaWfbs"
+  }
+]

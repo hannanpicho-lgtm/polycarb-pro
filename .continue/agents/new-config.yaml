@@ -1,0 +1,30 @@
+name: Local Config
+version: 0.0.1
+schema: v1
+
+models:
+  # Claude (Cloud - high quality, but has rate limits)
+  - name: Claude Sonnet
+    provider: anthropic
+    model: claude-sonnet-4-6
+    apiKey: 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
+
+  # Local Ollama models (unlimited, no rate limits)
+  - name: ollama3 (General Purpose)
+    provider: ollama
+    model: llama3
+    apiBase: http://localhost:11434
+
+  - name: Qwen2.5 Coder (Fast Coding)
+    provider: ollama
+    model: qwen2.5-coder:1.5b
+    apiBase: http://localhost:11434
+    
+  - name: Grok 4
+    provider: xai
+    model: grok-4.20-reasoning
+    apiKey: xai-c32711rp7CrD07cAiBvLILMROGPDUrQ1zE5UcBp6sgskUr003JvIhuFyPjgicSDZLocUTQXmk6LQTaWfbs
+    roles:
+      - chat
+      - edit
+      - apply

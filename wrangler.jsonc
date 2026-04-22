@@ -1,0 +1,26 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "covestro-pc",
+  "main": ".open-next/worker.js",
+  "compatibility_date": "2026-04-16",
+  "compatibility_flags": ["nodejs_compat"],
+  "assets": {
+    "binding": "ASSETS",
+    "directory": ".open-next/assets"
+  },
+  "d1_databases": [
+    {
+      "binding": "DB",
+      "database_name": "covestro-pc",
+      "database_id": "8ee0c201-b3e9-4b4a-ae8c-78bc286ffdbc"
+    }
+  ],
+  "observability": {
+    "enabled": true
+  },
+  "routes": [
+    { "pattern": "covestro.steadfastworkbench.org/*", "zone_name": "steadfastworkbench.org" },
+    { "pattern": "covestroppc.com/*", "zone_name": "covestroppc.com" },
+    { "pattern": "www.covestroppc.com/*", "zone_name": "covestroppc.com" }
+  ]
+}
