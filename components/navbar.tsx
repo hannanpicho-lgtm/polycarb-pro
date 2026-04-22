@@ -81,6 +81,9 @@ export function Navbar() {
             {siteConfig.contact.phoneDisplay}
           </a>
           <span>{siteConfig.contact.businessHours}</span>
+          <Link href="/track" className="hover:text-white transition-colors">
+            Track Order
+          </Link>
           <Link href="/quote?source=navbar-utility" className="hover:text-white transition-colors">
             Request Quote
           </Link>

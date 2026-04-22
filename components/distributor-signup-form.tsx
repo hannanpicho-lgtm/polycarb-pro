@@ -2,7 +2,7 @@
 
 import { useState } from 'react';
 import { zodResolver } from '@hookform/resolvers/zod';
-import { useForm, Controller } from 'react-hook-form';
+import { useForm } from 'react-hook-form';
 import { Button } from '@/components/ui/button';
 import {
   distributorSignupSchema,
@@ -23,11 +23,11 @@ export function DistributorSignupFormComponent({ onSuccess, onError }: Distribut
   const [countrySearch, setCountrySearch] = useState('');
 
   const {
-    control,
     register,
     handleSubmit,
     formState: { errors },
     reset,
+    setValue,
   } = useForm<DistributorSignupForm>({
     resolver: zodResolver(distributorSignupSchema),
     defaultValues: {
@@ -44,9 +44,12 @@ export function DistributorSignupFormComponent({ onSuccess, onError }: Distribut
   });
 
   const handleCountryToggle = (country: string) => {
-    setSelectedCountries((prev) =>
-      prev.includes(country) ? prev.filter((c) => c !== country) : [...prev, country]
-    );
+    setSelectedCountries((prev) => {
+      const next = prev.includes(country) ? prev.filter((c) => c !== country) : [...prev, country];
+      // Keep react-hook-form in sync so Zod validation sees the current selection
+      setValue('countries', next, { shouldValidate: true });
+      return next;
+    });
   };
 
   const filteredCountries = countryList.filter((country) =>
@@ -54,28 +57,23 @@ export function DistributorSignupFormComponent({ onSuccess, onError }: Distribut
   );
 
   const onSubmit = async (data: DistributorSignupForm) => {
-    if (selectedCountries.length === 0) {
-      onError?.('Please select at least one country');
-      return;
-    }
-
     setIsSubmitting(true);
     try {
       const response = await fetch('/api/distributor-signup', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          ...data,
-          countries: selectedCountries,
-        }),
+        body: JSON.stringify(data), // countries is now part of validated data
       });
 
+      const result = await response.json().catch(() => ({}));
+
       if (!response.ok) {
-        throw new Error('Submission failed');
+        throw new Error((result as { error?: string }).error || 'Submission failed');
       }
 
       reset();
       setSelectedCountries([]);
+      setValue('countries', []);
       onSuccess();
     } catch (error) {
       onError?.(error instanceof Error ? error.message : 'An error occurred');
@@ -238,6 +236,9 @@ export function DistributorSignupFormComponent({ onSuccess, onError }: Distribut
               </span>
             ))}
           </div>
+        )}
+        {errors.countries && (
+          <p className="mt-1 text-sm text-red-500 font-semibold">{errors.countries.message}</p>
         )}
       </div>
 

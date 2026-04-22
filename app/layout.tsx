@@ -3,8 +3,6 @@ import { Inter, Space_Grotesk } from 'next/font/google';
 import { Analytics } from '@vercel/analytics/react';
 import { SpeedInsights } from '@vercel/speed-insights/next';
 import { ThemeProvider } from '@/components/theme-provider';
-import { Navbar } from '@/components/navbar';
-import { Footer } from '@/components/footer';
 import { DistributorPromoProvider } from '@/components/distributor-promo-provider';
 import { OrganizationJsonLd } from '@/components/json-ld';
 import { siteConfig } from '@/lib/site-config';
@@ -67,6 +65,9 @@ export const viewport: Viewport = {
   initialScale: 1,
 };
 
+// Root layout intentionally has NO Navbar or Footer.
+// Public pages live in app/(public)/layout.tsx which adds them.
+// Admin / portal / distributor / print routes get their own shells.
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
     <html lang="en" suppressHydrationWarning className={`${inter.variable} ${spaceGrotesk.variable}`}>
@@ -74,14 +75,9 @@ export default function RootLayout({ children }: { children: React.ReactNode }) 
         <OrganizationJsonLd />
       </head>
       <body className="min-h-screen bg-background font-sans antialiased">
-        <a href="#main-content" className="skip-link">
-          Skip to main content
-        </a>
         <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
           <DistributorPromoProvider>
-            <Navbar />
-            <main id="main-content">{children}</main>
-            <Footer />
+            {children}
           </DistributorPromoProvider>
         </ThemeProvider>
         <Analytics />

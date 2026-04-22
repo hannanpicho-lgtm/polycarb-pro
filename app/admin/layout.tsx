@@ -4,6 +4,10 @@ import Link from 'next/link';
 import { usePathname, useRouter } from 'next/navigation';
 import { useState } from 'react';
 
+// Injected at build time — changes every deploy so you can confirm new code is live
+const BUILD_TS = process.env.NEXT_PUBLIC_BUILD_TIME ?? 'dev';
+import { AdminSearch } from '@/components/admin-search';
+
 const navItems = [
   { href: '/admin',              label: 'Dashboard',      icon: ChartIcon },
   { href: '/admin/quotes',       label: 'Quotes',         icon: QuoteIcon },
@@ -68,8 +72,13 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
           </div>
         </div>
 
+        {/* Search */}
+        <div className="px-2 pt-3 pb-1">
+          <AdminSearch />
+        </div>
+
         {/* Nav */}
-        <nav className="flex-1 px-2 py-4 space-y-0.5 overflow-y-auto">
+        <nav className="flex-1 px-2 py-2 space-y-0.5 overflow-y-auto">
           {navItems.map((item) => {
             const isActive =
               item.href === '/admin'
@@ -106,6 +115,9 @@ export default function AdminLayout({ children }: { children: React.ReactNode })
             <svg className="w-3.5 h-3.5" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" d="M15.75 9V5.25A2.25 2.25 0 0013.5 3h-6a2.25 2.25 0 00-2.25 2.25v13.5A2.25 2.25 0 007.5 21h6a2.25 2.25 0 002.25-2.25V15M12 9l-3 3m0 0l3 3m-3-3h12.75" /></svg>
             {loggingOut ? 'Signing out…' : 'Sign out'}
           </button>
+          <p className="px-3 pt-1 text-[9px] text-slate-300 font-mono leading-tight" title="Build timestamp">
+            Built: {BUILD_TS}
+          </p>
         </div>
       </aside>
 

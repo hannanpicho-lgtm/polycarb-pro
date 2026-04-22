@@ -125,6 +125,8 @@ export async function middleware(request: NextRequest) {
   }
   // ── End distributor guard ───────────────────────────────────────────────────
 
+  // Navbar/Footer are now handled by the (public) route group layout.
+  // No custom headers needed.
   const response = NextResponse.next();
   const cookieOptions = buildCookieOptions();
   const nowIso = new Date().toISOString();

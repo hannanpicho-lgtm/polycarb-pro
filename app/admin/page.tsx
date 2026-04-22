@@ -256,11 +256,11 @@ export default function AdminDashboard() {
           <section className="bg-white border border-slate-200 rounded-2xl overflow-hidden">
             <div className="flex items-center justify-between border-b border-slate-100 px-5 py-3.5">
               <h2 className="text-sm font-bold text-slate-700 uppercase tracking-wide">Recent activity</h2>
-              <div className="flex gap-1">
+              <div className="flex items-center gap-1">
                 {(['orders', 'quotes', 'distributors'] as const).map(t => (
                   <button key={t} onClick={() => setTab(t)}
-                    className={`px-3 py-1 rounded-lg text-xs font-medium capitalize transition-colors ${
-                      tab === t ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-800'
+                    className={`px-3 py-1.5 rounded-lg text-xs font-medium capitalize leading-none transition-colors ${
+                      tab === t ? 'bg-slate-900 text-white' : 'text-slate-500 hover:text-slate-800 hover:bg-slate-100'
                     }`}>
                     {t}
                   </button>
