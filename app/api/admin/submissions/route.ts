@@ -1,15 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCloudflareContext } from '@opennextjs/cloudflare';
+import { apiJsonError } from '@/lib/api-json-error';
+import { getD1 } from '@/lib/d1';
 import { getDistributorSubmissions, getContactSubmissions } from '@/lib/database';
-import type { D1Database } from '@cloudflare/workers-types';
 
 export async function GET(request: NextRequest) {
   try {
-    const { env } = await getCloudflareContext({ async: true });
-    const db = (env as Record<string, unknown>)['DB'] as D1Database | undefined;
+    const db = await getD1();
 
     if (!db) {
-      return NextResponse.json({ error: 'Database not available' }, { status: 503 });
+      return apiJsonError('Database not available', 503);
     }
 
     const url = new URL(request.url);
@@ -18,7 +17,7 @@ export async function GET(request: NextRequest) {
     const type = url.searchParams.get('type') || '';
     const search = url.searchParams.get('search') || '';
 
-    let allSubmissions: unknown[] = [];
+    const allSubmissions: unknown[] = [];
     let total = 0;
 
     if (!type || type === 'distributor') {
@@ -38,7 +37,10 @@ export async function GET(request: NextRequest) {
           countQuery += ' WHERE email LIKE ?';
           countParams.push(`%${search}%`);
         }
-        const countResult = await db.prepare(countQuery).bind(...countParams).all();
+        const countResult = await db
+          .prepare(countQuery)
+          .bind(...countParams)
+          .all();
         total += ((countResult.results?.[0] as Record<string, unknown>)?.count as number) || 0;
       }
     }
@@ -77,6 +79,6 @@ export async function GET(request: NextRequest) {
     });
   } catch (error) {
     console.error('Error fetching submissions:', error);
-    return NextResponse.json({ error: 'Failed to fetch submissions' }, { status: 500 });
+    return apiJsonError('Failed to fetch submissions', 500);
   }
 }

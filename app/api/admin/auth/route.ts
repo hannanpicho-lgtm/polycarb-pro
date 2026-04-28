@@ -1,22 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { apiJsonError } from '@/lib/api-json-error';
 import { computeAdminToken, ADMIN_COOKIE, ADMIN_COOKIE_MAX_AGE } from '@/lib/admin-auth';
 
 export async function POST(request: NextRequest) {
   const adminPassword = process.env.ADMIN_PASSWORD;
   if (!adminPassword) {
-    return NextResponse.json({ error: 'Admin not configured' }, { status: 503 });
+    return apiJsonError('Admin not configured', 503);
   }
 
   let body: { password?: string };
   try {
     body = await request.json();
   } catch {
-    return NextResponse.json({ error: 'Invalid request' }, { status: 400 });
+    return apiJsonError('Invalid request', 400);
   }
 
   if (!body.password || body.password !== adminPassword) {
     await new Promise((r) => setTimeout(r, 600));
-    return NextResponse.json({ error: 'Invalid password' }, { status: 401 });
+    return apiJsonError('Invalid password', 401);
   }
 
   const token = await computeAdminToken(adminPassword);

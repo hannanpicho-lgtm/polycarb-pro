@@ -26,8 +26,16 @@ export interface ProductPromoModalProps {
 const categoryColors: Record<string, { badge: string; border: string; bg: string }> = {
   sheets: { badge: 'bg-blue-100 text-blue-900', border: 'border-blue-300', bg: 'bg-blue-50' },
   rods: { badge: 'bg-slate-100 text-slate-900', border: 'border-slate-300', bg: 'bg-slate-50' },
-  resins: { badge: 'bg-purple-100 text-purple-900', border: 'border-purple-300', bg: 'bg-purple-50' },
-  specialty: { badge: 'bg-orange-100 text-orange-900', border: 'border-orange-300', bg: 'bg-orange-50' },
+  resins: {
+    badge: 'bg-purple-100 text-purple-900',
+    border: 'border-purple-300',
+    bg: 'bg-purple-50',
+  },
+  specialty: {
+    badge: 'bg-orange-100 text-orange-900',
+    border: 'border-orange-300',
+    bg: 'bg-orange-50',
+  },
 };
 
 function getCategoryColors(category: string): { badge: string; border: string; bg: string } {
@@ -113,18 +121,25 @@ export function ProductPromoModal({ isOpen, onClose, product }: ProductPromoModa
                 {/* Promo Badge */}
                 <div className="flex items-center gap-2 mb-4">
                   <Zap className="h-5 w-5 text-yellow-500" />
-                  <span className={`inline-block px-3 py-1 rounded-full text-sm font-bold ${colors.badge}`}>
+                  <span
+                    className={`inline-block px-3 py-1 rounded-full text-sm font-bold ${colors.badge}`}
+                  >
                     Limited Time Offer
                   </span>
                 </div>
 
                 {/* Headline */}
-                <h2 id="promo-title" className="text-4xl sm:text-5xl font-display font-bold mb-2 text-gray-900">
+                <h2
+                  id="promo-title"
+                  className="text-4xl sm:text-5xl font-display font-bold mb-2 text-gray-900"
+                >
                   {product.name}
                 </h2>
 
                 {/* Promo Text */}
-                <div className={`inline-block px-4 py-2 rounded-lg ${colors.bg} border ${colors.border} mb-6`}>
+                <div
+                  className={`inline-block px-4 py-2 rounded-lg ${colors.bg} border ${colors.border} mb-6`}
+                >
                   <p className="text-lg sm:text-xl font-bold text-gray-900">{product.promoText}</p>
                 </div>
 
@@ -150,7 +165,9 @@ export function ProductPromoModal({ isOpen, onClose, product }: ProductPromoModa
                   <ul className="space-y-3">
                     {product.benefits.map((benefit, idx) => (
                       <li key={idx} className="flex gap-3 items-start">
-                        <span className={`flex-shrink-0 w-5 h-5 rounded-full ${colors.badge} flex items-center justify-center text-xs font-bold mt-0.5`}>
+                        <span
+                          className={`flex-shrink-0 w-5 h-5 rounded-full ${colors.badge} flex items-center justify-center text-xs font-bold mt-0.5`}
+                        >
                           ✓
                         </span>
                         <span className="text-gray-700">{benefit}</span>
@@ -170,21 +187,14 @@ export function ProductPromoModal({ isOpen, onClose, product }: ProductPromoModa
                 <div className="flex flex-col sm:flex-row gap-3">
                   {product.ctaLink ? (
                     <Button asChild size="lg" className="flex-1">
-                      <Link href={product.ctaLink}>
-                        {product.ctaText || 'View Product'}
-                      </Link>
+                      <Link href={product.ctaLink}>{product.ctaText || 'View Product'}</Link>
                     </Button>
                   ) : (
                     <Button size="lg" className="flex-1">
                       {product.ctaText || 'Learn More'}
                     </Button>
                   )}
-                  <Button
-                    variant="outline"
-                    size="lg"
-                    onClick={onClose}
-                    className="flex-1"
-                  >
+                  <Button variant="outline" size="lg" onClick={onClose} className="flex-1">
                     Close
                   </Button>
                 </div>

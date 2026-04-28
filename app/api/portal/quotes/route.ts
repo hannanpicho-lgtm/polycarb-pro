@@ -4,23 +4,17 @@
  * Protected by middleware — requires valid portal session cookie.
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { getCloudflareContext } from '@opennextjs/cloudflare';
-import type { D1Database } from '@cloudflare/workers-types';
-import { verifySessionCookie, PORTAL_COOKIE } from '@/lib/portal-auth';
-
-async function getDB(): Promise<D1Database | null> {
-  const { env } = await getCloudflareContext({ async: true });
-  return ((env as Record<string, unknown>)['DB'] as D1Database) ?? null;
-}
+import { apiJsonError } from '@/lib/api-json-error';
+import { getD1 } from '@/lib/d1';
+import { getPortalSessionEmail } from '@/lib/portal-auth';
 
 export async function GET(request: NextRequest) {
   try {
-    const sessionCookie = request.cookies.get(PORTAL_COOKIE)?.value;
-    const email = sessionCookie ? await verifySessionCookie(sessionCookie) : null;
-    if (!email) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    const email = await getPortalSessionEmail(request);
+    if (!email) return apiJsonError('Not authenticated', 401);
 
-    const db = await getDB();
-    if (!db) return NextResponse.json({ error: 'DB unavailable' }, { status: 503 });
+    const db = await getD1();
+    if (!db) return apiJsonError('DB unavailable', 503);
 
     const { results } = await db
       .prepare(
@@ -33,20 +27,37 @@ export async function GET(request: NextRequest) {
       )
       .bind(email)
       .all<{
-        id: string; referenceId: string; customerName: string; customerCompany?: string;
-        currency: string; status: string; quotedAmount?: number; adminNotes?: string;
-        respondedAt?: string; expiresAt?: string; products: string;
-        source: string; submittedAt: string; createdAt: string; updatedAt: string;
+        id: string;
+        referenceId: string;
+        customerName: string;
+        customerCompany?: string;
+        currency: string;
+        status: string;
+        quotedAmount?: number;
+        adminNotes?: string;
+        respondedAt?: string;
+        expiresAt?: string;
+        products: string;
+        source: string;
+        submittedAt: string;
+        createdAt: string;
+        updatedAt: string;
       }>();
 
     const quotes = (results ?? []).map((q) => ({
       ...q,
-      products: (() => { try { return JSON.parse(q.products); } catch { return []; } })(),
+      products: (() => {
+        try {
+          return JSON.parse(q.products);
+        } catch {
+          return [];
+        }
+      })(),
     }));
 
     return NextResponse.json({ quotes });
   } catch (error) {
     console.error('GET /api/portal/quotes:', error);
-    return NextResponse.json({ error: 'Failed to load quotes' }, { status: 500 });
+    return apiJsonError('Failed to load quotes', 500);
   }
 }

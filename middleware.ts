@@ -88,7 +88,8 @@ export async function middleware(request: NextRequest) {
   // ── End admin guard ─────────────────────────────────────────────────────────
 
   // ── Portal auth guard ───────────────────────────────────────────────────────
-  const isPortalDashboard = pathname.startsWith('/portal/dashboard') || pathname.startsWith('/portal/orders');
+  const isPortalDashboard =
+    pathname.startsWith('/portal/dashboard') || pathname.startsWith('/portal/orders');
   // Use `/api/portal/` prefix so public routes like `/api/portal-offers` (hyphen) are never caught
   const isPortalApi =
     pathname.startsWith('/api/portal/') &&
@@ -110,8 +111,10 @@ export async function middleware(request: NextRequest) {
   // ── End portal guard ────────────────────────────────────────────────────────
 
   // ── Distributor portal guard ────────────────────────────────────────────────
-  const isDistDashboard = pathname.startsWith('/distributor/dashboard') ||
-    pathname.startsWith('/distributor/catalog') || pathname.startsWith('/distributor/quotes');
+  const isDistDashboard =
+    pathname.startsWith('/distributor/dashboard') ||
+    pathname.startsWith('/distributor/catalog') ||
+    pathname.startsWith('/distributor/quotes');
   // Use `/api/distributor/` prefix — `/api/distributor-signup` must NOT match (that was returning 401)
   const isDistApi =
     pathname.startsWith('/api/distributor/') &&
@@ -206,7 +209,7 @@ export async function middleware(request: NextRequest) {
     'Permissions-Policy',
     'geolocation=(), microphone=(), camera=(), payment=(), usb=(), magnetometer=(), gyroscope=(), accelerometer=()'
   );
-  
+
   // CSP Header - allows images/scripts/styles from self and CDNs
   response.headers.set(
     'Content-Security-Policy',

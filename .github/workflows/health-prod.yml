@@ -1,0 +1,63 @@
+# Scheduled (and manual) GET to production /api/version — fails the run if the
+# endpoint is down or returns unexpected JSON. Complements post-deploy smoke in deploy.yml.
+
+name: Production health
+
+on:
+  schedule:
+    # Every 4 hours UTC (disable or adjust if you prefer less noise)
+    - cron: '0 */4 * * *'
+  workflow_dispatch:
+
+concurrency:
+  group: health-prod
+  cancel-in-progress: false
+
+permissions:
+  contents: read
+
+jobs:
+  api-version:
+    name: Smoke /api/health + /api/version
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+
+    steps:
+      - name: Fetch production liveness + version JSON
+        env:
+          PROD_HEALTH_URL: https://covestroppc.com/api/health
+          PROD_VERSION_URL: https://covestroppc.com/api/version
+        run: |
+          set -euo pipefail
+          curl -fsSL --retry 4 --retry-delay 3 --connect-timeout 10 --max-time 30 \
+            "$PROD_HEALTH_URL" -o /tmp/prod-health.json
+          node -e "
+            const fs = require('node:fs');
+            const o = JSON.parse(fs.readFileSync('/tmp/prod-health.json', 'utf8'));
+            if (o.ok !== true || o.status !== 'ok') {
+              console.error('Expected { ok: true, status: \"ok\" }, got', o);
+              process.exit(1);
+            }
+            console.log('health ok');
+            "
+          curl -fsSL --retry 4 --retry-delay 3 --connect-timeout 10 --max-time 30 \
+            "$PROD_VERSION_URL" -o /tmp/prod-version.json
+          node -e "
+            const fs = require('node:fs');
+            const o = JSON.parse(fs.readFileSync('/tmp/prod-version.json', 'utf8'));
+            if (o.ok !== true) {
+              console.error('Expected ok: true, got', o);
+              process.exit(1);
+            }
+            console.log('ok:', o.ok, 'version:', o.version ?? o.commit ?? 'n/a');
+            "
+
+      - name: Log response (truncated) on success
+        if: success()
+        run: |
+          echo '--- /api/health ---'
+          head -c 2000 /tmp/prod-health.json
+          echo
+          echo '--- /api/version ---'
+          head -c 2000 /tmp/prod-version.json
+          echo

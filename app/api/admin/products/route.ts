@@ -4,14 +4,9 @@
  * PATCH /api/admin/products         — update settings for one product
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { getCloudflareContext } from '@opennextjs/cloudflare';
-import type { D1Database } from '@cloudflare/workers-types';
+import { apiJsonError } from '@/lib/api-json-error';
+import { getD1 } from '@/lib/d1';
 import { productPrices } from '@/lib/pricing';
-
-async function getDB(): Promise<D1Database | null> {
-  const { env } = await getCloudflareContext({ async: true });
-  return ((env as Record<string, unknown>)['DB'] as D1Database) ?? null;
-}
 
 interface ProductSettingsRow {
   slug: string;
@@ -30,8 +25,8 @@ interface ProductSettingsRow {
 // ── GET: merged list ─────────────────────────────────────────────────────────
 export async function GET() {
   try {
-    const db = await getDB();
-    if (!db) return NextResponse.json({ error: 'DB unavailable' }, { status: 503 });
+    const db = await getD1();
+    if (!db) return apiJsonError('DB unavailable', 503);
 
     const { results } = await db
       .prepare('SELECT * FROM product_settings ORDER BY sortOrder ASC, slug ASC')
@@ -64,15 +59,15 @@ export async function GET() {
     return NextResponse.json({ products: merged, total: merged.length });
   } catch (error) {
     console.error('GET /api/admin/products:', error);
-    return NextResponse.json({ error: 'Failed to load products' }, { status: 500 });
+    return apiJsonError('Failed to load products', 500);
   }
 }
 
 // ── POST: seed all products into D1 (idempotent — skips existing rows) ───────
 export async function POST() {
   try {
-    const db = await getDB();
-    if (!db) return NextResponse.json({ error: 'DB unavailable' }, { status: 503 });
+    const db = await getD1();
+    if (!db) return apiJsonError('DB unavailable', 503);
 
     const now = new Date().toISOString();
     let seeded = 0;
@@ -94,17 +89,17 @@ export async function POST() {
     return NextResponse.json({ ok: true, seeded, total: productPrices.length });
   } catch (error) {
     console.error('POST /api/admin/products (seed):', error);
-    return NextResponse.json({ error: 'Seed failed' }, { status: 500 });
+    return apiJsonError('Seed failed', 500);
   }
 }
 
 // ── PATCH: update product settings ──────────────────────────────────────────
 export async function PATCH(request: NextRequest) {
   try {
-    const db = await getDB();
-    if (!db) return NextResponse.json({ error: 'DB unavailable' }, { status: 503 });
+    const db = await getD1();
+    if (!db) return apiJsonError('DB unavailable', 503);
 
-    const body = await request.json() as {
+    const body = (await request.json()) as {
       slug: string;
       unitPriceUSD?: number;
       unitPriceAUD?: number | null;
@@ -118,13 +113,13 @@ export async function PATCH(request: NextRequest) {
     };
 
     if (!body.slug) {
-      return NextResponse.json({ error: 'slug required' }, { status: 400 });
+      return apiJsonError('slug required', 400);
     }
 
     // Find defaults from static data
     const staticPrice = productPrices.find((p) => p.slug === body.slug);
     if (!staticPrice) {
-      return NextResponse.json({ error: 'Unknown product slug' }, { status: 404 });
+      return apiJsonError('Unknown product slug', 404);
     }
 
     const now = new Date().toISOString();
@@ -163,6 +158,6 @@ export async function PATCH(request: NextRequest) {
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('PATCH /api/admin/products:', error);
-    return NextResponse.json({ error: 'Update failed' }, { status: 500 });
+    return apiJsonError('Update failed', 500);
   }
 }

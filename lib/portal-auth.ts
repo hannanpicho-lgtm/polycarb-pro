@@ -1,6 +1,8 @@
 // Stateless portal session — email signed with PORTAL_SECRET (falls back to ADMIN_PASSWORD)
 // Cookie value: `<base64(email)>.<sha256(email + secret)>`
 
+import type { NextRequest } from 'next/server';
+
 export const PORTAL_COOKIE = 'portal_session';
 export const PORTAL_COOKIE_MAX_AGE = 60 * 60 * 24 * 7; // 7 days
 export const MAGIC_LINK_TTL_MINUTES = 30;
@@ -14,16 +16,24 @@ function getSecret(): string {
 async function hmac(message: string, secret: string): Promise<string> {
   const enc = new TextEncoder();
   const key = await crypto.subtle.importKey(
-    'raw', enc.encode(secret), { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+    'raw',
+    enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' },
+    false,
+    ['sign']
   );
   const sig = await crypto.subtle.sign('HMAC', key, enc.encode(message));
-  return Array.from(new Uint8Array(sig)).map(b => b.toString(16).padStart(2, '0')).join('');
+  return Array.from(new Uint8Array(sig))
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
 export async function generateMagicToken(): Promise<string> {
   const bytes = new Uint8Array(32);
   crypto.getRandomValues(bytes);
-  return Array.from(bytes).map(b => b.toString(16).padStart(2, '0')).join('');
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
 }
 
 export async function buildSessionCookie(email: string): Promise<string> {
@@ -43,4 +53,11 @@ export async function verifySessionCookie(cookie: string): Promise<string | null
   } catch {
     return null;
   }
+}
+
+/** Resolves the portal user email from the request cookie, or `null` if missing or invalid. */
+export async function getPortalSessionEmail(request: NextRequest): Promise<string | null> {
+  const raw = request.cookies.get(PORTAL_COOKIE)?.value;
+  if (!raw) return null;
+  return verifySessionCookie(raw);
 }

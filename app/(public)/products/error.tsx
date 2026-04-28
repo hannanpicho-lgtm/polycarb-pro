@@ -20,7 +20,9 @@ export default function ProductsError({
           {error.message ?? 'We could not load the product catalogue. Please try again.'}
         </p>
         <div className="flex gap-3 justify-center">
-          <Button onClick={reset} variant="outline">Try again</Button>
+          <Button onClick={reset} variant="outline">
+            Try again
+          </Button>
           <Button asChild className="bg-brand-500 hover:bg-brand-600 text-white">
             <Link href="/contact?source=products-error">Contact support</Link>
           </Button>

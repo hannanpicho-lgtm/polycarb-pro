@@ -89,7 +89,7 @@ export async function saveDistributorSubmission(
   const now = new Date().toISOString();
 
   try {
-    const result = await db
+    await db
       .prepare(
         `INSERT INTO distributor_submissions (
           id, fullName, companyName, jobTitle, businessType, countries,
@@ -133,7 +133,7 @@ export async function saveContactSubmission(
   const now = new Date().toISOString();
 
   try {
-    const result = await db
+    await db
       .prepare(
         `INSERT INTO contact_submissions (
           id, firstName, lastName, email, company, subject, message,
@@ -170,7 +170,7 @@ export async function getDistributorSubmissions(
 ) {
   try {
     let query = 'SELECT * FROM distributor_submissions';
-    const params: any[] = [];
+    const params: unknown[] = [];
 
     if (emailFilter) {
       query += ' WHERE email LIKE ?';
@@ -180,7 +180,10 @@ export async function getDistributorSubmissions(
     query += ' ORDER BY createdAt DESC LIMIT ? OFFSET ?';
     params.push(limit, offset);
 
-    const result = await db.prepare(query).bind(...params).all();
+    const result = await db
+      .prepare(query)
+      .bind(...params)
+      .all();
 
     // Return results directly for API usage
     return result.results || [];
@@ -190,7 +193,11 @@ export async function getDistributorSubmissions(
   }
 }
 
-export async function getContactSubmissions(db: D1Database, limit: number = 50, offset: number = 0) {
+export async function getContactSubmissions(
+  db: D1Database,
+  limit: number = 50,
+  offset: number = 0
+) {
   try {
     const result = await db
       .prepare(`SELECT * FROM contact_submissions ORDER BY createdAt DESC LIMIT ? OFFSET ?`)
@@ -200,20 +207,35 @@ export async function getContactSubmissions(db: D1Database, limit: number = 50, 
     return { success: true, data: result.results || [] };
   } catch (error) {
     console.error('Failed to fetch contact submissions:', error);
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error', data: [] };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      data: [],
+    };
   }
 }
 
-export async function getSubmissionByReferenceId(db: D1Database, referenceId: string, type: 'distributor' | 'contact') {
+export async function getSubmissionByReferenceId(
+  db: D1Database,
+  referenceId: string,
+  type: 'distributor' | 'contact'
+) {
   const table = type === 'distributor' ? 'distributor_submissions' : 'contact_submissions';
 
   try {
-    const result = await db.prepare(`SELECT * FROM ${table} WHERE referenceId = ? LIMIT 1`).bind(referenceId).first();
+    const result = await db
+      .prepare(`SELECT * FROM ${table} WHERE referenceId = ? LIMIT 1`)
+      .bind(referenceId)
+      .first();
 
     return { success: true, data: result };
   } catch (error) {
     console.error(`Failed to fetch ${type} submission:`, error);
-    return { success: false, error: error instanceof Error ? error.message : 'Unknown error', data: null };
+    return {
+      success: false,
+      error: error instanceof Error ? error.message : 'Unknown error',
+      data: null,
+    };
   }
 }
 

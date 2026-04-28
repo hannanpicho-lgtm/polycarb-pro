@@ -1,28 +1,26 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCloudflareContext } from '@opennextjs/cloudflare';
-import type { D1Database } from '@cloudflare/workers-types';
+import { apiJsonError } from '@/lib/api-json-error';
+import { getD1 } from '@/lib/d1';
 import { generateMagicToken, MAGIC_LINK_TTL_MINUTES } from '@/lib/portal-auth';
-
-async function getDB(): Promise<D1Database | null> {
-  const { env } = await getCloudflareContext({ async: true });
-  return ((env as Record<string, unknown>)['DB'] as D1Database) ?? null;
-}
 
 export async function POST(request: NextRequest) {
   try {
-    const { email } = await request.json() as { email?: string };
+    const { email } = (await request.json()) as { email?: string };
     if (!email || !email.includes('@')) {
-      return NextResponse.json({ error: 'Valid email required' }, { status: 400 });
+      return apiJsonError('Valid email required', 400);
     }
 
     const normalised = email.trim().toLowerCase();
-    const db = await getDB();
-    if (!db) return NextResponse.json({ error: 'Service unavailable' }, { status: 503 });
+    const db = await getD1();
+    if (!db) return apiJsonError('Service unavailable', 503);
 
     // Only send to confirmed distributors (any status — they can see their pending status too)
-    const distRow = await db.prepare(
-      `SELECT status, discountTier FROM distributor_submissions WHERE email = ? ORDER BY createdAt DESC LIMIT 1`
-    ).bind(normalised).first<{ status: string; discountTier: string }>();
+    const distRow = await db
+      .prepare(
+        `SELECT status, discountTier FROM distributor_submissions WHERE email = ? ORDER BY createdAt DESC LIMIT 1`
+      )
+      .bind(normalised)
+      .first<{ status: string; discountTier: string }>();
 
     // Always return success to prevent email enumeration
     if (distRow) {
@@ -30,9 +28,10 @@ export async function POST(request: NextRequest) {
       const expiresAt = new Date(Date.now() + MAGIC_LINK_TTL_MINUTES * 60 * 1000).toISOString();
       const id = crypto.randomUUID();
 
-      await db.prepare(
-        `INSERT INTO magic_links (id, email, token, expiresAt) VALUES (?, ?, ?, ?)`
-      ).bind(id, normalised, token, expiresAt).run();
+      await db
+        .prepare(`INSERT INTO magic_links (id, email, token, expiresAt) VALUES (?, ?, ?, ?)`)
+        .bind(id, normalised, token, expiresAt)
+        .run();
 
       const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://covestroppc.com';
       const link = `${siteUrl}/distributor/verify?token=${token}`;
@@ -42,7 +41,7 @@ export async function POST(request: NextRequest) {
         const isApproved = distRow.status === 'approved';
         await fetch('https://api.resend.com/emails', {
           method: 'POST',
-          headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+          headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
           body: JSON.stringify({
             from: process.env.FROM_EMAIL ?? 'noreply@covestroppc.com',
             to: normalised,
@@ -55,9 +54,11 @@ export async function POST(request: NextRequest) {
                   ${isApproved ? 'Access your distributor portal' : 'Check your application status'}
                 </h1>
                 <p style="color:#475569;font-size:15px;margin:0 0 24px">
-                  ${isApproved
-                    ? 'Click below to access your distributor dashboard — pricing, catalog, and order management.'
-                    : 'Click below to check the current status of your distributor application.'}
+                  ${
+                    isApproved
+                      ? 'Click below to access your distributor dashboard — pricing, catalog, and order management.'
+                      : 'Click below to check the current status of your distributor application.'
+                  }
                 </p>
                 <a href="${link}" style="display:inline-block;background:#0087C3;color:#fff;text-decoration:none;padding:12px 28px;border-radius:8px;font-weight:600;font-size:15px">
                   Open portal →
@@ -75,6 +76,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('POST /api/distributor/request-link:', error);
-    return NextResponse.json({ error: 'Failed' }, { status: 500 });
+    return apiJsonError('Failed', 500);
   }
 }

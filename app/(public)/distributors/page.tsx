@@ -7,7 +7,8 @@ export const metadata: Metadata = {
   description: `Apply to become an authorized ${siteConfig.company.shortName} distributor — tiered pricing, full catalog, and partner support. USD & AUD.`,
   openGraph: {
     title: `Distributor program | ${siteConfig.company.name}`,
-    description: 'Join our industrial partner network for engineering-grade polycarbonate distribution.',
+    description:
+      'Join our industrial partner network for engineering-grade polycarbonate distribution.',
   },
 };
 

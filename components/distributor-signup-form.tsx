@@ -174,7 +174,9 @@ export function DistributorSignupFormComponent({ onSuccess, onError }: Distribut
             placeholder="john@company.com"
             className="w-full rounded-lg border-2 border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all hover:border-slate-300"
           />
-          {errors.email && <p className="mt-1 text-sm text-red-500 font-semibold">{errors.email.message}</p>}
+          {errors.email && (
+            <p className="mt-1 text-sm text-red-500 font-semibold">{errors.email.message}</p>
+          )}
         </div>
 
         <div>
@@ -188,7 +190,9 @@ export function DistributorSignupFormComponent({ onSuccess, onError }: Distribut
             placeholder="+1 (555) 123-4567"
             className="w-full rounded-lg border-2 border-slate-200 bg-white px-4 py-3 text-slate-900 placeholder:text-slate-400 focus:border-blue-500 focus:outline-none focus:ring-2 focus:ring-blue-500/20 transition-all hover:border-slate-300"
           />
-          {errors.phone && <p className="mt-1 text-sm text-red-500 font-semibold">{errors.phone.message}</p>}
+          {errors.phone && (
+            <p className="mt-1 text-sm text-red-500 font-semibold">{errors.phone.message}</p>
+          )}
         </div>
       </div>
 
@@ -208,7 +212,10 @@ export function DistributorSignupFormComponent({ onSuccess, onError }: Distribut
           />
           <div className="max-h-40 overflow-y-auto space-y-2 border-t border-slate-200 pt-3">
             {filteredCountries.map((country) => (
-              <label key={country} className="flex items-center gap-2 cursor-pointer hover:bg-blue-50 p-2 rounded transition-colors">
+              <label
+                key={country}
+                className="flex items-center gap-2 cursor-pointer hover:bg-blue-50 p-2 rounded transition-colors"
+              >
                 <input
                   type="checkbox"
                   checked={selectedCountries.includes(country)}
@@ -262,7 +269,9 @@ export function DistributorSignupFormComponent({ onSuccess, onError }: Distribut
           ))}
         </select>
         {errors.estimatedAnnualVolume && (
-          <p className="mt-1 text-sm text-red-500 font-semibold">{errors.estimatedAnnualVolume.message}</p>
+          <p className="mt-1 text-sm text-red-500 font-semibold">
+            {errors.estimatedAnnualVolume.message}
+          </p>
         )}
       </div>
 
@@ -294,7 +303,8 @@ export function DistributorSignupFormComponent({ onSuccess, onError }: Distribut
 
       {/* Legal note */}
       <p className="text-xs text-slate-500 text-center leading-relaxed">
-        By submitting, you agree to be contacted by Covestro about partnership opportunities. We respect your privacy and never share your information.
+        By submitting, you agree to be contacted by Covestro about partnership opportunities. We
+        respect your privacy and never share your information.
       </p>
     </form>
   );

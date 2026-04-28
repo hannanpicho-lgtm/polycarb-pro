@@ -16,11 +16,10 @@ export default function GlobalError({ reset }: { reset: () => void }) {
             </div>
 
             {/* Content */}
-            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">
-              Something went wrong
-            </h1>
+            <h1 className="text-4xl md:text-5xl font-bold text-white mb-4">Something went wrong</h1>
             <p className="text-xl text-red-100 mb-8 leading-relaxed">
-              An unexpected error occurred while processing your request. Our team has been notified. Please try again, or contact us if the issue persists.
+              An unexpected error occurred while processing your request. Our team has been
+              notified. Please try again, or contact us if the issue persists.
             </p>
 
             {/* Action Buttons */}

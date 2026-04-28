@@ -21,8 +21,12 @@ export function BlogTeaser() {
         {/* Header with tab-style navigation like Covestro */}
         <div className="flex flex-col md:flex-row md:items-end justify-between gap-6 mb-10">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.15em] text-brand-500 mb-2">Resources</p>
-            <h2 id="blog-heading" className="section-heading font-display">Insights & Technical Briefs</h2>
+            <p className="text-xs font-bold uppercase tracking-[0.15em] text-brand-500 mb-2">
+              Resources
+            </p>
+            <h2 id="blog-heading" className="section-heading font-display">
+              Insights & Technical Briefs
+            </h2>
           </div>
           <div className="flex items-center gap-4 border-b border-border pb-1">
             {['Blog', 'Solutions', 'Media'].map((tab, i) => (
@@ -54,7 +58,10 @@ export function BlogTeaser() {
               return (
                 <motion.article
                   key={post.id}
-                  variants={{ hidden: { opacity: 0, y: 20 }, show: { opacity: 1, y: 0, transition: { duration: 0.45 } } }}
+                  variants={{
+                    hidden: { opacity: 0, y: 20 },
+                    show: { opacity: 1, y: 0, transition: { duration: 0.45 } },
+                  }}
                   className="group w-72 lg:w-auto flex-shrink-0 lg:flex-shrink border border-border rounded-lg overflow-hidden bg-card hover:shadow-md hover:border-brand-200 dark:hover:border-brand-800 transition-all duration-300"
                 >
                   {/* Image */}
@@ -75,9 +82,7 @@ export function BlogTeaser() {
                   {/* Content */}
                   <div className="p-5">
                     <h3 className="font-bold text-sm leading-tight text-foreground group-hover:text-brand-600 dark:group-hover:text-brand-400 transition-colors mb-2 line-clamp-2">
-                      <Link href={`/resources/${post.slug}`}>
-                        {post.title}
-                      </Link>
+                      <Link href={`/resources/${post.slug}`}>{post.title}</Link>
                     </h3>
                     <p className="text-xs text-muted-foreground leading-relaxed line-clamp-3 mb-4">
                       {post.excerpt}

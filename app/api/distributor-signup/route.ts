@@ -1,8 +1,8 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCloudflareContext } from '@opennextjs/cloudflare';
+import { apiJsonError } from '@/lib/api-json-error';
+import { getD1 } from '@/lib/d1';
 import { distributorSignupSchema } from '@/lib/distributor-validation';
 import { sendDistributorApplicationEmails } from '@/lib/email';
-import type { D1Database } from '@cloudflare/workers-types';
 
 export async function POST(request: NextRequest) {
   try {
@@ -26,8 +26,7 @@ export async function POST(request: NextRequest) {
     // Try to save to D1 database if available
     let dbSaveSuccess = false;
     try {
-      const { env } = await getCloudflareContext({ async: true });
-      const db = (env as Record<string, unknown>)['DB'] as D1Database | undefined;
+      const db = await getD1();
 
       if (db) {
         const { saveDistributorSubmission } = await import('@/lib/database');
@@ -45,7 +44,8 @@ export async function POST(request: NextRequest) {
           ipAddress
         );
         dbSaveSuccess = saveResult.success;
-        if (!dbSaveSuccess) console.warn('Database save failed:', (saveResult as { error?: string }).error);
+        if (!dbSaveSuccess)
+          console.warn('Database save failed:', (saveResult as { error?: string }).error);
       }
     } catch (dbError) {
       console.warn('Database operation failed:', dbError);
@@ -83,10 +83,6 @@ export async function POST(request: NextRequest) {
   } catch (error) {
     console.error('Distributor signup error:', error);
 
-    return NextResponse.json(
-      { error: 'Internal server error' },
-      { status: 500 }
-    );
+    return apiJsonError('Internal server error', 500);
   }
 }
-

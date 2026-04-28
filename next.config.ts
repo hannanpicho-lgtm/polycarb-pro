@@ -33,9 +33,7 @@ const nextConfig: NextConfig = {
       // Immutable cache ONLY for Next.js hashed static chunks — these filenames change on every build
       {
         source: '/_next/static/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 'public, max-age=31536000, immutable' },
-        ],
+        headers: [{ key: 'Cache-Control', value: 'public, max-age=31536000, immutable' }],
       },
 
       // Public image/media assets (non-hashed) — moderate TTL
@@ -49,29 +47,21 @@ const nextConfig: NextConfig = {
       // Admin, portal, distributor — never cache, always fresh
       {
         source: '/admin/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' },
-        ],
+        headers: [{ key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' }],
       },
       {
         source: '/portal/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' },
-        ],
+        headers: [{ key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' }],
       },
       {
         source: '/distributor/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' },
-        ],
+        headers: [{ key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' }],
       },
 
       // API routes — never cache
       {
         source: '/api/:path*',
-        headers: [
-          { key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' },
-        ],
+        headers: [{ key: 'Cache-Control', value: 'no-store, no-cache, must-revalidate' }],
       },
     ];
   },

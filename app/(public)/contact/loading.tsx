@@ -3,8 +3,14 @@ export default function ContactLoading() {
     <div className="min-h-screen">
       <div className="bg-steel-950 pt-28 pb-14">
         <div className="container mx-auto space-y-3">
-          <div className="shimmer h-4 w-24 rounded" style={{ background: 'rgba(255,255,255,0.08)' }} />
-          <div className="shimmer h-12 w-80 rounded" style={{ background: 'rgba(255,255,255,0.08)' }} />
+          <div
+            className="shimmer h-4 w-24 rounded"
+            style={{ background: 'rgba(255,255,255,0.08)' }}
+          />
+          <div
+            className="shimmer h-12 w-80 rounded"
+            style={{ background: 'rgba(255,255,255,0.08)' }}
+          />
         </div>
       </div>
       <div className="container mx-auto py-16">

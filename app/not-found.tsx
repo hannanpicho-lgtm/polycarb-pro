@@ -7,35 +7,42 @@ export default function NotFound() {
       <div className="text-center max-w-2xl">
         {/* Large 404 */}
         <div className="mb-8">
-          <h1 className="text-[120px] md:text-[200px] font-bold text-white/20 leading-none">
-            404
-          </h1>
+          <h1 className="text-[120px] md:text-[200px] font-bold text-white/20 leading-none">404</h1>
         </div>
 
         {/* Content */}
-        <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">
-          Page Not Found
-        </h2>
+        <h2 className="text-3xl md:text-5xl font-bold text-white mb-4">Page Not Found</h2>
         <p className="text-xl text-blue-100 mb-8 leading-relaxed">
-          The page you're looking for doesn't exist. It might have been moved or deleted, or the link might be incorrect.
+          The page you're looking for doesn't exist. It might have been moved or deleted, or the
+          link might be incorrect.
         </p>
 
         {/* Helpful Links */}
         <div className="bg-white/10 backdrop-blur-sm border border-white/20 rounded-lg p-8 mb-8">
-          <h3 className="text-white text-lg font-semibold mb-6">
-            What you can do:
-          </h3>
+          <h3 className="text-white text-lg font-semibold mb-6">What you can do:</h3>
           <div className="grid md:grid-cols-2 gap-4">
             <Button asChild size="lg" className="bg-white text-blue-600 hover:bg-blue-50 font-bold">
               <Link href="/">← Return Home</Link>
             </Button>
-            <Button asChild size="lg" className="bg-blue-500 text-white hover:bg-blue-600 font-bold">
+            <Button
+              asChild
+              size="lg"
+              className="bg-blue-500 text-white hover:bg-blue-600 font-bold"
+            >
               <Link href="/products">Browse Products →</Link>
             </Button>
-            <Button asChild size="lg" className="bg-blue-500 text-white hover:bg-blue-600 font-bold">
+            <Button
+              asChild
+              size="lg"
+              className="bg-blue-500 text-white hover:bg-blue-600 font-bold"
+            >
               <Link href="/contact">Contact Us</Link>
             </Button>
-            <Button asChild size="lg" className="bg-blue-500 text-white hover:bg-blue-600 font-bold">
+            <Button
+              asChild
+              size="lg"
+              className="bg-blue-500 text-white hover:bg-blue-600 font-bold"
+            >
               <Link href="/resources">View Resources</Link>
             </Button>
           </div>
@@ -44,11 +51,7 @@ export default function NotFound() {
         {/* Search Suggestion */}
         <div className="text-blue-100">
           <p className="mb-2">Or try searching for what you need:</p>
-          <form
-            action="/products"
-            method="GET"
-            className="flex gap-2 max-w-md mx-auto"
-          >
+          <form action="/products" method="GET" className="flex gap-2 max-w-md mx-auto">
             <input
               type="text"
               name="search"

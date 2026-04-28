@@ -1,5 +1,9 @@
 import { clsx, type ClassValue } from 'clsx';
 import { twMerge } from 'tailwind-merge';
+import {
+  COMPARE_QUERY_PARAM_KEYS,
+  PRODUCTS_SHORTLIST_QUERY_PARAM_KEYS,
+} from '@/lib/public-catalog-constants';
 
 export function cn(...inputs: ClassValue[]) {
   return twMerge(clsx(inputs));
@@ -42,4 +46,25 @@ export function getCatalogueLinkProps(url: string): {
     href: url,
     download: true,
   };
+}
+
+const COMPARE_AND_CATALOG_SHORTLIST_KEYS = [
+  ...COMPARE_QUERY_PARAM_KEYS,
+  ...PRODUCTS_SHORTLIST_QUERY_PARAM_KEYS,
+] as const;
+
+/** Remove compare / catalog shortlist query params whose values are inactive (D1) product slugs. */
+export function stripHiddenCompareParamsFromPath(path: string, hidden: Set<string>): string {
+  if (!path.startsWith('/')) return path;
+  try {
+    const u = new URL(path, 'https://path.local');
+    for (const key of COMPARE_AND_CATALOG_SHORTLIST_KEYS) {
+      const v = u.searchParams.get(key);
+      if (v && hidden.has(v)) u.searchParams.delete(key);
+    }
+    const q = u.searchParams.toString();
+    return u.pathname + (q ? `?${q}` : '');
+  } catch {
+    return path;
+  }
 }

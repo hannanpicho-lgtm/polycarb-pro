@@ -1,5 +1,14 @@
 import Link from 'next/link';
-import { Linkedin, Youtube, Instagram, Facebook, Mail, Phone, MapPin, ArrowRight, MessageCircle, Send, Music2 } from 'lucide-react';
+import {
+  Linkedin,
+  Youtube,
+  Instagram,
+  Facebook,
+  ArrowRight,
+  MessageCircle,
+  Send,
+  Music2,
+} from 'lucide-react';
 import { NewsletterForm } from '@/components/newsletter-form';
 import { BuildStamp } from '@/components/build-stamp';
 import { siteConfig } from '@/lib/site-config';
@@ -47,10 +56,12 @@ export function Footer() {
       <div className="bg-brand-500">
         <div className="container mx-auto py-10 flex flex-col lg:flex-row items-center justify-between gap-8">
           <div className="text-center lg:text-left">
-            <h2 className="text-2xl font-bold text-white font-display">Ready to specify your next project?</h2>
+            <h2 className="text-2xl font-bold text-white font-display">
+              Ready to specify your next project?
+            </h2>
             <p className="text-white/80 mt-1 text-sm max-w-xl">
-              Get technical support, datasheets, and pricing in one request — or join our distributor network for volume
-              pricing.
+              Get technical support, datasheets, and pricing in one request — or join our
+              distributor network for volume pricing.
             </p>
           </div>
           <div className="flex flex-col sm:flex-row items-stretch sm:items-center gap-3 w-full sm:w-auto">
@@ -77,17 +88,20 @@ export function Footer() {
           <div className="lg:col-span-2 space-y-5">
             <div>
               <div className="text-xl font-bold tracking-tight">{siteConfig.company.name}</div>
-              <p className="text-white/50 text-xs uppercase tracking-widest mt-0.5">{siteConfig.company.tagline}</p>
+              <p className="text-white/50 text-xs uppercase tracking-widest mt-0.5">
+                {siteConfig.company.tagline}
+              </p>
             </div>
             <p className="text-white/60 text-sm leading-relaxed max-w-xs">
-              World-class distributor of engineering-grade polycarbonate materials — from transparent glazing
-              sheets to optical resins and structural compounds. Serving industrial OEMs globally since 2003.
+              World-class distributor of engineering-grade polycarbonate materials — from
+              transparent glazing sheets to optical resins and structural compounds. Serving
+              industrial OEMs globally since 2003.
             </p>
 
             {/* Contact CTA */}
             <div className="space-y-2 text-sm text-white/60">
-              <Link 
-                href="/contact" 
+              <Link
+                href="/contact"
                 className="inline-flex items-center gap-2 text-brand-400 hover:text-brand-300 transition-colors font-semibold text-base"
               >
                 Contact Us <ArrowRight className="h-4 w-4" />
@@ -120,7 +134,9 @@ export function Footer() {
         {/* Newsletter */}
         <div className="mt-12 pt-10 border-t border-white/10">
           <div className="max-w-lg">
-            <h3 className="text-sm font-bold uppercase tracking-widest text-white/80 mb-1">Industry Newsletter</h3>
+            <h3 className="text-sm font-bold uppercase tracking-widest text-white/80 mb-1">
+              Industry Newsletter
+            </h3>
             <p className="text-sm text-white/50 mb-4">
               Material updates, new grades, regulatory news, and technical resources — monthly.
             </p>
@@ -133,16 +149,25 @@ export function Footer() {
       <div className="border-t border-white/10">
         <div className="container mx-auto py-5 flex flex-col sm:flex-row items-center justify-between gap-3 text-xs text-white/40">
           <div className="flex flex-col sm:flex-row sm:items-center gap-1 sm:gap-3">
-            <span>Copyright © {new Date().getFullYear()} {siteConfig.company.legalName}. All rights reserved.</span>
+            <span>
+              Copyright © {new Date().getFullYear()} {siteConfig.company.legalName}. All rights
+              reserved.
+            </span>
             <span className="inline-flex items-center rounded border border-brand-400/40 bg-brand-500/10 px-2 py-0.5 text-[11px] font-semibold text-brand-200">
               Cursor verification marker
             </span>
             <BuildStamp />
           </div>
           <div className="flex items-center gap-5">
-            <Link href="/privacy" className="hover:text-white transition-colors">Privacy Statement</Link>
-            <Link href="/terms" className="hover:text-white transition-colors">Terms of Use</Link>
-            <Link href="/sitemap.xml" className="hover:text-white transition-colors">Sitemap</Link>
+            <Link href="/privacy" className="hover:text-white transition-colors">
+              Privacy Statement
+            </Link>
+            <Link href="/terms" className="hover:text-white transition-colors">
+              Terms of Use
+            </Link>
+            <Link href="/sitemap.xml" className="hover:text-white transition-colors">
+              Sitemap
+            </Link>
           </div>
         </div>
       </div>
@@ -150,7 +175,13 @@ export function Footer() {
   );
 }
 
-function FooterLinkGroup({ title, links }: { title: string; links: { label: string; href: string }[] }) {
+function FooterLinkGroup({
+  title,
+  links,
+}: {
+  title: string;
+  links: { label: string; href: string }[];
+}) {
   return (
     <div>
       <h3 className="text-sm font-bold uppercase tracking-widest text-white/80 mb-4">{title}</h3>

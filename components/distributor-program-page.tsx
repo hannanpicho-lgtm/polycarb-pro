@@ -44,8 +44,9 @@ export function DistributorProgramPage() {
               Become a Covestro PC distributor
             </h1>
             <p className="mt-4 text-lg text-white/70 leading-relaxed max-w-2xl">
-              Join our network of industrial partners. Stock-list pricing, tiered rebates, and priority allocation on
-              engineering-grade Makrolon, Lexan, and specialty PC materials — with USD &amp; AUD support.
+              Join our network of industrial partners. Stock-list pricing, tiered rebates, and
+              priority allocation on engineering-grade Makrolon, Lexan, and specialty PC materials —
+              with USD &amp; AUD support.
             </p>
             <div className="mt-8 flex flex-wrap gap-3">
               <a
@@ -97,15 +98,18 @@ export function DistributorProgramPage() {
               </div>
               <h2 className="text-2xl font-bold text-slate-900">Application received</h2>
               <p className="mt-2 text-slate-600 max-w-md mx-auto">
-                Our partnerships team will review your profile and respond within one business day. Watch your inbox
-                for next steps and portal access.
+                Our partnerships team will review your profile and respond within one business day.
+                Watch your inbox for next steps and portal access.
               </p>
               <div className="mt-8 flex flex-wrap justify-center gap-3">
                 <Link href="/products" className="text-sm font-bold text-brand-600 hover:underline">
                   Browse products
                 </Link>
                 <span className="text-slate-300">·</span>
-                <Link href="/quote/builder" className="text-sm font-bold text-brand-600 hover:underline">
+                <Link
+                  href="/quote/builder"
+                  className="text-sm font-bold text-brand-600 hover:underline"
+                >
                   Build a quote
                 </Link>
               </div>
@@ -116,8 +120,8 @@ export function DistributorProgramPage() {
               <div className="px-5 py-8 sm:px-8 sm:py-10">
                 <h2 className="text-2xl sm:text-3xl font-black text-slate-900 mb-2">Apply now</h2>
                 <p className="text-slate-600 mb-8 text-sm sm:text-base">
-                  One short form — no credit card. We review every application to protect partner margins and ensure a
-                  good fit.
+                  One short form — no credit card. We review every application to protect partner
+                  margins and ensure a good fit.
                 </p>
                 {formError ? (
                   <div

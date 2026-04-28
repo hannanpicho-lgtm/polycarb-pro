@@ -1,6 +1,7 @@
-import { siteConfig } from '@/lib/site-config';
+import { getPublicSocialProfileUrls, siteConfig } from '@/lib/site-config';
 
 export function OrganizationJsonLd() {
+  const sameAs = getPublicSocialProfileUrls();
   const data = {
     '@context': 'https://schema.org',
     '@type': 'Organization',
@@ -26,19 +27,11 @@ export function OrganizationJsonLd() {
         availableLanguage: 'English',
       },
     ],
-    sameAs: [
-      siteConfig.social.linkedin,
-      siteConfig.social.youtube,
-      siteConfig.social.instagram,
-      siteConfig.social.facebook,
-    ],
+    ...(sameAs.length > 0 ? { sameAs } : {}),
   };
 
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
-    />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />
   );
 }
 
@@ -81,10 +74,7 @@ export function ProductJsonLd({
   };
 
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
-    />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />
   );
 }
 
@@ -108,18 +98,11 @@ export function BreadcrumbJsonLd({ items }: { items: BreadcrumbItem[] }) {
   };
 
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
-    />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />
   );
 }
 
-export function FAQJsonLd({
-  items,
-}: {
-  items: Array<{ question: string; answer: string }>;
-}) {
+export function FAQJsonLd({ items }: { items: Array<{ question: string; answer: string }> }) {
   const mainEntity = items.map((item) => ({
     '@type': 'Question',
     name: item.question,
@@ -136,9 +119,6 @@ export function FAQJsonLd({
   };
 
   return (
-    <script
-      type="application/ld+json"
-      dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }}
-    />
+    <script type="application/ld+json" dangerouslySetInnerHTML={{ __html: JSON.stringify(data) }} />
   );
 }

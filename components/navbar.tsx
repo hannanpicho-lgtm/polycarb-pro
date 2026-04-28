@@ -78,7 +78,10 @@ export function Navbar() {
       {/* Top utility bar */}
       <div className="border-b border-white/10 hidden lg:block">
         <div className="container mx-auto flex items-center justify-end gap-6 py-1.5 text-xs text-white/60">
-          <a href={`tel:${siteConfig.contact.phoneHref}`} className="flex items-center gap-1.5 hover:text-white transition-colors">
+          <a
+            href={`tel:${siteConfig.contact.phoneHref}`}
+            className="flex items-center gap-1.5 hover:text-white transition-colors"
+          >
             <Phone className="h-3 w-3" />
             {siteConfig.contact.phoneDisplay}
           </a>
@@ -102,7 +105,11 @@ export function Navbar() {
       <nav className="container mx-auto" aria-label="Main navigation">
         <div className="flex items-center justify-between h-16 lg:h-18">
           {/* Logo */}
-          <Link href="/" className="flex items-center gap-3 group flex-shrink-0" aria-label={`${siteConfig.company.name} – Home`}>
+          <Link
+            href="/"
+            className="flex items-center gap-3 group flex-shrink-0"
+            aria-label={`${siteConfig.company.name} – Home`}
+          >
             <PolyLogo />
             <div className="flex flex-col">
               <span className="text-white font-bold text-lg leading-none tracking-tight group-hover:text-brand-400 transition-colors font-display">
@@ -169,9 +176,7 @@ export function Navbar() {
                   href={link.href}
                   className={cn(
                     'px-4 py-2 text-sm font-medium rounded transition-colors',
-                    pathname === link.href
-                      ? 'text-brand-400'
-                      : 'text-white/80 hover:text-white'
+                    pathname === link.href ? 'text-brand-400' : 'text-white/80 hover:text-white'
                   )}
                 >
                   {link.label}
@@ -219,7 +224,9 @@ export function Navbar() {
                     href={link.href}
                     className={cn(
                       'px-4 py-3 text-sm font-medium rounded transition-colors',
-                      pathname.startsWith(link.href) ? 'text-brand-400 bg-white/5' : 'text-white/80 hover:text-white hover:bg-white/5'
+                      pathname.startsWith(link.href)
+                        ? 'text-brand-400 bg-white/5'
+                        : 'text-white/80 hover:text-white hover:bg-white/5'
                     )}
                   >
                     {link.label}
@@ -252,12 +259,26 @@ function PolyLogo() {
   return (
     <svg width="38" height="38" viewBox="0 0 38 38" fill="none" aria-hidden="true">
       <defs>
-        <linearGradient id="logoMetalRing" x1="4" y1="4" x2="34" y2="34" gradientUnits="userSpaceOnUse">
+        <linearGradient
+          id="logoMetalRing"
+          x1="4"
+          y1="4"
+          x2="34"
+          y2="34"
+          gradientUnits="userSpaceOnUse"
+        >
           <stop offset="0" stopColor="#E6EEF8" />
           <stop offset="0.48" stopColor="#8EA5BF" />
           <stop offset="1" stopColor="#F5F9FF" />
         </linearGradient>
-        <radialGradient id="logoCore" cx="0" cy="0" r="1" gradientUnits="userSpaceOnUse" gradientTransform="translate(19 17) rotate(90) scale(20)">
+        <radialGradient
+          id="logoCore"
+          cx="0"
+          cy="0"
+          r="1"
+          gradientUnits="userSpaceOnUse"
+          gradientTransform="translate(19 17) rotate(90) scale(20)"
+        >
           <stop offset="0" stopColor="#133A5A" stopOpacity="0.95" />
           <stop offset="1" stopColor="#051221" stopOpacity="0.98" />
         </radialGradient>
@@ -280,12 +301,33 @@ function PolyLogo() {
         ['#C067C2', 26.2, 27.0, 1.55, 0.64],
       ].map(([color, cx, cy, r, opacity], i) => (
         <g key={i}>
-          <circle cx={cx as number} cy={cy as number} r={r as number} fill={color as string} fillOpacity={opacity as number} />
-          <circle cx={(cx as number) - 0.45} cy={(cy as number) - 0.45} r={(r as number) * 0.44} fill="#FFFFFF" fillOpacity="0.34" />
+          <circle
+            cx={cx as number}
+            cy={cy as number}
+            r={r as number}
+            fill={color as string}
+            fillOpacity={opacity as number}
+          />
+          <circle
+            cx={(cx as number) - 0.45}
+            cy={(cy as number) - 0.45}
+            r={(r as number) * 0.44}
+            fill="#FFFFFF"
+            fillOpacity="0.34"
+          />
         </g>
       ))}
 
-      <text x="19" y="23.5" textAnchor="middle" fill="#EEF6FF" fontSize="10.5" fontWeight="700" fontFamily="ui-sans-serif, system-ui, sans-serif" letterSpacing="0.3">
+      <text
+        x="19"
+        y="23.5"
+        textAnchor="middle"
+        fill="#EEF6FF"
+        fontSize="10.5"
+        fontWeight="700"
+        fontFamily="ui-sans-serif, system-ui, sans-serif"
+        letterSpacing="0.3"
+      >
         PC
       </text>
     </svg>

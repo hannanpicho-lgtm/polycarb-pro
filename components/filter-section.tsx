@@ -1,6 +1,5 @@
 'use client';
 
-import Link from 'next/link';
 import { motion } from 'framer-motion';
 import { SlidersHorizontal } from 'lucide-react';
 import { productCategories, industryOptions } from '@/lib/data';

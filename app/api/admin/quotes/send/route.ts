@@ -6,18 +6,13 @@
  * - Sends branded email to the customer with pricing + portal link
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { getCloudflareContext } from '@opennextjs/cloudflare';
-import type { D1Database } from '@cloudflare/workers-types';
+import { apiJsonError } from '@/lib/api-json-error';
+import { getD1 } from '@/lib/d1';
 import { sendQuoteToCustomer } from '@/lib/email';
-
-async function getDB(): Promise<D1Database | null> {
-  const { env } = await getCloudflareContext({ async: true });
-  return ((env as Record<string, unknown>)['DB'] as D1Database) ?? null;
-}
 
 export async function POST(request: NextRequest) {
   try {
-    const body = await request.json() as {
+    const body = (await request.json()) as {
       quoteId: string;
       quotedAmount: number;
       currency?: string;
@@ -27,23 +22,28 @@ export async function POST(request: NextRequest) {
 
     const { quoteId, quotedAmount, currency, adminMessage, expiresInDays } = body;
     if (!quoteId || !quotedAmount || quotedAmount <= 0) {
-      return NextResponse.json({ error: 'quoteId and quotedAmount are required' }, { status: 400 });
+      return apiJsonError('quoteId and quotedAmount are required', 400);
     }
 
-    const db = await getDB();
-    if (!db) return NextResponse.json({ error: 'DB unavailable' }, { status: 503 });
+    const db = await getD1();
+    if (!db) return apiJsonError('DB unavailable', 503);
 
     const quote = await db
-      .prepare('SELECT id, referenceId, customerName, customerEmail, customerCompany, currency FROM quotes WHERE id = ?')
+      .prepare(
+        'SELECT id, referenceId, customerName, customerEmail, customerCompany, currency FROM quotes WHERE id = ?'
+      )
       .bind(quoteId)
       .first<{
-        id: string; referenceId: string;
-        customerName: string; customerEmail: string; customerCompany?: string;
+        id: string;
+        referenceId: string;
+        customerName: string;
+        customerEmail: string;
+        customerCompany?: string;
         currency: string;
       }>();
 
-    if (!quote) return NextResponse.json({ error: 'Quote not found' }, { status: 404 });
-    if (!quote.customerEmail) return NextResponse.json({ error: 'No email on this quote' }, { status: 422 });
+    if (!quote) return apiJsonError('Quote not found', 404);
+    if (!quote.customerEmail) return apiJsonError('No email on this quote', 422);
 
     const now = new Date().toISOString();
     const expiresAt = expiresInDays
@@ -79,6 +79,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, emailSent: true, sentTo: quote.customerEmail });
   } catch (error) {
     console.error('[admin/quotes/send]', error);
-    return NextResponse.json({ error: 'Failed to send quote' }, { status: 500 });
+    return apiJsonError('Failed to send quote', 500);
   }
 }

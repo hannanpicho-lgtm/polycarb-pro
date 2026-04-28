@@ -42,8 +42,8 @@ function SpotlightReveal() {
     >
       {/* Base image (always visible, dimmed) */}
       <Image
-      src={spotlightImage.src}
-      alt={spotlightImage.alt}
+        src={spotlightImage.src}
+        alt={spotlightImage.alt}
         fill
         className="object-cover"
         sizes="100vw"
@@ -68,7 +68,8 @@ function SpotlightReveal() {
             left: `${pos.x}%`,
             top: `${pos.y}%`,
             transform: 'translate(-50%, -50%)',
-            background: 'radial-gradient(circle, transparent 45%, rgba(59,130,246,0.15) 50%, transparent 55%)',
+            background:
+              'radial-gradient(circle, transparent 45%, rgba(59,130,246,0.15) 50%, transparent 55%)',
           }}
         />
       )}
@@ -186,7 +187,10 @@ function TiltCard({ src, alt, label, href, index }: TiltCardProps) {
 
           {/* Bottom gradient + label */}
           <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/10 to-transparent" />
-          <div className="absolute bottom-0 inset-x-0 p-4" style={{ transform: 'translateZ(30px)' }}>
+          <div
+            className="absolute bottom-0 inset-x-0 p-4"
+            style={{ transform: 'translateZ(30px)' }}
+          >
             <span className="text-white font-bold text-base drop-shadow-lg">{label}</span>
             <span className="block text-brand-400 text-[11px] font-semibold mt-0.5 group-hover:translate-x-1.5 transition-transform duration-300">
               Explore →
@@ -210,24 +214,22 @@ const tiltCards = spectacularGalleryContent.tilt;
    ───────────────────────────────────────────── */
 
 const marqueeItems = spectacularGalleryContent.marquee;
-const marqueeRow1 = marqueeItems
-  .filter((_, index) => index % 2 === 0);
-const marqueeRow2 = marqueeItems
-  .filter((_, index) => index % 2 === 1);
+const marqueeRow1 = marqueeItems.filter((_, index) => index % 2 === 0);
+const marqueeRow2 = marqueeItems.filter((_, index) => index % 2 === 1);
 
 const galleryDiagnostics = spectacularGallerySelectionDiagnostics;
 const diagnosticsToneClass =
   galleryDiagnostics.healthStatus === 'healthy'
     ? 'text-emerald-300/90'
     : galleryDiagnostics.healthStatus === 'watch'
-    ? 'text-amber-300/90'
-    : 'text-rose-300/90';
+      ? 'text-amber-300/90'
+      : 'text-rose-300/90';
 const severityBadgeClass =
   galleryDiagnostics.severityBand === 'ok'
     ? 'bg-emerald-500/20 text-emerald-200 border-emerald-400/40'
     : galleryDiagnostics.severityBand === 'elevated'
-    ? 'bg-amber-500/20 text-amber-200 border-amber-400/40'
-    : 'bg-rose-500/20 text-rose-200 border-rose-400/40';
+      ? 'bg-amber-500/20 text-amber-200 border-amber-400/40'
+      : 'bg-rose-500/20 text-rose-200 border-rose-400/40';
 
 function MarqueeRow({
   items,
@@ -295,26 +297,39 @@ export function SpectacularGallery() {
       {process.env.NODE_ENV !== 'production' && (
         <div className="container mx-auto mb-4">
           <div className="mb-2 flex items-center gap-2">
-            <span className={cn('inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-bold tracking-wide', severityBadgeClass)}>
+            <span
+              className={cn(
+                'inline-flex items-center rounded-full border px-2.5 py-1 text-[10px] font-bold tracking-wide',
+                severityBadgeClass
+              )}
+            >
               {galleryDiagnostics.severityBand.toUpperCase()} {galleryDiagnostics.severityScore}
             </span>
-            <span className="text-[10px] sm:text-[11px] text-white/70 font-mono">{galleryDiagnostics.triageHint}</span>
+            <span className="text-[10px] sm:text-[11px] text-white/70 font-mono">
+              {galleryDiagnostics.triageHint}
+            </span>
           </div>
           <p className={cn('text-[11px] sm:text-xs font-mono tracking-wide', diagnosticsToneClass)}>
             Gallery diagnostics: curated {galleryDiagnostics.totalCuratedSourceCount} | reserved{' '}
-            {galleryDiagnostics.reservedSourceCount} | selected {galleryDiagnostics.selectedSourceCount} | overlap{' '}
-            {galleryDiagnostics.selectedReservedOverlapCount} | fallback {galleryDiagnostics.fallbackSelectionCount} (spotlight{' '}
-            {galleryDiagnostics.spotlightFallbackCount}, tilt {galleryDiagnostics.tiltFallbackCount}) | recycle{' '}
-            {galleryDiagnostics.marqueeRecycleCount} | marquee {galleryDiagnostics.marqueeRenderedCount}/
-            {galleryDiagnostics.marqueeTargetCount} | duplicates {galleryDiagnostics.marqueeDuplicateSourceCount} |
-            tiltMismatch {galleryDiagnostics.tiltCategoryMismatchCount} | diversity {galleryDiagnostics.selectionDiversityRatio} |
-            uniqueness {galleryDiagnostics.marqueeUniquenessRatio} | reservedRatio {galleryDiagnostics.reservedSourceRatio} |
-            selectedRatio {galleryDiagnostics.selectedSourceRatio} | availableRatio {galleryDiagnostics.availableSourceRatio} |
-            rowOverlapRatio {galleryDiagnostics.marqueeRowOverlapRatio} | categoryCoverageRatio {galleryDiagnostics.categoryCoverageRatio} |
-            alerts A/D/W {galleryDiagnostics.activeAlertCount}/{galleryDiagnostics.degradedAlertCount}/
-            {galleryDiagnostics.watchAlertCount} |
-            severity {galleryDiagnostics.severityBand}:{galleryDiagnostics.severityScore} |
-            status {galleryDiagnostics.healthStatus}
+            {galleryDiagnostics.reservedSourceCount} | selected{' '}
+            {galleryDiagnostics.selectedSourceCount} | overlap{' '}
+            {galleryDiagnostics.selectedReservedOverlapCount} | fallback{' '}
+            {galleryDiagnostics.fallbackSelectionCount} (spotlight{' '}
+            {galleryDiagnostics.spotlightFallbackCount}, tilt {galleryDiagnostics.tiltFallbackCount}
+            ) | recycle {galleryDiagnostics.marqueeRecycleCount} | marquee{' '}
+            {galleryDiagnostics.marqueeRenderedCount}/{galleryDiagnostics.marqueeTargetCount} |
+            duplicates {galleryDiagnostics.marqueeDuplicateSourceCount} | tiltMismatch{' '}
+            {galleryDiagnostics.tiltCategoryMismatchCount} | diversity{' '}
+            {galleryDiagnostics.selectionDiversityRatio} | uniqueness{' '}
+            {galleryDiagnostics.marqueeUniquenessRatio} | reservedRatio{' '}
+            {galleryDiagnostics.reservedSourceRatio} | selectedRatio{' '}
+            {galleryDiagnostics.selectedSourceRatio} | availableRatio{' '}
+            {galleryDiagnostics.availableSourceRatio} | rowOverlapRatio{' '}
+            {galleryDiagnostics.marqueeRowOverlapRatio} | categoryCoverageRatio{' '}
+            {galleryDiagnostics.categoryCoverageRatio} | alerts A/D/W{' '}
+            {galleryDiagnostics.activeAlertCount}/{galleryDiagnostics.degradedAlertCount}/
+            {galleryDiagnostics.watchAlertCount} | severity {galleryDiagnostics.severityBand}:
+            {galleryDiagnostics.severityScore} | status {galleryDiagnostics.healthStatus}
           </p>
           {galleryDiagnostics.topAlertKeys.length > 0 && (
             <p className="text-[10px] sm:text-[11px] text-fuchsia-200/80 font-mono mt-1">
@@ -332,7 +347,8 @@ export function SpectacularGallery() {
           )}
           {galleryDiagnostics.missingSelectedCategories.length > 0 && (
             <p className="text-[10px] sm:text-[11px] text-amber-200/80 font-mono mt-1">
-              Missing categories in selection: {galleryDiagnostics.missingSelectedCategories.join(', ')}
+              Missing categories in selection:{' '}
+              {galleryDiagnostics.missingSelectedCategories.join(', ')}
             </p>
           )}
           {galleryDiagnostics.healthNotes.length > 0 && (
@@ -340,8 +356,12 @@ export function SpectacularGallery() {
               {galleryDiagnostics.healthNotes.join(' | ')}
             </p>
           )}
-          <p className="text-[10px] sm:text-[11px] text-white/50 font-mono mt-1">{galleryDiagnostics.alertSummary}</p>
-          <p className="text-[10px] sm:text-[11px] text-white/40 font-mono mt-1">{galleryDiagnostics.snapshotLine}</p>
+          <p className="text-[10px] sm:text-[11px] text-white/50 font-mono mt-1">
+            {galleryDiagnostics.alertSummary}
+          </p>
+          <p className="text-[10px] sm:text-[11px] text-white/40 font-mono mt-1">
+            {galleryDiagnostics.snapshotLine}
+          </p>
         </div>
       )}
       <div className="container mx-auto mb-12">
@@ -352,10 +372,15 @@ export function SpectacularGallery() {
           transition={{ duration: 0.6 }}
           className="text-center mb-10"
         >
-          <span className="tag-pill bg-brand-500 text-white mb-3 inline-block">IMMERSIVE GALLERY</span>
-          <h2 className="text-3xl md:text-4xl font-bold text-white font-display">Experience the Material</h2>
+          <span className="tag-pill bg-brand-500 text-white mb-3 inline-block">
+            IMMERSIVE GALLERY
+          </span>
+          <h2 className="text-3xl md:text-4xl font-bold text-white font-display">
+            Experience the Material
+          </h2>
           <p className="text-white/45 text-sm mt-2 max-w-xl mx-auto">
-            Interactive visuals. Real-world applications. Hover, explore, and discover what polycarbonate makes possible.
+            Interactive visuals. Real-world applications. Hover, explore, and discover what
+            polycarbonate makes possible.
           </p>
         </motion.div>
 

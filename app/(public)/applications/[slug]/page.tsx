@@ -5,12 +5,15 @@ import { notFound } from 'next/navigation';
 import { ArrowLeft, ArrowRight, CheckCircle2 } from 'lucide-react';
 import { applications, getApplicationBySlug, getProductsByIndustry } from '@/lib/data';
 import type { ProductIndustry } from '@/lib/data';
+import { filterByPublicProductVisibility, getPublicHiddenProductSlugs } from '@/lib/public-catalog';
 import { Button } from '@/components/ui/button';
 import { ViewportVideo } from '@/components/viewport-video';
 
 interface Props {
   params: Promise<{ slug: string }>;
 }
+
+export const revalidate = 60;
 
 export async function generateStaticParams() {
   return applications.map((a) => ({ slug: a.slug }));
@@ -37,7 +40,11 @@ export default async function ApplicationDetailPage({ params }: Props) {
   const app = getApplicationBySlug(slug);
   if (!app) notFound();
 
-  const relatedProducts = getProductsByIndustry(app.id as ProductIndustry);
+  const hidden = await getPublicHiddenProductSlugs();
+  const relatedProducts = filterByPublicProductVisibility(
+    getProductsByIndustry(app.id as ProductIndustry),
+    hidden
+  );
 
   return (
     <>
@@ -49,8 +56,12 @@ export default async function ApplicationDetailPage({ params }: Props) {
           >
             <ArrowLeft className="h-3.5 w-3.5" /> Back to Applications
           </Link>
-          <p className="text-brand-400 text-[11px] font-bold uppercase tracking-[0.15em] mb-2">Industry Focus</p>
-          <h1 className="text-4xl lg:text-5xl font-bold text-white tracking-tight mb-3 font-display">{app.title}</h1>
+          <p className="text-brand-400 text-[11px] font-bold uppercase tracking-[0.15em] mb-2">
+            Industry Focus
+          </p>
+          <h1 className="text-4xl lg:text-5xl font-bold text-white tracking-tight mb-3 font-display">
+            {app.title}
+          </h1>
           <p className="text-white/65 text-base max-w-3xl leading-relaxed">{app.description}</p>
         </div>
       </div>
@@ -82,7 +93,10 @@ export default async function ApplicationDetailPage({ params }: Props) {
               <h2 className="text-xl font-bold text-foreground mb-3">Typical Use Cases</h2>
               <ul className="grid sm:grid-cols-2 gap-2">
                 {app.benefits.map((benefit) => (
-                  <li key={benefit} className="flex items-start gap-2 text-sm text-muted-foreground">
+                  <li
+                    key={benefit}
+                    className="flex items-start gap-2 text-sm text-muted-foreground"
+                  >
                     <CheckCircle2 className="h-4 w-4 text-brand-500 mt-0.5 flex-shrink-0" />
                     <span>{benefit}</span>
                   </li>
@@ -93,16 +107,23 @@ export default async function ApplicationDetailPage({ params }: Props) {
             <section>
               <h2 className="text-xl font-bold text-foreground mb-3">Recommended Products</h2>
               {relatedProducts.length === 0 ? (
-                <p className="text-sm text-muted-foreground">No products are currently tagged for this industry.</p>
+                <p className="text-sm text-muted-foreground">
+                  No products are currently tagged for this industry.
+                </p>
               ) : (
                 <div className="grid sm:grid-cols-2 gap-4">
                   {relatedProducts.map((product) => (
-                    <article key={product.id} className="border border-border rounded-lg p-4 bg-card">
+                    <article
+                      key={product.id}
+                      className="border border-border rounded-lg p-4 bg-card"
+                    >
                       <p className="text-[11px] text-muted-foreground uppercase tracking-wide mb-1">
                         {product.brand} - {product.grade}
                       </p>
                       <h3 className="text-sm font-bold text-foreground mb-2">{product.name}</h3>
-                      <p className="text-xs text-muted-foreground line-clamp-2 mb-3">{product.shortDescription}</p>
+                      <p className="text-xs text-muted-foreground line-clamp-2 mb-3">
+                        {product.shortDescription}
+                      </p>
                       <Link
                         href={`/products/${product.slug}`}
                         className="inline-flex items-center gap-1 text-xs font-semibold text-brand-600 hover:text-brand-700 transition-colors"
@@ -118,12 +139,17 @@ export default async function ApplicationDetailPage({ params }: Props) {
 
           <aside className="space-y-4">
             <div className="border border-border rounded-lg p-5 bg-muted/30">
-              <h2 className="text-sm font-bold uppercase tracking-wide text-foreground mb-2">Need a Technical Recommendation?</h2>
+              <h2 className="text-sm font-bold uppercase tracking-wide text-foreground mb-2">
+                Need a Technical Recommendation?
+              </h2>
               <p className="text-sm text-muted-foreground mb-4">
-                Share your mechanical, optical, and compliance requirements and our engineers will suggest suitable grades.
+                Share your mechanical, optical, and compliance requirements and our engineers will
+                suggest suitable grades.
               </p>
               <Button asChild className="w-full bg-brand-500 hover:bg-brand-600 text-white">
-                <Link href={`/contact?industry=${app.id}&source=application-detail-sidebar`}>Talk to an Engineer</Link>
+                <Link href={`/contact?industry=${app.id}&source=application-detail-sidebar`}>
+                  Talk to an Engineer
+                </Link>
               </Button>
             </div>
           </aside>

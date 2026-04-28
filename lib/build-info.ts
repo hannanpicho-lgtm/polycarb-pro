@@ -13,4 +13,3 @@ export const buildInfo = {
   commit: normalizedCommit ? normalizedCommit.slice(0, 12) : 'local',
   builtAt: process.env.NEXT_PUBLIC_BUILD_TIME ?? 'unknown',
 } as const;
-

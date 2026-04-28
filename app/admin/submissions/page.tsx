@@ -118,7 +118,10 @@ export default function AdminPage() {
       if (filterType !== 'all') params.set('type', filterType);
 
       const res = await fetch(`/api/admin/submissions?${params}`);
-      if (res.status === 401) { router.replace('/admin/login'); return; }
+      if (res.status === 401) {
+        router.replace('/admin/login');
+        return;
+      }
       if (!res.ok) throw new Error('Failed to fetch submissions');
 
       const data: PaginationData = await res.json();
@@ -135,7 +138,9 @@ export default function AdminPage() {
     try {
       const res = await fetch('/api/admin/stats');
       if (res.ok) setStats(await res.json());
-    } catch { /* non-fatal */ }
+    } catch {
+      /* non-fatal */
+    }
   }, []);
 
   useEffect(() => {
@@ -144,7 +149,9 @@ export default function AdminPage() {
   }, [fetchSubmissions, fetchStats]);
 
   // Reset to page 1 when filter/search changes
-  useEffect(() => { setPage(1); }, [searchEmail, filterType]);
+  useEffect(() => {
+    setPage(1);
+  }, [searchEmail, filterType]);
 
   async function handleLogout() {
     setLoggingOut(true);
@@ -154,7 +161,11 @@ export default function AdminPage() {
 
   const tabs: { label: string; value: FilterType; count?: number }[] = [
     { label: 'All', value: 'all', count: stats?.totalSubmissions },
-    { label: 'Distributor Applications', value: 'distributor', count: stats?.distributorSubmissions },
+    {
+      label: 'Distributor Applications',
+      value: 'distributor',
+      count: stats?.distributorSubmissions,
+    },
     { label: 'Contact Enquiries', value: 'contact', count: stats?.contactSubmissions },
   ];
 
@@ -165,8 +176,18 @@ export default function AdminPage() {
         <div className="max-w-7xl mx-auto flex items-center justify-between">
           <div className="flex items-center gap-3">
             <div className="w-7 h-7 rounded-lg bg-brand-500/15 border border-brand-400/30 flex items-center justify-center">
-              <svg className="w-3.5 h-3.5 text-brand-500" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z" />
+              <svg
+                className="w-3.5 h-3.5 text-brand-500"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M9 12.75L11.25 15 15 9.75m-3-7.036A11.959 11.959 0 013.598 6 11.99 11.99 0 003 9.749c0 5.592 3.824 10.29 9 11.623 5.176-1.332 9-6.03 9-11.622 0-1.31-.21-2.571-.598-3.751h-.152c-3.196 0-6.1-1.248-8.25-3.285z"
+                />
               </svg>
             </div>
             <span className="font-semibold text-slate-800 text-sm">Admin Portal</span>
@@ -174,7 +195,10 @@ export default function AdminPage() {
             <span className="text-slate-500 text-sm">Covestro Polycarbonates</span>
           </div>
           <div className="flex items-center gap-2">
-            <Link href="/" className="text-sm text-slate-500 hover:text-slate-800 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors">
+            <Link
+              href="/"
+              className="text-sm text-slate-500 hover:text-slate-800 px-3 py-1.5 rounded-lg hover:bg-slate-100 transition-colors"
+            >
               ← View site
             </Link>
             <button
@@ -192,19 +216,38 @@ export default function AdminPage() {
         {/* Page header */}
         <div>
           <h1 className="text-2xl font-bold text-slate-900">Submissions</h1>
-          <p className="text-slate-500 text-sm mt-0.5">Distributor applications and contact enquiries from the site</p>
+          <p className="text-slate-500 text-sm mt-0.5">
+            Distributor applications and contact enquiries from the site
+          </p>
         </div>
 
         {/* Stats */}
         {stats && (
           <div className="grid grid-cols-3 gap-4">
             {[
-              { label: 'Total submissions', value: stats.totalSubmissions, color: 'text-slate-900' },
-              { label: 'Distributor applications', value: stats.distributorSubmissions, color: 'text-blue-600' },
-              { label: 'Contact enquiries', value: stats.contactSubmissions, color: 'text-emerald-600' },
+              {
+                label: 'Total submissions',
+                value: stats.totalSubmissions,
+                color: 'text-slate-900',
+              },
+              {
+                label: 'Distributor applications',
+                value: stats.distributorSubmissions,
+                color: 'text-blue-600',
+              },
+              {
+                label: 'Contact enquiries',
+                value: stats.contactSubmissions,
+                color: 'text-emerald-600',
+              },
             ].map((s) => (
-              <div key={s.label} className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm">
-                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">{s.label}</p>
+              <div
+                key={s.label}
+                className="bg-white border border-slate-200 rounded-xl p-5 shadow-sm"
+              >
+                <p className="text-xs font-medium text-slate-500 uppercase tracking-wide">
+                  {s.label}
+                </p>
                 <p className={`text-3xl font-bold mt-2 ${s.color}`}>{s.value}</p>
               </div>
             ))}
@@ -227,9 +270,13 @@ export default function AdminPage() {
                 >
                   {tab.label}
                   {tab.count !== undefined && tab.count > 0 && (
-                    <span className={`ml-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
-                      filterType === tab.value ? 'bg-brand-100 text-brand-700' : 'bg-slate-100 text-slate-500'
-                    }`}>
+                    <span
+                      className={`ml-1.5 text-[10px] font-semibold px-1.5 py-0.5 rounded-full ${
+                        filterType === tab.value
+                          ? 'bg-brand-100 text-brand-700'
+                          : 'bg-slate-100 text-slate-500'
+                      }`}
+                    >
                       {tab.count}
                     </span>
                   )}
@@ -238,8 +285,18 @@ export default function AdminPage() {
             </div>
             <div className="flex items-center gap-2 py-2">
               <div className="relative">
-                <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z" />
+                <svg
+                  className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400"
+                  fill="none"
+                  viewBox="0 0 24 24"
+                  strokeWidth={1.5}
+                  stroke="currentColor"
+                >
+                  <path
+                    strokeLinecap="round"
+                    strokeLinejoin="round"
+                    d="M21 21l-5.197-5.197m0 0A7.5 7.5 0 105.196 5.196a7.5 7.5 0 0010.607 10.607z"
+                  />
                 </svg>
                 <input
                   type="email"
@@ -266,7 +323,12 @@ export default function AdminPage() {
           ) : error ? (
             <div className="py-16 text-center">
               <p className="text-red-500 text-sm">{error}</p>
-              <button onClick={fetchSubmissions} className="mt-2 text-xs text-slate-500 hover:text-slate-800 underline">Retry</button>
+              <button
+                onClick={fetchSubmissions}
+                className="mt-2 text-xs text-slate-500 hover:text-slate-800 underline"
+              >
+                Retry
+              </button>
             </div>
           ) : submissions.length === 0 ? (
             <div className="py-16 text-center text-slate-400 text-sm">No submissions found</div>
@@ -275,12 +337,24 @@ export default function AdminPage() {
               <table className="w-full text-sm">
                 <thead>
                   <tr className="bg-slate-50 border-b border-slate-100">
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Type</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Name</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Email</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Company / Subject</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Ref</th>
-                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">Submitted</th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                      Type
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                      Name
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                      Email
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                      Company / Subject
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                      Ref
+                    </th>
+                    <th className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">
+                      Submitted
+                    </th>
                     <th className="px-4 py-3" />
                   </tr>
                 </thead>
@@ -298,20 +372,26 @@ export default function AdminPage() {
                             <TypeBadge type={sub.type} />
                           </td>
                           <td className="px-4 py-3.5 font-medium text-slate-900">
-                            {sub.type === 'distributor' ? sub.fullName : `${sub.firstName} ${sub.lastName}`}
+                            {sub.type === 'distributor'
+                              ? sub.fullName
+                              : `${sub.firstName} ${sub.lastName}`}
                           </td>
                           <td className="px-4 py-3.5 text-slate-600">{sub.email}</td>
                           <td className="px-4 py-3.5 text-slate-600 max-w-[200px] truncate">
-                            {sub.type === 'distributor'
-                              ? sub.companyName
-                              : sub.subject}
+                            {sub.type === 'distributor' ? sub.companyName : sub.subject}
                           </td>
-                          <td className="px-4 py-3.5 font-mono text-xs text-slate-400">{sub.referenceId}</td>
+                          <td className="px-4 py-3.5 font-mono text-xs text-slate-400">
+                            {sub.referenceId}
+                          </td>
                           <td className="px-4 py-3.5 text-slate-500 whitespace-nowrap text-xs">
                             {formatDate(sub.submittedAt ?? sub.createdAt)}
                           </td>
                           <td className="px-4 py-3.5 text-slate-400 text-right">
-                            <span className={`inline-block transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}>›</span>
+                            <span
+                              className={`inline-block transition-transform duration-200 ${isExpanded ? 'rotate-90' : ''}`}
+                            >
+                              ›
+                            </span>
                           </td>
                         </tr>
                         {isExpanded && (
@@ -324,14 +404,28 @@ export default function AdminPage() {
                                   <Detail label="Business Type" value={sub.businessType} />
                                   <Detail label="Annual Volume" value={sub.estimatedAnnualVolume} />
                                   <Detail label="Countries" value={sub.countries} />
-                                  {sub.message && <Detail label="Message" value={sub.message} className="col-span-2 md:col-span-3" />}
-                                  {sub.ipAddress && <Detail label="IP Address" value={sub.ipAddress} />}
+                                  {sub.message && (
+                                    <Detail
+                                      label="Message"
+                                      value={sub.message}
+                                      className="col-span-2 md:col-span-3"
+                                    />
+                                  )}
+                                  {sub.ipAddress && (
+                                    <Detail label="IP Address" value={sub.ipAddress} />
+                                  )}
                                 </div>
                               ) : (
                                 <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-sm">
                                   {sub.company && <Detail label="Company" value={sub.company} />}
-                                  <Detail label="Message" value={sub.message} className="col-span-2 md:col-span-4" />
-                                  {sub.ipAddress && <Detail label="IP Address" value={sub.ipAddress} />}
+                                  <Detail
+                                    label="Message"
+                                    value={sub.message}
+                                    className="col-span-2 md:col-span-4"
+                                  />
+                                  {sub.ipAddress && (
+                                    <Detail label="IP Address" value={sub.ipAddress} />
+                                  )}
                                 </div>
                               )}
                             </td>
@@ -375,7 +469,15 @@ export default function AdminPage() {
   );
 }
 
-function Detail({ label, value, className = '' }: { label: string; value: string; className?: string }) {
+function Detail({
+  label,
+  value,
+  className = '',
+}: {
+  label: string;
+  value: string;
+  className?: string;
+}) {
   return (
     <div className={className}>
       <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">{label}</p>

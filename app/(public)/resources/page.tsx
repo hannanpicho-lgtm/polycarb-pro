@@ -2,7 +2,12 @@ import type { Metadata } from 'next';
 import Link from 'next/link';
 import Image from 'next/image';
 import { ArrowRight, Clock, Download, Sparkles } from 'lucide-react';
-import { blogPosts, datasheetLibrary, getRecentDatasheets, getUnmappedDatasheets } from '@/lib/data';
+import {
+  blogPosts,
+  datasheetLibrary,
+  getRecentDatasheets,
+  getUnmappedDatasheets,
+} from '@/lib/data';
 import { getCatalogueLinkProps } from '@/lib/utils';
 
 interface Props {
@@ -22,7 +27,8 @@ const NEW_BADGE_WINDOW_DAYS = 30;
 
 export const metadata: Metadata = {
   title: 'Resources & Blog',
-  description: 'Technical articles and market insights on polycarbonate materials, applications, and processing.',
+  description:
+    'Technical articles and market insights on polycarbonate materials, applications, and processing.',
 };
 
 export default async function ResourcesPage({ searchParams }: Props) {
@@ -33,7 +39,9 @@ export default async function ResourcesPage({ searchParams }: Props) {
   const newBadgeCutoff = new Date(now);
   newBadgeCutoff.setDate(newBadgeCutoff.getDate() - NEW_BADGE_WINDOW_DAYS);
   const showOnlyNew = query.onlynew === '1';
-  const newDocCount = datasheetLibrary.filter((doc) => new Date(doc.publishedAt).getTime() >= newBadgeCutoff.getTime()).length;
+  const newDocCount = datasheetLibrary.filter(
+    (doc) => new Date(doc.publishedAt).getTime() >= newBadgeCutoff.getTime()
+  ).length;
   const selectedBrand = query.brand ?? 'all';
   const selectedType = query.type ?? 'all';
   const selectedFamily = query.family ?? 'all';
@@ -41,9 +49,15 @@ export default async function ResourcesPage({ searchParams }: Props) {
   const selectedSort = query.sort ?? 'title-asc';
   const requestedPage = Number.parseInt(query.page ?? '1', 10);
 
-  const brands = Array.from(new Set(datasheetLibrary.map((doc) => doc.brand))).sort((a, b) => a.localeCompare(b));
-  const documentTypes = Array.from(new Set(datasheetLibrary.map((doc) => doc.type))).sort((a, b) => a.localeCompare(b));
-  const materialFamilies = Array.from(new Set(datasheetLibrary.map((doc) => doc.materialFamily))).sort((a, b) => a.localeCompare(b));
+  const brands = Array.from(new Set(datasheetLibrary.map((doc) => doc.brand))).sort((a, b) =>
+    a.localeCompare(b)
+  );
+  const documentTypes = Array.from(new Set(datasheetLibrary.map((doc) => doc.type))).sort((a, b) =>
+    a.localeCompare(b)
+  );
+  const materialFamilies = Array.from(
+    new Set(datasheetLibrary.map((doc) => doc.materialFamily))
+  ).sort((a, b) => a.localeCompare(b));
 
   const filteredDatasheets = datasheetLibrary.filter((doc) => {
     if (showOnlyNew && new Date(doc.publishedAt).getTime() < newBadgeCutoff.getTime()) return false;
@@ -52,17 +66,19 @@ export default async function ResourcesPage({ searchParams }: Props) {
     const matchesFamily = selectedFamily === 'all' || doc.materialFamily === selectedFamily;
     const lowerQuery = searchQuery.toLowerCase();
     const matchesSearch =
-      lowerQuery.length === 0
-      || doc.title.toLowerCase().includes(lowerQuery)
-      || doc.brand.toLowerCase().includes(lowerQuery)
-      || doc.type.toLowerCase().includes(lowerQuery)
-      || doc.materialFamily.toLowerCase().includes(lowerQuery);
+      lowerQuery.length === 0 ||
+      doc.title.toLowerCase().includes(lowerQuery) ||
+      doc.brand.toLowerCase().includes(lowerQuery) ||
+      doc.type.toLowerCase().includes(lowerQuery) ||
+      doc.materialFamily.toLowerCase().includes(lowerQuery);
     return matchesBrand && matchesType && matchesFamily && matchesSearch;
   });
 
   const sortedDatasheets = [...filteredDatasheets].sort((a, b) => {
-    if (selectedSort === 'date-desc') return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
-    if (selectedSort === 'date-asc') return new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime();
+    if (selectedSort === 'date-desc')
+      return new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime();
+    if (selectedSort === 'date-asc')
+      return new Date(a.publishedAt).getTime() - new Date(b.publishedAt).getTime();
     if (selectedSort === 'title-desc') return b.title.localeCompare(a.title);
     if (selectedSort === 'brand-asc') {
       const brandCompare = a.brand.localeCompare(b.brand);
@@ -84,14 +100,22 @@ export default async function ResourcesPage({ searchParams }: Props) {
     currentPage * DATASHEETS_PER_PAGE
   );
 
-  const buildFilterHref = (updates: { brand?: string; type?: string; family?: string; q?: string; sort?: string; page?: string; onlynew?: string }) => {
+  const buildFilterHref = (updates: {
+    brand?: string;
+    type?: string;
+    family?: string;
+    q?: string;
+    sort?: string;
+    page?: string;
+    onlynew?: string;
+  }) => {
     const nextBrand = updates.brand ?? selectedBrand;
     const nextType = updates.type ?? selectedType;
     const nextFamily = updates.family ?? selectedFamily;
     const nextQuery = updates.q ?? searchQuery;
     const nextSort = updates.sort ?? selectedSort;
     const nextPage = updates.page ?? '1';
-    const nextOnlyNew = updates.onlynew !== undefined ? updates.onlynew : (showOnlyNew ? '1' : '');
+    const nextOnlyNew = updates.onlynew !== undefined ? updates.onlynew : showOnlyNew ? '1' : '';
     const params = new URLSearchParams();
 
     if (nextBrand !== 'all') params.set('brand', nextBrand);
@@ -114,7 +138,11 @@ export default async function ResourcesPage({ searchParams }: Props) {
       ? { key: 'type', label: `Type: ${selectedType}`, href: buildFilterHref({ type: 'all' }) }
       : null,
     selectedFamily !== 'all'
-      ? { key: 'family', label: `Material: ${selectedFamily}`, href: buildFilterHref({ family: 'all' }) }
+      ? {
+          key: 'family',
+          label: `Material: ${selectedFamily}`,
+          href: buildFilterHref({ family: 'all' }),
+        }
       : null,
     searchQuery.length > 0
       ? { key: 'q', label: `Search: ${searchQuery}`, href: buildFilterHref({ q: '' }) }
@@ -129,9 +157,9 @@ export default async function ResourcesPage({ searchParams }: Props) {
                 ? 'Sort: Newest first'
                 : selectedSort === 'date-asc'
                   ? 'Sort: Oldest first'
-              : selectedSort === 'brand-asc'
-                ? 'Sort: Brand'
-                : 'Sort: Type',
+                  : selectedSort === 'brand-asc'
+                    ? 'Sort: Brand'
+                    : 'Sort: Type',
           href: buildFilterHref({ sort: 'title-asc' }),
         }
       : null,
@@ -144,10 +172,15 @@ export default async function ResourcesPage({ searchParams }: Props) {
     <>
       <div className="bg-steel-950 pt-28 pb-12">
         <div className="container mx-auto">
-          <p className="text-brand-400 text-[11px] font-bold uppercase tracking-[0.15em] mb-2">Knowledge Centre</p>
-          <h1 className="text-4xl lg:text-5xl font-bold text-white tracking-tight mb-3 font-display">Insights & Technical Briefs</h1>
+          <p className="text-brand-400 text-[11px] font-bold uppercase tracking-[0.15em] mb-2">
+            Knowledge Centre
+          </p>
+          <h1 className="text-4xl lg:text-5xl font-bold text-white tracking-tight mb-3 font-display">
+            Insights & Technical Briefs
+          </h1>
           <p className="text-white/65 text-base max-w-3xl leading-relaxed">
-            Material selection, sustainability, compliance, and processing — engineering-grade knowledge for engineering-grade projects.
+            Material selection, sustainability, compliance, and processing — engineering-grade
+            knowledge for engineering-grade projects.
           </p>
         </div>
       </div>
@@ -155,7 +188,10 @@ export default async function ResourcesPage({ searchParams }: Props) {
       <div className="bg-background py-12">
         <div className="container mx-auto grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-5">
           {blogPosts.map((post, idx) => (
-            <article key={post.id} className="group border border-border rounded-lg overflow-hidden bg-card hover:shadow-md hover:border-brand-200 transition-all duration-300">
+            <article
+              key={post.id}
+              className="group border border-border rounded-lg overflow-hidden bg-card hover:shadow-md hover:border-brand-200 transition-all duration-300"
+            >
               <div className="relative aspect-[16/10] bg-muted overflow-hidden">
                 <Image
                   src={post.image}
@@ -168,8 +204,12 @@ export default async function ResourcesPage({ searchParams }: Props) {
                 />
               </div>
               <div className="p-4">
-                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">{post.category}</p>
-                <h2 className="text-sm font-bold text-foreground leading-tight mb-2">{post.title}</h2>
+                <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground mb-1">
+                  {post.category}
+                </p>
+                <h2 className="text-sm font-bold text-foreground leading-tight mb-2">
+                  {post.title}
+                </h2>
                 <p className="text-xs text-muted-foreground line-clamp-3 mb-3">{post.excerpt}</p>
                 <div className="flex items-center justify-between">
                   <span className="inline-flex items-center gap-1 text-xs text-muted-foreground">
@@ -189,20 +229,32 @@ export default async function ResourcesPage({ searchParams }: Props) {
 
         <div className="container mx-auto mt-14">
           <div className="mb-6">
-            <p className="text-brand-500 text-[11px] font-bold uppercase tracking-[0.15em] mb-2">Datasheet Library</p>
-            <h2 className="text-2xl lg:text-3xl font-display font-bold text-foreground mb-2">Technical Downloads</h2>
+            <p className="text-brand-500 text-[11px] font-bold uppercase tracking-[0.15em] mb-2">
+              Datasheet Library
+            </p>
+            <h2 className="text-2xl lg:text-3xl font-display font-bold text-foreground mb-2">
+              Technical Downloads
+            </h2>
             <p className="text-sm text-muted-foreground max-w-3xl">
-              Access product-aligned polycarbonate datasheets plus additional engineering references from our extended materials library.
+              Access product-aligned polycarbonate datasheets plus additional engineering references
+              from our extended materials library.
             </p>
           </div>
 
           <div className="mb-6 rounded-xl border border-border bg-card p-4 sm:p-5">
             <div className="flex flex-col sm:flex-row sm:items-end sm:justify-between gap-3 mb-4">
               <div>
-                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-brand-500 mb-1">New in Library</p>
-                <h3 className="text-base sm:text-lg font-bold text-foreground font-display">Recently Added Datasheets</h3>
+                <p className="text-[11px] font-semibold uppercase tracking-[0.12em] text-brand-500 mb-1">
+                  New in Library
+                </p>
+                <h3 className="text-base sm:text-lg font-bold text-foreground font-display">
+                  Recently Added Datasheets
+                </h3>
               </div>
-              <Link href={buildFilterHref({ sort: 'date-desc' })} className="text-xs font-semibold text-brand-600 hover:text-brand-700 transition-colors">
+              <Link
+                href={buildFilterHref({ sort: 'date-desc' })}
+                className="text-xs font-semibold text-brand-600 hover:text-brand-700 transition-colors"
+              >
                 View newest first
               </Link>
             </div>
@@ -211,9 +263,16 @@ export default async function ResourcesPage({ searchParams }: Props) {
               {recentDatasheets.map((doc) => (
                 <article key={doc.id} className="rounded-lg border border-border bg-background p-3">
                   <p className="text-[10px] uppercase tracking-wide text-muted-foreground font-semibold mb-1">
-                    {doc.brand} · {new Date(doc.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                    {doc.brand} ·{' '}
+                    {new Date(doc.publishedAt).toLocaleDateString('en-US', {
+                      year: 'numeric',
+                      month: 'short',
+                      day: 'numeric',
+                    })}
                   </p>
-                  <h4 className="text-sm font-semibold text-foreground leading-snug mb-2 line-clamp-2">{doc.title}</h4>
+                  <h4 className="text-sm font-semibold text-foreground leading-snug mb-2 line-clamp-2">
+                    {doc.title}
+                  </h4>
                   <a
                     {...getCatalogueLinkProps(doc.url)}
                     className="inline-flex items-center gap-1.5 text-xs font-semibold text-brand-600 hover:text-brand-700 transition-colors"
@@ -225,11 +284,23 @@ export default async function ResourcesPage({ searchParams }: Props) {
             </div>
           </div>
 
-          <form method="get" action="/resources" className="mb-4 flex flex-col sm:flex-row gap-2 sm:items-center">
-            {selectedBrand !== 'all' ? <input type="hidden" name="brand" value={selectedBrand} /> : null}
-            {selectedType !== 'all' ? <input type="hidden" name="type" value={selectedType} /> : null}
-            {selectedFamily !== 'all' ? <input type="hidden" name="family" value={selectedFamily} /> : null}
-            {selectedSort !== 'title-asc' ? <input type="hidden" name="sort" value={selectedSort} /> : null}
+          <form
+            method="get"
+            action="/resources"
+            className="mb-4 flex flex-col sm:flex-row gap-2 sm:items-center"
+          >
+            {selectedBrand !== 'all' ? (
+              <input type="hidden" name="brand" value={selectedBrand} />
+            ) : null}
+            {selectedType !== 'all' ? (
+              <input type="hidden" name="type" value={selectedType} />
+            ) : null}
+            {selectedFamily !== 'all' ? (
+              <input type="hidden" name="family" value={selectedFamily} />
+            ) : null}
+            {selectedSort !== 'title-asc' ? (
+              <input type="hidden" name="sort" value={selectedSort} />
+            ) : null}
             {showOnlyNew ? <input type="hidden" name="onlynew" value="1" /> : null}
             <input
               type="text"
@@ -256,7 +327,9 @@ export default async function ResourcesPage({ searchParams }: Props) {
           </form>
 
           <div className="mb-4 flex flex-wrap items-center gap-2">
-            <span className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground font-semibold">Sort</span>
+            <span className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground font-semibold">
+              Sort
+            </span>
             <Link
               href={buildFilterHref({ sort: 'title-asc' })}
               className={`text-xs px-3 py-1 rounded border transition-colors ${selectedSort === 'title-asc' ? 'bg-brand-500 text-white border-brand-500' : 'bg-background text-muted-foreground border-border hover:border-brand-300 hover:text-brand-700'}`}
@@ -296,9 +369,13 @@ export default async function ResourcesPage({ searchParams }: Props) {
           </div>
 
           <div className="mb-4 flex flex-wrap items-center gap-2">
-            <span className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground font-semibold">Quick Filter</span>
+            <span className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground font-semibold">
+              Quick Filter
+            </span>
             <Link
-              href={showOnlyNew ? buildFilterHref({ onlynew: '0' }) : buildFilterHref({ onlynew: '1' })}
+              href={
+                showOnlyNew ? buildFilterHref({ onlynew: '0' }) : buildFilterHref({ onlynew: '1' })
+              }
               className={`inline-flex items-center gap-1.5 text-xs px-3 py-1 rounded border transition-colors font-semibold ${showOnlyNew ? 'bg-brand-500 text-white border-brand-500' : 'bg-background text-muted-foreground border-border hover:border-brand-300 hover:text-brand-700'}`}
             >
               <Sparkles className="h-3 w-3" />
@@ -308,7 +385,9 @@ export default async function ResourcesPage({ searchParams }: Props) {
 
           <div className="space-y-4 mb-6">
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground font-semibold">Brand</span>
+              <span className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground font-semibold">
+                Brand
+              </span>
               <Link
                 href={buildFilterHref({ brand: 'all' })}
                 className={`text-xs px-3 py-1 rounded border transition-colors ${selectedBrand === 'all' ? 'bg-brand-500 text-white border-brand-500' : 'bg-background text-muted-foreground border-border hover:border-brand-300 hover:text-brand-700'}`}
@@ -327,7 +406,9 @@ export default async function ResourcesPage({ searchParams }: Props) {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground font-semibold">Type</span>
+              <span className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground font-semibold">
+                Type
+              </span>
               <Link
                 href={buildFilterHref({ type: 'all' })}
                 className={`text-xs px-3 py-1 rounded border transition-colors ${selectedType === 'all' ? 'bg-brand-500 text-white border-brand-500' : 'bg-background text-muted-foreground border-border hover:border-brand-300 hover:text-brand-700'}`}
@@ -346,7 +427,9 @@ export default async function ResourcesPage({ searchParams }: Props) {
             </div>
 
             <div className="flex flex-wrap items-center gap-2">
-              <span className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground font-semibold">Material</span>
+              <span className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground font-semibold">
+                Material
+              </span>
               <Link
                 href={buildFilterHref({ family: 'all' })}
                 className={`text-xs px-3 py-1 rounded border transition-colors ${selectedFamily === 'all' ? 'bg-brand-500 text-white border-brand-500' : 'bg-background text-muted-foreground border-border hover:border-brand-300 hover:text-brand-700'}`}
@@ -367,7 +450,9 @@ export default async function ResourcesPage({ searchParams }: Props) {
 
           {activeChips.length > 0 ? (
             <div className="mb-6 flex flex-wrap items-center gap-2">
-              <span className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground font-semibold">Active</span>
+              <span className="text-[11px] uppercase tracking-[0.12em] text-muted-foreground font-semibold">
+                Active
+              </span>
               {activeChips.map((chip) => (
                 <Link
                   key={chip.key}
@@ -392,8 +477,12 @@ export default async function ResourcesPage({ searchParams }: Props) {
               <article key={doc.id} className="border border-border rounded-lg bg-card p-4">
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">{doc.brand} · {doc.type}</p>
-                    <h3 className="text-sm font-semibold text-foreground mt-1 leading-snug">{doc.title}</h3>
+                    <p className="text-[11px] font-semibold uppercase tracking-wide text-muted-foreground">
+                      {doc.brand} · {doc.type}
+                    </p>
+                    <h3 className="text-sm font-semibold text-foreground mt-1 leading-snug">
+                      {doc.title}
+                    </h3>
                   </div>
                   <div className="flex flex-col items-end gap-1">
                     {new Date(doc.publishedAt).getTime() >= newBadgeCutoff.getTime() ? (
@@ -410,10 +499,17 @@ export default async function ResourcesPage({ searchParams }: Props) {
                 <div className="mt-3 flex items-center justify-between">
                   <div>
                     <p className="text-xs text-muted-foreground">
-                      {doc.relatedProductSlugs.length > 0 ? `Mapped to ${doc.relatedProductSlugs.length} product(s)` : 'General reference'}
+                      {doc.relatedProductSlugs.length > 0
+                        ? `Mapped to ${doc.relatedProductSlugs.length} product(s)`
+                        : 'General reference'}
                     </p>
                     <p className="text-[11px] text-muted-foreground/80 mt-0.5">
-                      Added {new Date(doc.publishedAt).toLocaleDateString('en-US', { year: 'numeric', month: 'short', day: 'numeric' })}
+                      Added{' '}
+                      {new Date(doc.publishedAt).toLocaleDateString('en-US', {
+                        year: 'numeric',
+                        month: 'short',
+                        day: 'numeric',
+                      })}
                     </p>
                   </div>
                   <a
@@ -436,7 +532,8 @@ export default async function ResourcesPage({ searchParams }: Props) {
           {sortedDatasheets.length > 0 ? (
             <div className="mt-4 flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
               <p className="text-xs text-muted-foreground">
-                Showing {paginatedDatasheets.length} result(s) on page {currentPage} of {totalPages}. Filtered from {datasheetLibrary.length} datasheet document(s).
+                Showing {paginatedDatasheets.length} result(s) on page {currentPage} of {totalPages}
+                . Filtered from {datasheetLibrary.length} datasheet document(s).
               </p>
 
               {totalPages > 1 ? (
@@ -469,7 +566,8 @@ export default async function ResourcesPage({ searchParams }: Props) {
 
           {unmappedDatasheets.length > 0 ? (
             <p className="text-xs text-muted-foreground mt-4">
-              {unmappedDatasheets.length} document(s) are currently listed as general references and not tied to a specific product SKU.
+              {unmappedDatasheets.length} document(s) are currently listed as general references and
+              not tied to a specific product SKU.
             </p>
           ) : null}
         </div>

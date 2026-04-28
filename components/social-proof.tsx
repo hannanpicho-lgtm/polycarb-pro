@@ -4,28 +4,32 @@ import { Star, CheckCircle } from 'lucide-react';
 
 const testimonials = [
   {
-    quote: 'Covestro PC materials have been critical to our automotive light-weighting strategy. Their technical support team is exceptional.',
+    quote:
+      'Covestro PC materials have been critical to our automotive light-weighting strategy. Their technical support team is exceptional.',
     author: 'Sarah Chen',
     role: 'Materials Engineer',
     company: 'Global Automotive Supplier',
     rating: 5,
   },
   {
-    quote: 'We trust SABIC Lexan for high-security applications. The consistency and quality are unmatched in the industry.',
+    quote:
+      'We trust SABIC Lexan for high-security applications. The consistency and quality are unmatched in the industry.',
     author: 'Michael Rodriguez',
     role: 'Product Development Lead',
     company: 'Security Systems Manufacturer',
     rating: 5,
   },
   {
-    quote: 'Medical-grade polycarbonate is non-negotiable. This supplier provides the documentation and certifications we need.',
+    quote:
+      'Medical-grade polycarbonate is non-negotiable. This supplier provides the documentation and certifications we need.',
     author: 'Dr. James Patterson',
     role: 'Chief Technology Officer',
     company: 'Medical Device Company',
     rating: 5,
   },
   {
-    quote: 'The technical advisory service has saved us thousands in material waste and processing optimization.',
+    quote:
+      'The technical advisory service has saved us thousands in material waste and processing optimization.',
     author: 'Lisa Thompson',
     role: 'Manufacturing Manager',
     company: 'Precision Plastics',
@@ -77,14 +81,18 @@ export function SocialProof() {
               Why Leading Companies Choose Us
             </h2>
             <p className="text-xl text-gray-600 max-w-2xl mx-auto">
-              From automotive manufacturers to medical device companies, enterprises rely on our materials and expertise.
+              From automotive manufacturers to medical device companies, enterprises rely on our
+              materials and expertise.
             </p>
           </div>
 
           {/* Testimonial Grid */}
           <div className="grid md:grid-cols-2 gap-8">
             {testimonials.map((testimonial, idx) => (
-              <div key={idx} className="bg-white p-8 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition">
+              <div
+                key={idx}
+                className="bg-white p-8 rounded-lg shadow-sm border border-gray-200 hover:shadow-md transition"
+              >
                 {/* Stars */}
                 <div className="flex gap-1 mb-4">
                   {Array.from({ length: testimonial.rating }).map((_, i) => (
@@ -134,9 +142,7 @@ export function SocialProof() {
             <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
               Certified & Compliant
             </h2>
-            <p className="text-lg text-gray-600">
-              Meeting the highest standards across industries
-            </p>
+            <p className="text-lg text-gray-600">Meeting the highest standards across industries</p>
           </div>
 
           <div className="grid md:grid-cols-4 gap-6">

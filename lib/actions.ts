@@ -7,7 +7,12 @@ import { sendLeadEmail, sendLeadWebhook } from '@/lib/lead-delivery';
 import { checkRateLimit, getRateLimitKey } from '@/lib/rate-limit';
 import { sendContactConfirmationEmail } from '@/lib/email';
 import { saveContactSubmission } from '@/lib/database';
-import { getCloudflareContext } from '@opennextjs/cloudflare';
+import { getD1 } from '@/lib/d1';
+import {
+  getPublicHiddenProductSlugs,
+  getSanitizedCompareLeadSlugs,
+  PUBLIC_COMPARE_MAX_SLUGS,
+} from '@/lib/public-catalog';
 
 type LeadKind = 'quote' | 'contact' | 'newsletter';
 
@@ -89,7 +94,11 @@ async function getRequestContext() {
   };
 }
 
-function withSubmissionMeta(kind: LeadKind, payload: Record<string, unknown>, requestContext: RequestContext) {
+function withSubmissionMeta(
+  kind: LeadKind,
+  payload: Record<string, unknown>,
+  requestContext: RequestContext
+) {
   return {
     ...payload,
     _metaLeadKind: kind,
@@ -101,7 +110,10 @@ function withSubmissionMeta(kind: LeadKind, payload: Record<string, unknown>, re
   };
 }
 
-function withCookieFallback(value: string | undefined, fallback: string | null): string | undefined {
+function withCookieFallback(
+  value: string | undefined,
+  fallback: string | null
+): string | undefined {
   const normalized = value?.trim();
   if (normalized) {
     return normalized;
@@ -123,16 +135,30 @@ function sourcePathFromReferer(referer: string | null): string | undefined {
 }
 
 function firstTouchAttributionSummary(requestContext: RequestContext): string | undefined {
-  return [
-    requestContext.firstTouchUtmSource ? `utm_source=${requestContext.firstTouchUtmSource}` : null,
-    requestContext.firstTouchUtmMedium ? `utm_medium=${requestContext.firstTouchUtmMedium}` : null,
-    requestContext.firstTouchUtmCampaign ? `utm_campaign=${requestContext.firstTouchUtmCampaign}` : null,
-    requestContext.firstTouchGclid ? `gclid=${requestContext.firstTouchGclid}` : null,
-    requestContext.firstTouchMsclkid ? `msclkid=${requestContext.firstTouchMsclkid}` : null,
-    requestContext.firstTouchFbclid ? `fbclid=${requestContext.firstTouchFbclid}` : null,
-    requestContext.firstTouchLandingPath ? `landing=${requestContext.firstTouchLandingPath}` : null,
-    requestContext.firstTouchReferrerHost ? `referrer_host=${requestContext.firstTouchReferrerHost}` : null,
-  ].filter(Boolean).join(' | ') || undefined;
+  return (
+    [
+      requestContext.firstTouchUtmSource
+        ? `utm_source=${requestContext.firstTouchUtmSource}`
+        : null,
+      requestContext.firstTouchUtmMedium
+        ? `utm_medium=${requestContext.firstTouchUtmMedium}`
+        : null,
+      requestContext.firstTouchUtmCampaign
+        ? `utm_campaign=${requestContext.firstTouchUtmCampaign}`
+        : null,
+      requestContext.firstTouchGclid ? `gclid=${requestContext.firstTouchGclid}` : null,
+      requestContext.firstTouchMsclkid ? `msclkid=${requestContext.firstTouchMsclkid}` : null,
+      requestContext.firstTouchFbclid ? `fbclid=${requestContext.firstTouchFbclid}` : null,
+      requestContext.firstTouchLandingPath
+        ? `landing=${requestContext.firstTouchLandingPath}`
+        : null,
+      requestContext.firstTouchReferrerHost
+        ? `referrer_host=${requestContext.firstTouchReferrerHost}`
+        : null,
+    ]
+      .filter(Boolean)
+      .join(' | ') || undefined
+  );
 }
 
 function isSearchEngineHost(host: string | null) {
@@ -167,7 +193,11 @@ function deriveAttributionChannel(values: {
     return 'paid';
   }
 
-  if (['cpc', 'ppc', 'paid', 'paid-social', 'display', 'retargeting'].some((token) => utmMedium.includes(token))) {
+  if (
+    ['cpc', 'ppc', 'paid', 'paid-social', 'display', 'retargeting'].some((token) =>
+      utmMedium.includes(token)
+    )
+  ) {
     return 'paid';
   }
 
@@ -239,7 +269,8 @@ function computeQuoteQualification(input: {
   if (input.message.trim().length >= 120) score += 8;
   else if (input.message.trim().length >= 50) score += 4;
   if (input.attributionChannel === 'paid' || input.attributionChannel === 'email') score += 5;
-  if (input.attributionDaysToConversion !== undefined && input.attributionDaysToConversion <= 7) score += 6;
+  if (input.attributionDaysToConversion !== undefined && input.attributionDaysToConversion <= 7)
+    score += 6;
 
   return {
     leadScore: Math.min(score, 100),
@@ -267,12 +298,14 @@ function computeContactQualification(input: {
   if (input.message.trim().length >= 160) score += 8;
   else if (input.message.trim().length >= 60) score += 4;
   if (input.attributionChannel === 'paid' || input.attributionChannel === 'email') score += 4;
-  if (input.attributionDaysToConversion !== undefined && input.attributionDaysToConversion <= 7) score += 5;
+  if (input.attributionDaysToConversion !== undefined && input.attributionDaysToConversion <= 7)
+    score += 5;
 
   return {
     leadScore: Math.min(score, 100),
     leadPriority: scoreToPriority(score),
-    leadIntent: buyingSignal.test(subject) || buyingSignal.test(message) ? 'consultation' : 'spec-research',
+    leadIntent:
+      buyingSignal.test(subject) || buyingSignal.test(message) ? 'consultation' : 'spec-research',
   };
 }
 
@@ -283,8 +316,10 @@ function computeNewsletterQualification(input: {
   let score = 12;
 
   if (input.attributionChannel === 'paid') score += 6;
-  else if (input.attributionChannel === 'organic' || input.attributionChannel === 'referral') score += 3;
-  if (input.attributionDaysToConversion !== undefined && input.attributionDaysToConversion <= 3) score += 4;
+  else if (input.attributionChannel === 'organic' || input.attributionChannel === 'referral')
+    score += 3;
+  if (input.attributionDaysToConversion !== undefined && input.attributionDaysToConversion <= 3)
+    score += 4;
 
   return {
     leadScore: Math.min(score, 100),
@@ -297,7 +332,8 @@ function deriveLeadRouting(kind: LeadKind, qualification: LeadQualification): Le
   if (kind === 'newsletter') {
     return {
       leadRoutingTeam: 'marketing',
-      leadRoutingQueue: qualification.leadPriority === 'high' ? 'marketing-priority' : 'marketing-nurture',
+      leadRoutingQueue:
+        qualification.leadPriority === 'high' ? 'marketing-priority' : 'marketing-nurture',
       leadSlaHours: qualification.leadPriority === 'high' ? 24 : 72,
     };
   }
@@ -305,7 +341,8 @@ function deriveLeadRouting(kind: LeadKind, qualification: LeadQualification): Le
   if (qualification.leadIntent === 'spec-research') {
     return {
       leadRoutingTeam: 'technical-sales',
-      leadRoutingQueue: qualification.leadPriority === 'high' ? 'technical-priority' : 'technical-general',
+      leadRoutingQueue:
+        qualification.leadPriority === 'high' ? 'technical-priority' : 'technical-general',
       leadSlaHours: qualification.leadPriority === 'high' ? 4 : 12,
     };
   }
@@ -313,18 +350,23 @@ function deriveLeadRouting(kind: LeadKind, qualification: LeadQualification): Le
   return {
     leadRoutingTeam: 'sales',
     leadRoutingQueue: qualification.leadPriority === 'high' ? 'sales-priority' : 'sales-general',
-    leadSlaHours: qualification.leadPriority === 'high' ? 2 : qualification.leadPriority === 'medium' ? 8 : 24,
+    leadSlaHours:
+      qualification.leadPriority === 'high' ? 2 : qualification.leadPriority === 'medium' ? 8 : 24,
   };
 }
 
-async function deliverLeadWithOptionalWebhook(kind: LeadKind, payload: Record<string, unknown>): Promise<DeliveryResult> {
+async function deliverLeadWithOptionalWebhook(
+  kind: LeadKind,
+  payload: Record<string, unknown>
+): Promise<DeliveryResult> {
   await sendLeadEmail(kind, payload);
 
   try {
     await sendLeadWebhook(kind, payload);
     return { webhookDelivered: true };
   } catch (error) {
-    const submissionId = typeof payload['_metaSubmissionId'] === 'string' ? payload['_metaSubmissionId'] : 'unknown';
+    const submissionId =
+      typeof payload['_metaSubmissionId'] === 'string' ? payload['_metaSubmissionId'] : 'unknown';
     console.warn(`[lead:${kind}] webhook delivery failed (submissionId=${submissionId})`, error);
     return { webhookDelivered: false };
   }
@@ -379,9 +421,14 @@ export async function submitQuoteRequest(
     };
   }
 
-  const compareSlugs = parsed.data.compareSlugs
-    ? parsed.data.compareSlugs.split(',').map((s) => s.trim()).filter(Boolean)
-    : [];
+  const hiddenCatalog = await getPublicHiddenProductSlugs();
+  const compareSanitized = getSanitizedCompareLeadSlugs(
+    hiddenCatalog,
+    parsed.data.compareSlugs,
+    parsed.data.compareNames,
+    PUBLIC_COMPARE_MAX_SLUGS
+  );
+  const compareSlugs = compareSanitized.slugs;
 
   const utmSource = withCookieFallback(parsed.data.utmSource, requestContext.utmSource);
   const utmMedium = withCookieFallback(parsed.data.utmMedium, requestContext.utmMedium);
@@ -390,7 +437,8 @@ export async function submitQuoteRequest(
   const msclkid = withCookieFallback(parsed.data.msclkid, requestContext.msclkid);
   const fbclid = withCookieFallback(parsed.data.fbclid, requestContext.fbclid);
   const landingPath = withCookieFallback(parsed.data.landingPath, requestContext.landingPath);
-  const sourcePath = parsed.data.sourcePath?.trim() || sourcePathFromReferer(requestContext.referer);
+  const sourcePath =
+    parsed.data.sourcePath?.trim() || sourcePathFromReferer(requestContext.referer);
   const firstTouchSummary = firstTouchAttributionSummary(requestContext);
   const submittedAt = new Date();
   const attributionDaysToConversion = conversionLagDays(requestContext.firstTouchAt, submittedAt);
@@ -423,6 +471,8 @@ export async function submitQuoteRequest(
 
   const enrichedPayload = {
     ...parsed.data,
+    compareSlugs: compareSanitized.compareSlugsField,
+    compareNames: compareSanitized.compareNamesField,
     utmSource,
     utmMedium,
     utmCampaign,
@@ -474,10 +524,14 @@ export async function submitQuoteRequest(
       `sla_hours=${routing.leadSlaHours}`,
       requestContext.firstTouchAt ? `first_touch_at=${requestContext.firstTouchAt}` : null,
       requestContext.lastTouchAt ? `last_touch_at=${requestContext.lastTouchAt}` : null,
-      attributionDaysToConversion !== undefined ? `days_to_conversion=${attributionDaysToConversion}` : null,
+      attributionDaysToConversion !== undefined
+        ? `days_to_conversion=${attributionDaysToConversion}`
+        : null,
       parsed.data.compareOnlyDiff ? `onlydiff=${parsed.data.compareOnlyDiff}` : null,
       sourcePath ? `path=${sourcePath}` : null,
-    ].filter(Boolean).join(' | '),
+    ]
+      .filter(Boolean)
+      .join(' | '),
   };
 
   const payloadWithMeta = withSubmissionMeta('quote', enrichedPayload, requestContext);
@@ -488,7 +542,8 @@ export async function submitQuoteRequest(
     return {
       success: true,
       data: { submissionId, webhookDelivered: delivery.webhookDelivered },
-      message: 'Your quote request has been received. Our team will contact you within 1 business day.',
+      message:
+        'Your quote request has been received. Our team will contact you within 1 business day.',
     };
   } catch (error) {
     console.error('submitQuoteRequest failed', error);
@@ -528,9 +583,14 @@ export async function submitContactForm(
     };
   }
 
-  const compareSlugs = parsed.data.compareSlugs
-    ? parsed.data.compareSlugs.split(',').map((s) => s.trim()).filter(Boolean)
-    : [];
+  const hiddenCatalog = await getPublicHiddenProductSlugs();
+  const compareSanitized = getSanitizedCompareLeadSlugs(
+    hiddenCatalog,
+    parsed.data.compareSlugs,
+    parsed.data.compareNames,
+    PUBLIC_COMPARE_MAX_SLUGS
+  );
+  const compareSlugs = compareSanitized.slugs;
 
   const utmSource = withCookieFallback(parsed.data.utmSource, requestContext.utmSource);
   const utmMedium = withCookieFallback(parsed.data.utmMedium, requestContext.utmMedium);
@@ -539,7 +599,8 @@ export async function submitContactForm(
   const msclkid = withCookieFallback(parsed.data.msclkid, requestContext.msclkid);
   const fbclid = withCookieFallback(parsed.data.fbclid, requestContext.fbclid);
   const landingPath = withCookieFallback(parsed.data.landingPath, requestContext.landingPath);
-  const sourcePath = parsed.data.sourcePath?.trim() || sourcePathFromReferer(requestContext.referer);
+  const sourcePath =
+    parsed.data.sourcePath?.trim() || sourcePathFromReferer(requestContext.referer);
   const firstTouchSummary = firstTouchAttributionSummary(requestContext);
   const submittedAt = new Date();
   const attributionDaysToConversion = conversionLagDays(requestContext.firstTouchAt, submittedAt);
@@ -571,6 +632,8 @@ export async function submitContactForm(
 
   const enrichedPayload = {
     ...parsed.data,
+    compareSlugs: compareSanitized.compareSlugsField,
+    compareNames: compareSanitized.compareNamesField,
     utmSource,
     utmMedium,
     utmCampaign,
@@ -622,10 +685,14 @@ export async function submitContactForm(
       `sla_hours=${routing.leadSlaHours}`,
       requestContext.firstTouchAt ? `first_touch_at=${requestContext.firstTouchAt}` : null,
       requestContext.lastTouchAt ? `last_touch_at=${requestContext.lastTouchAt}` : null,
-      attributionDaysToConversion !== undefined ? `days_to_conversion=${attributionDaysToConversion}` : null,
+      attributionDaysToConversion !== undefined
+        ? `days_to_conversion=${attributionDaysToConversion}`
+        : null,
       parsed.data.compareOnlyDiff ? `onlydiff=${parsed.data.compareOnlyDiff}` : null,
       sourcePath ? `path=${sourcePath}` : null,
-    ].filter(Boolean).join(' | '),
+    ]
+      .filter(Boolean)
+      .join(' | '),
   };
 
   const payloadWithMeta = withSubmissionMeta('contact', enrichedPayload, requestContext);
@@ -636,8 +703,7 @@ export async function submitContactForm(
 
     // Persist to D1 (best-effort — failure does not block the user)
     try {
-      const { env } = await getCloudflareContext({ async: true });
-      const db = (env as Record<string, unknown>)['DB'] as import('@cloudflare/workers-types').D1Database | undefined;
+      const db = await getD1();
       if (db) {
         await saveContactSubmission(
           db,
@@ -651,7 +717,7 @@ export async function submitContactForm(
           },
           submissionId,
           requestContext.userAgent ?? undefined,
-          requestContext.ip ?? undefined,
+          requestContext.ip ?? undefined
         );
       }
     } catch (dbErr) {
@@ -665,7 +731,7 @@ export async function submitContactForm(
       console.warn('Failed to send contact confirmation email:', emailResult.error);
       // Don't fail the submission just because email failed
     }
-    
+
     return {
       success: true,
       data: { submissionId, webhookDelivered: delivery.webhookDelivered },
@@ -691,7 +757,11 @@ export async function subscribeNewsletter(
   }
 
   const requestContext = await getRequestContext();
-  const allowed = checkRateLimit(getRateLimitKey('newsletter', requestContext.ip), 6, 10 * 60 * 1000);
+  const allowed = checkRateLimit(
+    getRateLimitKey('newsletter', requestContext.ip),
+    6,
+    10 * 60 * 1000
+  );
   if (!allowed) {
     return {
       success: false,
@@ -787,9 +857,13 @@ export async function subscribeNewsletter(
       `sla_hours=${routing.leadSlaHours}`,
       requestContext.firstTouchAt ? `first_touch_at=${requestContext.firstTouchAt}` : null,
       requestContext.lastTouchAt ? `last_touch_at=${requestContext.lastTouchAt}` : null,
-      attributionDaysToConversion !== undefined ? `days_to_conversion=${attributionDaysToConversion}` : null,
+      attributionDaysToConversion !== undefined
+        ? `days_to_conversion=${attributionDaysToConversion}`
+        : null,
       newsletterSourcePath ? `path=${newsletterSourcePath}` : null,
-    ].filter(Boolean).join(' | '),
+    ]
+      .filter(Boolean)
+      .join(' | '),
   };
 
   const payloadWithMeta = withSubmissionMeta('newsletter', newsletterPayload, requestContext);

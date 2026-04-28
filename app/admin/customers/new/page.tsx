@@ -5,6 +5,8 @@ import { useRouter } from 'next/navigation';
 
 export default function NewCustomerRedirect() {
   const router = useRouter();
-  useEffect(() => { router.replace('/admin/customers'); }, [router]);
+  useEffect(() => {
+    router.replace('/admin/customers');
+  }, [router]);
   return null;
 }

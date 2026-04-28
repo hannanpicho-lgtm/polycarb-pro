@@ -1,0 +1,2 @@
+npm run check:all
+npm run test:ci

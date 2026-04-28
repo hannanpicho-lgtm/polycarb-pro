@@ -19,7 +19,7 @@ const benefits = [
     icon: Eye,
     title: 'Up to 92% Light Transmittance',
     description:
-      "Optical-grade PC matches glass in clarity while offering design flexibility impossible with inorganic substrates. Ideal for lenses, diffusers, and light guides.",
+      'Optical-grade PC matches glass in clarity while offering design flexibility impossible with inorganic substrates. Ideal for lenses, diffusers, and light guides.',
     stat: '92%',
     statLabel: 'light transmittance',
     color: 'text-cyan-500',
@@ -83,13 +83,15 @@ export function WhyPolycarbonate() {
     <section className="py-20 bg-background" aria-labelledby="why-pc-heading">
       <div className="container mx-auto">
         <div className="text-center mb-14">
-          <p className="text-xs font-bold uppercase tracking-widest text-brand-500 mb-2">Material Science</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-brand-500 mb-2">
+            Material Science
+          </p>
           <h2 id="why-pc-heading" className="section-heading">
             Why Polycarbonate?
           </h2>
           <p className="section-subheading mx-auto mt-3">
-            Six decades of engineering innovation have made polycarbonate the transparent engineering thermoplastic of
-            choice across the most demanding global industries.
+            Six decades of engineering innovation have made polycarbonate the transparent
+            engineering thermoplastic of choice across the most demanding global industries.
           </p>
         </div>
 
@@ -116,7 +118,9 @@ export function WhyPolycarbonate() {
                       <span className="text-xs text-muted-foreground">{benefit.statLabel}</span>
                     </div>
                     <h3 className="font-bold text-base text-foreground mb-2">{benefit.title}</h3>
-                    <p className="text-sm text-muted-foreground leading-relaxed">{benefit.description}</p>
+                    <p className="text-sm text-muted-foreground leading-relaxed">
+                      {benefit.description}
+                    </p>
                   </div>
                 </div>
               </motion.div>
@@ -134,29 +138,46 @@ export function WhyPolycarbonate() {
               poster="/video-posters/proof-pc-vs-glass.jpg"
               className="absolute inset-0 w-full h-full object-cover object-center"
             />
-            <div className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-steel-950/60 hidden lg:block" aria-hidden="true" />
+            <div
+              className="absolute inset-0 bg-gradient-to-r from-transparent via-transparent to-steel-950/60 hidden lg:block"
+              aria-hidden="true"
+            />
           </div>
           {/* Text panel */}
           <div className="flex flex-col justify-center px-8 py-10 lg:px-12">
-            <span className="text-xs font-bold uppercase tracking-widest text-brand-400 mb-3">Proof, Not Claims</span>
+            <span className="text-xs font-bold uppercase tracking-widest text-brand-400 mb-3">
+              Proof, Not Claims
+            </span>
             <h3 className="text-2xl lg:text-3xl font-black text-white leading-tight mb-4">
               The demonstration that speaks louder than any datasheet
             </h3>
             <ul className="space-y-3 text-[15px] text-white/70 leading-relaxed">
               <li className="flex items-start gap-2">
-                <span className="mt-1.5 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-brand-400" aria-hidden="true" />
+                <span
+                  className="mt-1.5 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-brand-400"
+                  aria-hidden="true"
+                />
                 Bricks stacked directly on polycarbonate — zero cracks, zero deflection
               </li>
               <li className="flex items-start gap-2">
-                <span className="mt-1.5 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-brand-400" aria-hidden="true" />
+                <span
+                  className="mt-1.5 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-brand-400"
+                  aria-hidden="true"
+                />
                 Glass dropped the same distance: shatters on impact into dust
               </li>
               <li className="flex items-start gap-2">
-                <span className="mt-1.5 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-brand-400" aria-hidden="true" />
+                <span
+                  className="mt-1.5 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-brand-400"
+                  aria-hidden="true"
+                />
                 250× impact resistance vs. standard glass — this is what it looks like in practice
               </li>
               <li className="flex items-start gap-2">
-                <span className="mt-1.5 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-brand-400" aria-hidden="true" />
+                <span
+                  className="mt-1.5 flex-shrink-0 w-1.5 h-1.5 rounded-full bg-brand-400"
+                  aria-hidden="true"
+                />
                 Lighter, cheaper to ship, and survives conditions that destroy alternatives
               </li>
             </ul>
@@ -178,10 +199,7 @@ export function WhyPolycarbonate() {
               </thead>
               <tbody>
                 {technicalSpecs.map((spec, i) => (
-                  <tr
-                    key={spec.property}
-                    className={i % 2 === 0 ? 'bg-background' : 'bg-muted/40'}
-                  >
+                  <tr key={spec.property} className={i % 2 === 0 ? 'bg-background' : 'bg-muted/40'}>
                     <td className="px-5 py-3 font-medium text-foreground">{spec.property}</td>
                     <td className="px-5 py-3 text-muted-foreground font-mono">{spec.value}</td>
                   </tr>
@@ -190,7 +208,8 @@ export function WhyPolycarbonate() {
             </table>
           </div>
           <p className="text-xs text-muted-foreground text-center mt-3">
-            Values are indicative across our standard portfolio. Contact us for grade-specific datasheets.
+            Values are indicative across our standard portfolio. Contact us for grade-specific
+            datasheets.
           </p>
         </div>
       </div>

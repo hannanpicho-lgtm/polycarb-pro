@@ -11,12 +11,24 @@ export function DistributorPromoBanner() {
         <div className="absolute -right-40 -top-40 h-80 w-80 rounded-full bg-blue-500/20 blur-3xl" />
         {/* Bottom-left amber glow */}
         <div className="absolute -bottom-32 -left-32 h-96 w-96 rounded-full bg-amber-500/15 blur-3xl" />
-        
+
         {/* Decorative polycarbonate sheet pattern */}
-        <svg className="absolute right-0 bottom-0 h-full w-1/3 opacity-5" viewBox="0 0 200 400" preserveAspectRatio="none">
+        <svg
+          className="absolute right-0 bottom-0 h-full w-1/3 opacity-5"
+          viewBox="0 0 200 400"
+          preserveAspectRatio="none"
+        >
           <defs>
             <pattern id="sheets" patternUnits="userSpaceOnUse" width="40" height="40">
-              <rect x="0" y="0" width="38" height="38" fill="none" stroke="currentColor" strokeWidth="1" />
+              <rect
+                x="0"
+                y="0"
+                width="38"
+                height="38"
+                fill="none"
+                stroke="currentColor"
+                strokeWidth="1"
+              />
             </pattern>
           </defs>
           <rect width="200" height="400" fill="url(#sheets)" />
@@ -29,7 +41,9 @@ export function DistributorPromoBanner() {
         <div className="mb-4 flex justify-center">
           <div className="inline-flex items-center gap-2 rounded-full bg-gradient-to-r from-blue-500/30 to-cyan-500/30 px-4 py-2 backdrop-blur-sm border border-blue-400/50">
             <div className="h-2 w-2 rounded-full bg-blue-300 animate-pulse" />
-            <span className="text-xs font-bold text-blue-100 tracking-wider uppercase">Limited Partnership</span>
+            <span className="text-xs font-bold text-blue-100 tracking-wider uppercase">
+              Limited Partnership
+            </span>
           </div>
         </div>
 

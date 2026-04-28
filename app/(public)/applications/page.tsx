@@ -12,7 +12,12 @@ export const metadata: Metadata = {
 };
 
 const iconMap: Record<string, React.ElementType> = {
-  Car, Building2, Stethoscope, Cpu, Lightbulb, ShieldCheck,
+  Car,
+  Building2,
+  Stethoscope,
+  Cpu,
+  Lightbulb,
+  ShieldCheck,
 };
 
 export default function ApplicationsPage() {
@@ -21,12 +26,15 @@ export default function ApplicationsPage() {
       {/* Page header */}
       <div className="bg-steel-950 pt-28 pb-14">
         <div className="container mx-auto">
-          <p className="text-brand-400 text-[11px] font-bold uppercase tracking-[0.15em] mb-3">Industries We Serve</p>
+          <p className="text-brand-400 text-[11px] font-bold uppercase tracking-[0.15em] mb-3">
+            Industries We Serve
+          </p>
           <h1 className="text-4xl lg:text-5xl font-bold text-white tracking-tight mb-4 font-display">
             Where Our Materials Perform
           </h1>
           <p className="text-white/60 text-base max-w-2xl leading-relaxed">
-            Automotive lightweighting, biocompatible medical housings, architectural glazing — polycarbonate engineered for the challenges that matter most.
+            Automotive lightweighting, biocompatible medical housings, architectural glazing —
+            polycarbonate engineered for the challenges that matter most.
           </p>
         </div>
       </div>
@@ -78,7 +86,10 @@ export default function ApplicationsPage() {
                     {/* Benefits */}
                     <div className="grid grid-cols-2 gap-1.5 my-4">
                       {app.benefits.map((b) => (
-                        <span key={b} className="text-[11px] bg-muted text-muted-foreground px-2 py-1 rounded">
+                        <span
+                          key={b}
+                          className="text-[11px] bg-muted text-muted-foreground px-2 py-1 rounded"
+                        >
                           {b}
                         </span>
                       ))}
@@ -103,9 +114,14 @@ export default function ApplicationsPage() {
         <div className="container mx-auto text-center">
           <h2 className="text-2xl font-bold text-foreground mb-3">Don't see your industry?</h2>
           <p className="text-muted-foreground text-sm mb-7 max-w-md mx-auto">
-            Our applications engineers work with customers in over 30 industry segments. Get in touch and we'll identify the right PC grade for your requirements.
+            Our applications engineers work with customers in over 30 industry segments. Get in
+            touch and we'll identify the right PC grade for your requirements.
           </p>
-          <Button asChild size="lg" className="bg-brand-500 hover:bg-brand-600 text-white font-bold">
+          <Button
+            asChild
+            size="lg"
+            className="bg-brand-500 hover:bg-brand-600 text-white font-bold"
+          >
             <Link href="/contact?source=applications-cta">Talk to an Applications Engineer</Link>
           </Button>
         </div>

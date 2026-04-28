@@ -17,9 +17,7 @@ export function DistributorPromoProvider({ children }: DistributorPromoProviderP
   const { isOpen, handleClose, closeModalOnly } = useDistributorPromoTrigger();
 
   const isShell = SHELL_PREFIXES.some((p) => pathname.startsWith(p));
-  const onDedicatedApplyPage = NO_MODAL.some(
-    (p) => pathname === p || pathname.startsWith(`${p}/`)
-  );
+  const onDedicatedApplyPage = NO_MODAL.some((p) => pathname === p || pathname.startsWith(`${p}/`));
   const shouldShow = isOpen && !onDedicatedApplyPage;
 
   useEffect(() => {

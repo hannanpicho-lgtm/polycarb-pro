@@ -1,19 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCloudflareContext } from '@opennextjs/cloudflare';
-import type { D1Database } from '@cloudflare/workers-types';
-
-async function getDB(): Promise<D1Database | null> {
-  const { env } = await getCloudflareContext({ async: true });
-  return ((env as Record<string, unknown>)['DB'] as D1Database) ?? null;
-}
+import { apiJsonError } from '@/lib/api-json-error';
+import { getD1 } from '@/lib/d1';
 
 /** PATCH — approve or reject a distributor application */
 export async function PATCH(request: NextRequest) {
   try {
-    const db = await getDB();
-    if (!db) return NextResponse.json({ error: 'DB unavailable' }, { status: 503 });
+    const db = await getD1();
+    if (!db) return apiJsonError('DB unavailable', 503);
 
-    const body = await request.json() as {
+    const body = (await request.json()) as {
       id: string;
       action: 'approve' | 'reject' | 'review';
       discountTier?: string;
@@ -22,23 +17,29 @@ export async function PATCH(request: NextRequest) {
     };
 
     if (!body.id || !body.action) {
-      return NextResponse.json({ error: 'id and action required' }, { status: 400 });
+      return apiJsonError('id and action required', 400);
     }
 
     const now = new Date().toISOString();
 
     if (body.action === 'approve') {
-      await db.prepare(
-        `UPDATE distributor_submissions
+      await db
+        .prepare(
+          `UPDATE distributor_submissions
          SET status = 'approved', discountTier = COALESCE(?, discountTier),
              approvedAt = ?, internalNotes = COALESCE(?, internalNotes)
          WHERE id = ?`
-      ).bind(body.discountTier ?? null, now, body.internalNotes ?? null, body.id).run();
+        )
+        .bind(body.discountTier ?? null, now, body.internalNotes ?? null, body.id)
+        .run();
 
       // Fetch the distributor to send approval email
-      const dist = await db.prepare(
-        `SELECT fullName, email, companyName, discountTier FROM distributor_submissions WHERE id = ?`
-      ).bind(body.id).first<{ fullName: string; email: string; companyName: string; discountTier: string }>();
+      const dist = await db
+        .prepare(
+          `SELECT fullName, email, companyName, discountTier FROM distributor_submissions WHERE id = ?`
+        )
+        .bind(body.id)
+        .first<{ fullName: string; email: string; companyName: string; discountTier: string }>();
 
       if (dist) {
         const resendKey = process.env.RESEND_API_KEY;
@@ -46,7 +47,7 @@ export async function PATCH(request: NextRequest) {
         if (resendKey) {
           await fetch('https://api.resend.com/emails', {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+            headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
               from: process.env.FROM_EMAIL ?? 'noreply@covestroppc.com',
               to: dist.email,
@@ -76,33 +77,39 @@ export async function PATCH(request: NextRequest) {
         }
       }
     } else if (body.action === 'reject') {
-      await db.prepare(
-        `UPDATE distributor_submissions
+      await db
+        .prepare(
+          `UPDATE distributor_submissions
          SET status = 'rejected', rejectedAt = ?,
              rejectionReason = COALESCE(?, rejectionReason),
              internalNotes = COALESCE(?, internalNotes)
          WHERE id = ?`
-      ).bind(now, body.rejectionReason ?? null, body.internalNotes ?? null, body.id).run();
+        )
+        .bind(now, body.rejectionReason ?? null, body.internalNotes ?? null, body.id)
+        .run();
     } else if (body.action === 'review') {
-      await db.prepare(
-        `UPDATE distributor_submissions SET status = 'reviewed', internalNotes = COALESCE(?, internalNotes) WHERE id = ?`
-      ).bind(body.internalNotes ?? null, body.id).run();
+      await db
+        .prepare(
+          `UPDATE distributor_submissions SET status = 'reviewed', internalNotes = COALESCE(?, internalNotes) WHERE id = ?`
+        )
+        .bind(body.internalNotes ?? null, body.id)
+        .run();
     }
 
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('PATCH /api/admin/distributors:', error);
-    return NextResponse.json({ error: 'Failed' }, { status: 500 });
+    return apiJsonError('Failed', 500);
   }
 }
 
 /** POST — update a distributor quote status and optionally notify the distributor */
 export async function POST(request: NextRequest) {
   try {
-    const db = await getDB();
-    if (!db) return NextResponse.json({ error: 'DB unavailable' }, { status: 503 });
+    const db = await getD1();
+    if (!db) return apiJsonError('DB unavailable', 503);
 
-    const body = await request.json() as {
+    const body = (await request.json()) as {
       quoteId: string;
       status: 'reviewed' | 'quoted' | 'approved' | 'rejected';
       adminNotes?: string;
@@ -110,37 +117,54 @@ export async function POST(request: NextRequest) {
     };
 
     if (!body.quoteId || !body.status) {
-      return NextResponse.json({ error: 'quoteId and status required' }, { status: 400 });
+      return apiJsonError('quoteId and status required', 400);
     }
 
     const now = new Date().toISOString();
-    await db.prepare(
-      `UPDATE distributor_quotes SET status = ?, adminNotes = COALESCE(?, adminNotes), respondedAt = ?, updatedAt = ? WHERE id = ?`
-    ).bind(body.status, body.adminNotes ?? null, now, now, body.quoteId).run();
+    await db
+      .prepare(
+        `UPDATE distributor_quotes SET status = ?, adminNotes = COALESCE(?, adminNotes), respondedAt = ?, updatedAt = ? WHERE id = ?`
+      )
+      .bind(body.status, body.adminNotes ?? null, now, now, body.quoteId)
+      .run();
 
     // Optionally notify the distributor
     if (body.notify) {
-      const quote = await db.prepare(
-        `SELECT id, referenceId, distributorEmail, distributorCompany, subtotalNet, currency, status
+      const quote = await db
+        .prepare(
+          `SELECT id, referenceId, distributorEmail, distributorCompany, subtotalNet, currency, status
          FROM distributor_quotes WHERE id = ?`
-      ).bind(body.quoteId).first<{
-        id: string; referenceId: string; distributorEmail: string;
-        distributorCompany: string; subtotalNet: number; currency: string; status: string;
-      }>();
+        )
+        .bind(body.quoteId)
+        .first<{
+          id: string;
+          referenceId: string;
+          distributorEmail: string;
+          distributorCompany: string;
+          subtotalNet: number;
+          currency: string;
+          status: string;
+        }>();
 
       if (quote) {
         const resendKey = process.env.RESEND_API_KEY;
         const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://covestroppc.com';
         if (resendKey) {
           const statusLabel: Record<string, string> = {
-            reviewed: 'Under Review', quoted: 'Quote Ready', approved: 'Approved', rejected: 'Declined',
+            reviewed: 'Under Review',
+            quoted: 'Quote Ready',
+            approved: 'Approved',
+            rejected: 'Declined',
           };
           const statusColor: Record<string, string> = {
-            reviewed: '#0087C3', quoted: '#7c3aed', approved: '#059669', rejected: '#dc2626',
+            reviewed: '#0087C3',
+            quoted: '#7c3aed',
+            approved: '#059669',
+            rejected: '#dc2626',
           };
           const bodyText: Record<string, string> = {
             reviewed: `We've received your quote request <strong>${quote.referenceId}</strong> and our team is reviewing it. We'll be in touch shortly.`,
-            quoted:   `We've prepared a response to your quote request <strong>${quote.referenceId}</strong>. Log in to your portal to view the details.`,
+            quoted: `We've prepared a response to your quote request <strong>${quote.referenceId}</strong>. Log in to your portal to view the details.`,
             approved: `Your quote request <strong>${quote.referenceId}</strong> has been approved and is ready to proceed to order.`,
             rejected: `After review, we're unable to fulfill quote request <strong>${quote.referenceId}</strong> at this time. Please contact your account manager for alternatives.`,
           };
@@ -150,7 +174,7 @@ export async function POST(request: NextRequest) {
 
           await fetch('https://api.resend.com/emails', {
             method: 'POST',
-            headers: { 'Authorization': `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
+            headers: { Authorization: `Bearer ${resendKey}`, 'Content-Type': 'application/json' },
             body: JSON.stringify({
               from: process.env.FROM_EMAIL ?? 'noreply@covestroppc.com',
               to: quote.distributorEmail,
@@ -182,15 +206,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true });
   } catch (error) {
     console.error('POST /api/admin/distributors:', error);
-    return NextResponse.json({ error: 'Failed' }, { status: 500 });
+    return apiJsonError('Failed', 500);
   }
 }
 
 /** GET — list distributor quotes submitted via portal */
 export async function GET(request: NextRequest) {
   try {
-    const db = await getDB();
-    if (!db) return NextResponse.json({ error: 'DB unavailable' }, { status: 503 });
+    const db = await getD1();
+    if (!db) return apiJsonError('DB unavailable', 503);
 
     const url = new URL(request.url);
     const view = url.searchParams.get('view') || 'applications';
@@ -198,19 +222,22 @@ export async function GET(request: NextRequest) {
     const offset = parseInt(url.searchParams.get('offset') || '0');
 
     if (view === 'quotes') {
-      const result = await db.prepare(
-        `SELECT * FROM distributor_quotes ORDER BY createdAt DESC LIMIT ? OFFSET ?`
-      ).bind(limit, offset).all();
-      const countResult = await db.prepare('SELECT COUNT(*) as count FROM distributor_quotes').all();
+      const result = await db
+        .prepare(`SELECT * FROM distributor_quotes ORDER BY createdAt DESC LIMIT ? OFFSET ?`)
+        .bind(limit, offset)
+        .all();
+      const countResult = await db
+        .prepare('SELECT COUNT(*) as count FROM distributor_quotes')
+        .all();
       return NextResponse.json({
         quotes: result.results ?? [],
         total: (countResult.results?.[0] as Record<string, unknown>)?.count ?? 0,
       });
     }
 
-    return NextResponse.json({ error: 'Unknown view' }, { status: 400 });
+    return apiJsonError('Unknown view', 400);
   } catch (error) {
     console.error('GET /api/admin/distributors:', error);
-    return NextResponse.json({ error: 'Failed' }, { status: 500 });
+    return apiJsonError('Failed', 500);
   }
 }

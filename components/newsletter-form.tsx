@@ -22,14 +22,19 @@ function SubmitButton() {
       {pending ? (
         <Loader2 className="h-4 w-4 animate-spin" />
       ) : (
-        <>Subscribe <ArrowRight className="h-4 w-4" /></>
+        <>
+          Subscribe <ArrowRight className="h-4 w-4" />
+        </>
       )}
     </button>
   );
 }
 
 export function NewsletterForm() {
-  const [state, formAction] = useActionState<ActionResult<{ submissionId?: string; webhookDelivered: boolean }> | null, FormData>(subscribeNewsletter, null);
+  const [state, formAction] = useActionState<
+    ActionResult<{ submissionId?: string; webhookDelivered: boolean }> | null,
+    FormData
+  >(subscribeNewsletter, null);
 
   React.useEffect(() => {
     if (!state) return;
@@ -47,7 +52,11 @@ export function NewsletterForm() {
         <CheckCircle2 className="h-5 w-5 flex-shrink-0" />
         <div className="flex flex-col">
           <span>{state.message}</span>
-          {state.data?.submissionId ? <span className="text-[10px] text-white/40 font-mono">Ref: {state.data.submissionId}</span> : null}
+          {state.data?.submissionId ? (
+            <span className="text-[10px] text-white/40 font-mono">
+              Ref: {state.data.submissionId}
+            </span>
+          ) : null}
         </div>
       </div>
     );

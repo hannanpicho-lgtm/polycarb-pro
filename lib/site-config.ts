@@ -7,9 +7,9 @@ export const siteConfig = {
     foundedYear: 2003,
   },
   contact: {
-    salesEmail: 'sales@polycarbpro.com',
-    phoneDisplay: '+1 (713) 555-0172',
-    phoneHref: '+17135550172',
+    salesEmail: process.env['NEXT_PUBLIC_CONTACT_SALES_EMAIL'] ?? 'sales@polycarbpro.com',
+    phoneDisplay: process.env['NEXT_PUBLIC_CONTACT_PHONE_DISPLAY'] ?? '+1 (713) 555-0172',
+    phoneHref: process.env['NEXT_PUBLIC_CONTACT_PHONE_HREF'] ?? '+17135550172',
     businessHours: 'Mon–Fri 8 AM – 6 PM EST',
     addressLine1: '1800 West Loop South, Suite 1550',
     city: 'Houston',
@@ -22,12 +22,13 @@ export const siteConfig = {
     locale: 'en_US',
   },
   social: {
+    /** Leave empty to hide the icon in the footer. */
+    linkedin: '',
+    youtube: '',
     facebook: 'https://www.facebook.com/profile.php?id=61569095061401',
     instagram: 'https://www.instagram.com/polycarbonatepanels?igsh=NXlybGZxaGFhc2s0',
     telegram: 'https://t.me/POLYCARBONATEPANELS',
     tiktok: 'https://tiktok.com/@polycarbonatepane',
-        linkedin: '', // TODO: Add LinkedIn page URL
-    youtube: '', // TODO: Add YouTube channel URL
     whatsapp: 'https://wa.me/17135550172',
   },
   seo: {
@@ -48,3 +49,17 @@ export const siteConfig = {
     ],
   },
 };
+
+/** Public Google Maps “search” link for the configured office (no API key). */
+export function getSiteOfficeGoogleMapsUrl(): string {
+  const { addressLine1, city, state, postalCode, country } = siteConfig.contact;
+  const q = [addressLine1, city, state, postalCode, country].filter(Boolean).join(', ');
+  return `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(q)}`;
+}
+
+/** Non-empty social profile URLs (for `sameAs` / footer). */
+export function getPublicSocialProfileUrls(): string[] {
+  return Object.values(siteConfig.social).filter(
+    (u): u is string => typeof u === 'string' && u.length > 0
+  );
+}

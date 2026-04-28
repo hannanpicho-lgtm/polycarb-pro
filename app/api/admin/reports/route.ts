@@ -1,16 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getCloudflareContext } from '@opennextjs/cloudflare';
-import type { D1Database } from '@cloudflare/workers-types';
-
-async function getDB(): Promise<D1Database | null> {
-  const { env } = await getCloudflareContext({ async: true });
-  return ((env as Record<string, unknown>)['DB'] as D1Database) ?? null;
-}
+import { apiJsonError } from '@/lib/api-json-error';
+import { getD1 } from '@/lib/d1';
 
 export async function GET() {
   try {
-    const db = await getDB();
-    if (!db) return NextResponse.json({ error: 'Database not available' }, { status: 503 });
+    const db = await getD1();
+    if (!db) return apiJsonError('Database not available', 503);
 
     const [
       monthlyOrders,
@@ -22,7 +17,9 @@ export async function GET() {
       recentConversions,
     ] = await Promise.all([
       // Monthly orders + revenue for last 12 months
-      db.prepare(`
+      db
+        .prepare(
+          `
         SELECT strftime('%Y-%m', createdAt) as month,
                COUNT(*) as orderCount,
                SUM(total) as revenue,
@@ -33,16 +30,24 @@ export async function GET() {
         WHERE createdAt >= date('now', '-12 months')
         GROUP BY month
         ORDER BY month ASC
-      `).all(),
+      `
+        )
+        .all(),
 
       // Orders by status
-      db.prepare(`SELECT status, COUNT(*) as count, SUM(total) as value FROM orders GROUP BY status`).all(),
+      db
+        .prepare(
+          `SELECT status, COUNT(*) as count, SUM(total) as value FROM orders GROUP BY status`
+        )
+        .all(),
 
       // Quotes by status + conversion rate
       db.prepare(`SELECT status, COUNT(*) as count FROM quotes GROUP BY status`).all(),
 
       // Top 10 products by revenue
-      db.prepare(`
+      db
+        .prepare(
+          `
         SELECT productName, productSlug,
                SUM(qty) as totalQty,
                SUM(lineTotal) as totalRevenue,
@@ -51,54 +56,81 @@ export async function GET() {
         GROUP BY productSlug, productName
         ORDER BY totalRevenue DESC
         LIMIT 10
-      `).all(),
+      `
+        )
+        .all(),
 
       // Distributor stats (resilient — distributor_quotes table may not exist yet)
       (async () => {
         try {
-          return await db.prepare(`
+          return await db
+            .prepare(
+              `
             SELECT
               (SELECT COUNT(*) FROM distributor_submissions WHERE status='approved') as approved,
               (SELECT COUNT(*) FROM distributor_submissions WHERE status='pending') as pending,
               (SELECT COUNT(*) FROM distributor_quotes) as quotesSubmitted,
               (SELECT COUNT(*) FROM distributor_quotes WHERE status='ordered') as quotesConverted,
               (SELECT SUM(subtotalNet) FROM distributor_quotes WHERE status='ordered') as distRevenue
-          `).first<{
-            approved: number; pending: number;
-            quotesSubmitted: number; quotesConverted: number; distRevenue: number;
-          }>();
+          `
+            )
+            .first<{
+              approved: number;
+              pending: number;
+              quotesSubmitted: number;
+              quotesConverted: number;
+              distRevenue: number;
+            }>();
         } catch {
           // Fall back to submissions-only stats if distributor_quotes table doesn't exist
-          return await db.prepare(`
+          return await db
+            .prepare(
+              `
             SELECT
               (SELECT COUNT(*) FROM distributor_submissions WHERE status='approved') as approved,
               (SELECT COUNT(*) FROM distributor_submissions WHERE status='pending') as pending,
               0 as quotesSubmitted, 0 as quotesConverted, 0 as distRevenue
-          `).first<{
-            approved: number; pending: number;
-            quotesSubmitted: number; quotesConverted: number; distRevenue: number;
-          }>();
+          `
+            )
+            .first<{
+              approved: number;
+              pending: number;
+              quotesSubmitted: number;
+              quotesConverted: number;
+              distRevenue: number;
+            }>();
         }
       })(),
 
       // Payment status breakdown
-      db.prepare(`
+      db
+        .prepare(
+          `
         SELECT paymentStatus,
                COUNT(*) as count,
                SUM(total) as value
         FROM orders GROUP BY paymentStatus
-      `).all(),
+      `
+        )
+        .all(),
 
       // Quote → order conversion (quotes that became orders)
-      db.prepare(`
+      db
+        .prepare(
+          `
         SELECT COUNT(*) as converted
         FROM quotes
         WHERE status IN ('converted', 'accepted', 'ordered')
-      `).first<{ converted: number }>(),
+      `
+        )
+        .first<{ converted: number }>(),
     ]);
 
     // Fill in missing months with zero values
-    const monthMap: Record<string, { month: string; orderCount: number; revenue: number; collected: number }> = {};
+    const monthMap: Record<
+      string,
+      { month: string; orderCount: number; revenue: number; collected: number }
+    > = {};
     (monthlyOrders.results ?? []).forEach((r: unknown) => {
       const row = r as { month: string; orderCount: number; revenue: number; collected: number };
       monthMap[row.month] = row;
@@ -113,7 +145,9 @@ export async function GET() {
       const key = `${d.getFullYear()}-${String(d.getMonth() + 1).padStart(2, '0')}`;
       months.push(key);
     }
-    const monthlyData = months.map(m => monthMap[m] ?? { month: m, orderCount: 0, revenue: 0, collected: 0 });
+    const monthlyData = months.map(
+      (m) => monthMap[m] ?? { month: m, orderCount: 0, revenue: 0, collected: 0 }
+    );
 
     // Quote totals
     const quoteMap: Record<string, number> = {};
@@ -133,11 +167,17 @@ export async function GET() {
       totalQuotes,
       convertedQuotes,
       topProducts: topProducts.results ?? [],
-      distributors: distStats ?? { approved: 0, pending: 0, quotesSubmitted: 0, quotesConverted: 0, distRevenue: 0 },
+      distributors: distStats ?? {
+        approved: 0,
+        pending: 0,
+        quotesSubmitted: 0,
+        quotesConverted: 0,
+        distRevenue: 0,
+      },
       paymentBreakdown: paymentBreakdown.results ?? [],
     });
   } catch (error) {
     console.error('Error fetching reports:', error);
-    return NextResponse.json({ error: 'Failed to fetch reports' }, { status: 500 });
+    return apiJsonError("Failed to fetch reports", 500);
   }
 }

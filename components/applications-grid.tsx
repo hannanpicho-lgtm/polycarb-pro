@@ -3,7 +3,17 @@
 import Link from 'next/link';
 import Image from 'next/image';
 import { motion } from 'framer-motion';
-import { ArrowRight, Car, Building2, Stethoscope, Cpu, Lightbulb, ShieldCheck, Leaf, Package } from 'lucide-react';
+import {
+  ArrowRight,
+  Car,
+  Building2,
+  Stethoscope,
+  Cpu,
+  Lightbulb,
+  ShieldCheck,
+  Leaf,
+  Package,
+} from 'lucide-react';
 import { applications, products } from '@/lib/data';
 
 const iconMap: Record<string, React.ElementType> = {
@@ -40,13 +50,15 @@ export function ApplicationsGrid() {
     <section className="py-20 bg-muted/40" aria-labelledby="applications-heading">
       <div className="container mx-auto">
         <div className="text-center mb-12">
-          <p className="text-xs font-bold uppercase tracking-widest text-brand-500 mb-2">Industries We Serve</p>
+          <p className="text-xs font-bold uppercase tracking-widest text-brand-500 mb-2">
+            Industries We Serve
+          </p>
           <h2 id="applications-heading" className="section-heading">
             Where Polycarbonate Performs
           </h2>
           <p className="section-subheading mx-auto mt-3">
-            From laboratory-grade optical components to large-scale architectural glazing, our material portfolio
-            covers every performance envelope.
+            From laboratory-grade optical components to large-scale architectural glazing, our
+            material portfolio covers every performance envelope.
           </p>
         </div>
 
@@ -69,7 +81,9 @@ export function ApplicationsGrid() {
                   className={`group flex flex-col h-full rounded border-l-4 ${accentClass} border-border p-6 hover:shadow-md transition-all duration-300`}
                 >
                   {/* Icon */}
-                  <div className={`w-12 h-12 rounded-lg bg-background flex items-center justify-center mb-5 shadow-sm border border-border group-hover:scale-110 transition-transform duration-300`}>
+                  <div
+                    className={`w-12 h-12 rounded-lg bg-background flex items-center justify-center mb-5 shadow-sm border border-border group-hover:scale-110 transition-transform duration-300`}
+                  >
                     <Icon className={`h-6 w-6 ${iconClass}`} aria-hidden="true" />
                   </div>
 
@@ -91,7 +105,10 @@ export function ApplicationsGrid() {
                         .filter((product) => app.products.includes(product.id))
                         .slice(0, 3)
                         .map((product) => (
-                          <div key={product.id} className="relative h-20 overflow-hidden rounded-xl border border-border bg-muted">
+                          <div
+                            key={product.id}
+                            className="relative h-20 overflow-hidden rounded-xl border border-border bg-muted"
+                          >
                             <Image
                               src={product.image}
                               alt={product.name}
@@ -103,7 +120,9 @@ export function ApplicationsGrid() {
                     </div>
                     <div className="mt-3 flex items-center justify-between text-xs text-muted-foreground">
                       <span>{Math.min(app.products.length, 3)} product images shown</span>
-                      <span className="font-semibold text-foreground">{app.products.length} grades</span>
+                      <span className="font-semibold text-foreground">
+                        {app.products.length} grades
+                      </span>
                     </div>
                   </div>
 

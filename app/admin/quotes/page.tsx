@@ -24,28 +24,37 @@ interface Quote {
 }
 
 const STATUS_LABELS: Record<QuoteStatus, string> = {
-  pending:   'Pending',
-  reviewed:  'Reviewed',
-  quoted:    'Quoted',
-  accepted:  'Accepted',
-  rejected:  'Rejected',
+  pending: 'Pending',
+  reviewed: 'Reviewed',
+  quoted: 'Quoted',
+  accepted: 'Accepted',
+  rejected: 'Rejected',
   converted: 'Converted',
 };
 
 const STATUS_COLORS: Record<QuoteStatus, string> = {
-  pending:   'bg-amber-50 text-amber-700 border-amber-200',
-  reviewed:  'bg-blue-50 text-blue-700 border-blue-200',
-  quoted:    'bg-purple-50 text-purple-700 border-purple-200',
-  accepted:  'bg-emerald-50 text-emerald-700 border-emerald-200',
-  rejected:  'bg-red-50 text-red-700 border-red-200',
+  pending: 'bg-amber-50 text-amber-700 border-amber-200',
+  reviewed: 'bg-blue-50 text-blue-700 border-blue-200',
+  quoted: 'bg-purple-50 text-purple-700 border-purple-200',
+  accepted: 'bg-emerald-50 text-emerald-700 border-emerald-200',
+  rejected: 'bg-red-50 text-red-700 border-red-200',
   converted: 'bg-slate-100 text-slate-600 border-slate-200',
 };
 
-const ALL_STATUSES: QuoteStatus[] = ['pending', 'reviewed', 'quoted', 'accepted', 'rejected', 'converted'];
+const ALL_STATUSES: QuoteStatus[] = [
+  'pending',
+  'reviewed',
+  'quoted',
+  'accepted',
+  'rejected',
+  'converted',
+];
 
 function StatusBadge({ status }: { status: QuoteStatus }) {
   return (
-    <span className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${STATUS_COLORS[status]}`}>
+    <span
+      className={`inline-flex items-center rounded-full border px-2 py-0.5 text-[10px] font-semibold uppercase tracking-wide ${STATUS_COLORS[status]}`}
+    >
       {STATUS_LABELS[status]}
     </span>
   );
@@ -65,46 +74,73 @@ function QuotesContent() {
   const [sendingQuoteId, setSendingQuoteId] = useState<string | null>(null);
   const [sendForm, setSendForm] = useState({ amount: '', message: '', expiryDays: '14' });
   const [sendResult, setSendResult] = useState<{ ok: boolean; msg: string } | null>(null);
-  const page = 1;
   const pageSize = 20;
 
   const fetchQuotes = useCallback(async () => {
-    setLoading(true); setError('');
+    setLoading(true);
+    setError('');
     try {
       const params = new URLSearchParams({ limit: String(pageSize), offset: '0', search });
       if (statusFilter) params.set('status', statusFilter);
       const res = await fetch(`/api/admin/quotes?${params}`);
-      if (res.status === 401) { router.replace('/admin/login'); return; }
+      if (res.status === 401) {
+        router.replace('/admin/login');
+        return;
+      }
       if (!res.ok) throw new Error('Failed');
       const data = await res.json();
       setQuotes(data.quotes ?? []);
       setTotal(data.total ?? 0);
-    } catch { setError('Failed to load quotes'); }
-    finally { setLoading(false); }
+    } catch {
+      setError('Failed to load quotes');
+    } finally {
+      setLoading(false);
+    }
   }, [search, statusFilter, router]);
 
-  useEffect(() => { fetchQuotes(); }, [fetchQuotes]);
+  useEffect(() => {
+    fetchQuotes();
+  }, [fetchQuotes]);
 
-  async function updateStatus(id: string, status: QuoteStatus, adminNotes?: string, quotedAmount?: number) {
+  async function updateStatus(
+    id: string,
+    status: QuoteStatus,
+    adminNotes?: string,
+    quotedAmount?: number
+  ) {
     setUpdatingId(id);
     try {
       await fetch('/api/admin/quotes', {
         method: 'PATCH',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, status, adminNotes, quotedAmount, respondedAt: new Date().toISOString() }),
+        body: JSON.stringify({
+          id,
+          status,
+          adminNotes,
+          quotedAmount,
+          respondedAt: new Date().toISOString(),
+        }),
       });
       fetchQuotes();
-    } finally { setUpdatingId(null); }
+    } finally {
+      setUpdatingId(null);
+    }
   }
 
   async function convertToOrder(quote: Quote) {
-    router.push(`/admin/orders/new?quoteId=${quote.id}&customerEmail=${encodeURIComponent(quote.customerEmail)}&customerName=${encodeURIComponent(quote.customerName)}&currency=${quote.currency}`);
+    router.push(
+      `/admin/orders/new?quoteId=${quote.id}&customerEmail=${encodeURIComponent(quote.customerEmail)}&customerName=${encodeURIComponent(quote.customerName)}&currency=${quote.currency}`
+    );
   }
 
   async function handleSendQuote(quoteId: string) {
     const amount = parseFloat(sendForm.amount);
-    if (!amount || amount <= 0) { setSendResult({ ok: false, msg: 'Enter a valid amount' }); return; }
-    setSendingQuoteId(quoteId); setSendResult(null);
+    if (!amount || amount <= 0) {
+      setSendResult({ ok: false, msg: 'Enter a valid amount' });
+      return;
+    }
+    setSendingQuoteId(quoteId);
+    setSendResult(null);
     try {
       const res = await fetch('/api/admin/quotes/send', {
         method: 'POST',
@@ -117,11 +153,25 @@ function QuotesContent() {
         }),
       });
       const data = await res.json();
-      if (!res.ok) { setSendResult({ ok: false, msg: data.error ?? 'Failed' }); return; }
-      setSendResult({ ok: true, msg: data.emailSent ? `Email sent to customer` : 'Quote saved (email not sent)' });
-      setTimeout(() => { setSendResult(null); setSendingQuoteId(null); setSendForm({ amount: '', message: '', expiryDays: '14' }); fetchQuotes(); }, 2500);
-    } catch { setSendResult({ ok: false, msg: 'Network error' }); }
-    finally { setSendingQuoteId(null); }
+      if (!res.ok) {
+        setSendResult({ ok: false, msg: data.error ?? 'Failed' });
+        return;
+      }
+      setSendResult({
+        ok: true,
+        msg: data.emailSent ? `Email sent to customer` : 'Quote saved (email not sent)',
+      });
+      setTimeout(() => {
+        setSendResult(null);
+        setSendingQuoteId(null);
+        setSendForm({ amount: '', message: '', expiryDays: '14' });
+        fetchQuotes();
+      }, 2500);
+    } catch {
+      setSendResult({ ok: false, msg: 'Network error' });
+    } finally {
+      setSendingQuoteId(null);
+    }
   }
 
   return (
@@ -132,10 +182,16 @@ function QuotesContent() {
           <p className="text-slate-500 text-sm mt-0.5">{total} total</p>
         </div>
         <div className="flex gap-2">
-          <a href="/api/admin/export?type=quotes" className="px-3 py-2 text-xs font-semibold bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors">
+          <a
+            href="/api/admin/export?type=quotes"
+            className="px-3 py-2 text-xs font-semibold bg-white border border-slate-200 text-slate-600 rounded-lg hover:bg-slate-50 transition-colors"
+          >
             ↓ CSV
           </a>
-          <Link href="/admin/quotes/new" className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors">
+          <Link
+            href="/admin/quotes/new"
+            className="px-4 py-2 bg-brand-600 text-white text-sm font-medium rounded-lg hover:bg-brand-700 transition-colors"
+          >
             + New Quote
           </Link>
         </div>
@@ -144,18 +200,26 @@ function QuotesContent() {
       {/* Filters */}
       <div className="flex flex-wrap gap-2 items-center">
         <div className="flex gap-1 flex-wrap">
-          {(['', ...ALL_STATUSES] as const).map(s => (
-            <button key={s} onClick={() => setStatusFilter(s)}
+          {(['', ...ALL_STATUSES] as const).map((s) => (
+            <button
+              key={s}
+              onClick={() => setStatusFilter(s)}
               className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-                statusFilter === s ? 'bg-slate-900 text-white' : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
-              }`}>
+                statusFilter === s
+                  ? 'bg-slate-900 text-white'
+                  : 'bg-white border border-slate-200 text-slate-600 hover:bg-slate-50'
+              }`}
+            >
               {s ? STATUS_LABELS[s as QuoteStatus] : 'All'}
             </button>
           ))}
         </div>
-        <input value={search} onChange={e => setSearch(e.target.value)}
+        <input
+          value={search}
+          onChange={(e) => setSearch(e.target.value)}
           placeholder="Search name, email…"
-          className="ml-auto px-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand-400/40 w-56" />
+          className="ml-auto px-3 py-1.5 text-sm border border-slate-200 rounded-lg bg-white focus:outline-none focus:ring-2 focus:ring-brand-400/40 w-56"
+        />
       </div>
 
       {/* Table */}
@@ -167,51 +231,100 @@ function QuotesContent() {
         ) : quotes.length === 0 ? (
           <div className="py-16 text-center space-y-4">
             <div className="w-14 h-14 rounded-full bg-slate-100 flex items-center justify-center mx-auto">
-              <svg className="w-6 h-6 text-slate-400" fill="none" viewBox="0 0 24 24" strokeWidth={1.5} stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z" />
+              <svg
+                className="w-6 h-6 text-slate-400"
+                fill="none"
+                viewBox="0 0 24 24"
+                strokeWidth={1.5}
+                stroke="currentColor"
+              >
+                <path
+                  strokeLinecap="round"
+                  strokeLinejoin="round"
+                  d="M19.5 14.25v-2.625a3.375 3.375 0 00-3.375-3.375h-1.5A1.125 1.125 0 0113.5 7.125v-1.5a3.375 3.375 0 00-3.375-3.375H8.25m0 12.75h7.5m-7.5 3H12M10.5 2.25H5.625c-.621 0-1.125.504-1.125 1.125v17.25c0 .621.504 1.125 1.125 1.125h12.75c.621 0 1.125-.504 1.125-1.125V11.25a9 9 0 00-9-9z"
+                />
               </svg>
             </div>
             <div>
               <p className="text-sm font-semibold text-slate-700">No quotes yet</p>
-              <p className="text-xs text-slate-400 mt-1">Create one manually below, or customers can submit via the live quote builder</p>
+              <p className="text-xs text-slate-400 mt-1">
+                Create one manually below, or customers can submit via the live quote builder
+              </p>
             </div>
             <div className="flex gap-3 justify-center">
-              <Link href="/admin/quotes/new"
-                className="px-4 py-2 bg-brand-600 text-white text-sm font-semibold rounded-lg hover:bg-brand-700 transition-colors">
+              <Link
+                href="/admin/quotes/new"
+                className="px-4 py-2 bg-brand-600 text-white text-sm font-semibold rounded-lg hover:bg-brand-700 transition-colors"
+              >
                 + Create Quote Manually
               </Link>
-              <a href="/quote/builder" target="_blank" rel="noopener noreferrer"
-                className="px-4 py-2 border border-slate-200 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors">
+              <a
+                href="/quote/builder"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="px-4 py-2 border border-slate-200 text-slate-700 text-sm font-semibold rounded-lg hover:bg-slate-50 transition-colors"
+              >
                 Open Quote Builder ↗
               </a>
             </div>
             <p className="text-[11px] text-slate-400">
-              Or use the <strong>Quote Builder</strong> at <code className="bg-slate-100 px-1 rounded">covestroppc.com/quote/builder</code> as a customer to test the end-to-end flow
+              Or use the <strong>Quote Builder</strong> at{' '}
+              <code className="bg-slate-100 px-1 rounded">covestroppc.com/quote/builder</code> as a
+              customer to test the end-to-end flow
             </p>
           </div>
         ) : (
           <table className="w-full text-sm">
             <thead className="bg-slate-50 border-b border-slate-100">
               <tr>
-                {['Ref', 'Customer', 'Email', 'Currency', 'Status', 'Date', ''].map(h => (
-                  <th key={h} className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide">{h}</th>
+                {['Ref', 'Customer', 'Email', 'Currency', 'Status', 'Date', ''].map((h) => (
+                  <th
+                    key={h}
+                    className="px-4 py-3 text-left text-xs font-semibold text-slate-500 uppercase tracking-wide"
+                  >
+                    {h}
+                  </th>
                 ))}
               </tr>
             </thead>
             <tbody className="divide-y divide-slate-100">
-              {quotes.map(q => {
+              {quotes.map((q) => {
                 const isExpanded = expandedId === q.id;
-                const products = (() => { try { return JSON.parse(q.products); } catch { return []; } })();
+                const products = (() => {
+                  try {
+                    return JSON.parse(q.products);
+                  } catch {
+                    return [];
+                  }
+                })();
                 return (
                   <>
-                    <tr key={q.id} className="hover:bg-slate-50 cursor-pointer" onClick={() => setExpandedId(isExpanded ? null : q.id)}>
-                      <td className="px-4 py-3 font-mono text-xs text-slate-500">{q.referenceId}</td>
-                      <td className="px-4 py-3 font-medium text-slate-900">{q.customerName}<br/><span className="text-xs text-slate-400 font-normal">{q.customerCompany}</span></td>
+                    <tr
+                      key={q.id}
+                      className="hover:bg-slate-50 cursor-pointer"
+                      onClick={() => setExpandedId(isExpanded ? null : q.id)}
+                    >
+                      <td className="px-4 py-3 font-mono text-xs text-slate-500">
+                        {q.referenceId}
+                      </td>
+                      <td className="px-4 py-3 font-medium text-slate-900">
+                        {q.customerName}
+                        <br />
+                        <span className="text-xs text-slate-400 font-normal">
+                          {q.customerCompany}
+                        </span>
+                      </td>
                       <td className="px-4 py-3 text-slate-600">{q.customerEmail}</td>
                       <td className="px-4 py-3 text-slate-600">{q.currency}</td>
-                      <td className="px-4 py-3"><StatusBadge status={q.status} /></td>
-                      <td className="px-4 py-3 text-xs text-slate-400 whitespace-nowrap">{new Date(q.createdAt).toLocaleDateString()}</td>
-                      <td className="px-4 py-3 text-right text-slate-400">{isExpanded ? '▲' : '▼'}</td>
+                      <td className="px-4 py-3">
+                        <StatusBadge status={q.status} />
+                      </td>
+                      <td className="px-4 py-3 text-xs text-slate-400 whitespace-nowrap">
+                        {new Date(q.createdAt).toLocaleDateString()}
+                      </td>
+                      <td className="px-4 py-3 text-right text-slate-400">
+                        {isExpanded ? '▲' : '▼'}
+                      </td>
                     </tr>
                     {isExpanded && (
                       <tr key={`${q.id}-detail`} className="bg-slate-50/60">
@@ -220,16 +333,23 @@ function QuotesContent() {
                             <div className="space-y-3">
                               {q.message && (
                                 <div>
-                                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Customer message</p>
+                                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                    Customer message
+                                  </p>
                                   <p className="text-sm text-slate-700 mt-1">{q.message}</p>
                                 </div>
                               )}
                               {products.length > 0 && (
                                 <div>
-                                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Products requested</p>
+                                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                    Products requested
+                                  </p>
                                   <ul className="mt-1 space-y-0.5">
                                     {products.map((p: Record<string, string>, i: number) => (
-                                      <li key={i} className="text-sm text-slate-700">· {p.productName ?? p.productSlug} {p.qty ? `× ${p.qty} kg` : ''}</li>
+                                      <li key={i} className="text-sm text-slate-700">
+                                        · {p.productName ?? p.productSlug}{' '}
+                                        {p.qty ? `× ${p.qty} kg` : ''}
+                                      </li>
                                     ))}
                                   </ul>
                                 </div>
@@ -237,56 +357,102 @@ function QuotesContent() {
                             </div>
                             <div className="space-y-3">
                               <div>
-                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Admin notes</p>
+                                <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                  Admin notes
+                                </p>
                                 <p className="text-sm text-slate-600 mt-1">{q.adminNotes || '—'}</p>
                               </div>
                               {q.quotedAmount && (
                                 <div>
-                                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">Quoted amount</p>
-                                  <p className="text-sm font-semibold text-slate-900 mt-1">{q.currency} {q.quotedAmount.toFixed(2)}</p>
+                                  <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-400">
+                                    Quoted amount
+                                  </p>
+                                  <p className="text-sm font-semibold text-slate-900 mt-1">
+                                    {q.currency} {q.quotedAmount.toFixed(2)}
+                                  </p>
                                 </div>
                               )}
                               {/* Send Quote panel */}
-                              {['pending','reviewed','quoted'].includes(q.status) && (
-                                <div className="mt-3 border border-brand-200 rounded-xl bg-brand-50/40 p-4" onClick={e => e.stopPropagation()}>
-                                  <p className="text-xs font-bold text-brand-700 mb-3 uppercase tracking-wide">📧 Send Priced Quote to Customer</p>
+                              {['pending', 'reviewed', 'quoted'].includes(q.status) && (
+                                <div
+                                  className="mt-3 border border-brand-200 rounded-xl bg-brand-50/40 p-4"
+                                  onClick={(e) => e.stopPropagation()}
+                                >
+                                  <p className="text-xs font-bold text-brand-700 mb-3 uppercase tracking-wide">
+                                    📧 Send Priced Quote to Customer
+                                  </p>
                                   <div className="flex flex-wrap gap-3 items-end">
                                     <div>
-                                      <label className="block text-xs font-semibold text-slate-600 mb-1">Amount ({q.currency})</label>
+                                      <label className="block text-xs font-semibold text-slate-600 mb-1">
+                                        Amount ({q.currency})
+                                      </label>
                                       <div className="relative">
-                                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">$</span>
-                                        <input type="number" step="0.01" placeholder="0.00"
+                                        <span className="absolute left-2.5 top-1/2 -translate-y-1/2 text-slate-400 text-xs">
+                                          $
+                                        </span>
+                                        <input
+                                          type="number"
+                                          step="0.01"
+                                          placeholder="0.00"
                                           value={sendForm.amount}
-                                          onChange={e => setSendForm(f => ({ ...f, amount: e.target.value }))}
-                                          className="pl-6 pr-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400 w-32 font-mono" />
+                                          onChange={(e) =>
+                                            setSendForm((f) => ({ ...f, amount: e.target.value }))
+                                          }
+                                          className="pl-6 pr-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400 w-32 font-mono"
+                                        />
                                       </div>
                                     </div>
                                     <div>
-                                      <label className="block text-xs font-semibold text-slate-600 mb-1">Expires in (days)</label>
-                                      <input type="number" min="1" max="90"
+                                      <label className="block text-xs font-semibold text-slate-600 mb-1">
+                                        Expires in (days)
+                                      </label>
+                                      <input
+                                        type="number"
+                                        min="1"
+                                        max="90"
                                         value={sendForm.expiryDays}
-                                        onChange={e => setSendForm(f => ({ ...f, expiryDays: e.target.value }))}
-                                        className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400 w-20 font-mono" />
+                                        onChange={(e) =>
+                                          setSendForm((f) => ({ ...f, expiryDays: e.target.value }))
+                                        }
+                                        className="px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400 w-20 font-mono"
+                                      />
                                     </div>
                                     <div className="flex-1 min-w-[160px]">
-                                      <label className="block text-xs font-semibold text-slate-600 mb-1">Message to customer <span className="font-normal text-slate-400">(optional)</span></label>
-                                      <input type="text" placeholder="e.g. Price includes freight to Sydney…"
+                                      <label className="block text-xs font-semibold text-slate-600 mb-1">
+                                        Message to customer{' '}
+                                        <span className="font-normal text-slate-400">
+                                          (optional)
+                                        </span>
+                                      </label>
+                                      <input
+                                        type="text"
+                                        placeholder="e.g. Price includes freight to Sydney…"
                                         value={sendForm.message}
-                                        onChange={e => setSendForm(f => ({ ...f, message: e.target.value }))}
-                                        className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400" />
+                                        onChange={(e) =>
+                                          setSendForm((f) => ({ ...f, message: e.target.value }))
+                                        }
+                                        className="w-full px-3 py-1.5 text-sm border border-slate-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand-400"
+                                      />
                                     </div>
                                     <button
                                       onClick={() => handleSendQuote(q.id)}
                                       disabled={!!sendingQuoteId}
                                       className="flex items-center gap-1.5 px-4 py-1.5 bg-brand-600 text-white text-xs font-bold rounded-lg hover:bg-brand-700 transition-colors disabled:opacity-50 whitespace-nowrap"
                                     >
-                                      {sendingQuoteId === q.id ? <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" /> : '📤'}
+                                      {sendingQuoteId === q.id ? (
+                                        <span className="w-3 h-3 border-2 border-white border-t-transparent rounded-full animate-spin inline-block" />
+                                      ) : (
+                                        '📤'
+                                      )}
                                       Send Quote Email
                                     </button>
                                   </div>
                                   {sendResult && (
-                                    <p className={`mt-2 text-xs font-medium ${sendResult.ok ? 'text-emerald-600' : 'text-red-500'}`}>
-                                      {sendResult.ok ? '✓ ' : '✗ '}{sendResult.msg}
+                                    <p
+                                      className={`mt-2 text-xs font-medium ${sendResult.ok ? 'text-emerald-600' : 'text-red-500'}`}
+                                    >
+                                      {sendResult.ok ? '✓ ' : '✗ '}
+                                      {sendResult.msg}
                                     </p>
                                   )}
                                 </div>
@@ -294,28 +460,49 @@ function QuotesContent() {
 
                               <div className="flex flex-wrap gap-2 pt-2">
                                 {q.status === 'pending' && (
-                                  <button onClick={(e) => { e.stopPropagation(); updateStatus(q.id, 'reviewed'); }}
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateStatus(q.id, 'reviewed');
+                                    }}
                                     disabled={updatingId === q.id}
-                                    className="px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50">
+                                    className="px-3 py-1.5 text-xs font-medium bg-blue-600 text-white rounded-lg hover:bg-blue-700 transition-colors disabled:opacity-50"
+                                  >
                                     Mark Reviewed
                                   </button>
                                 )}
                                 {(q.status === 'reviewed' || q.status === 'pending') && (
-                                  <button onClick={(e) => { e.stopPropagation(); updateStatus(q.id, 'rejected'); }}
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      updateStatus(q.id, 'rejected');
+                                    }}
                                     disabled={updatingId === q.id}
-                                    className="px-3 py-1.5 text-xs font-medium bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50">
+                                    className="px-3 py-1.5 text-xs font-medium bg-white border border-red-200 text-red-600 rounded-lg hover:bg-red-50 transition-colors disabled:opacity-50"
+                                  >
                                     Reject
                                   </button>
                                 )}
-                                {q.status !== 'converted' && q.status !== 'rejected' && q.status !== 'accepted' && (
-                                  <button onClick={(e) => { e.stopPropagation(); convertToOrder(q); }}
-                                    className="px-3 py-1.5 text-xs font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors">
-                                    Convert to Order →
-                                  </button>
-                                )}
-                                <a href={`/print/quote/${q.id}`} target="_blank" rel="noopener noreferrer"
-                                  onClick={e => e.stopPropagation()}
-                                  className="px-3 py-1.5 text-xs font-medium bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors">
+                                {q.status !== 'converted' &&
+                                  q.status !== 'rejected' &&
+                                  q.status !== 'accepted' && (
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        convertToOrder(q);
+                                      }}
+                                      className="px-3 py-1.5 text-xs font-medium bg-brand-600 text-white rounded-lg hover:bg-brand-700 transition-colors"
+                                    >
+                                      Convert to Order →
+                                    </button>
+                                  )}
+                                <a
+                                  href={`/print/quote/${q.id}`}
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  onClick={(e) => e.stopPropagation()}
+                                  className="px-3 py-1.5 text-xs font-medium bg-white border border-slate-200 text-slate-700 rounded-lg hover:bg-slate-50 transition-colors"
+                                >
                                   🖨 Quote PDF
                                 </a>
                               </div>
@@ -336,5 +523,9 @@ function QuotesContent() {
 }
 
 export default function QuotesPage() {
-  return <Suspense><QuotesContent /></Suspense>;
+  return (
+    <Suspense>
+      <QuotesContent />
+    </Suspense>
+  );
 }

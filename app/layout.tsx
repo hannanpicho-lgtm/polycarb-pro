@@ -39,13 +39,19 @@ export const metadata: Metadata = {
     title: siteConfig.seo.defaultTitle,
     description:
       'World-class polycarbonate materials for demanding industrial applications. Request a quote or download technical datasheets.',
-    images: [{ url: '/og-image.jpg', width: 1200, height: 630, alt: `${siteConfig.company.name} – ${siteConfig.company.tagline}` }],
+    images: [
+      {
+        url: '/og-image.jpg',
+        width: 1200,
+        height: 630,
+        alt: `${siteConfig.company.name} – ${siteConfig.company.tagline}`,
+      },
+    ],
   },
   twitter: {
     card: 'summary_large_image',
     title: siteConfig.seo.defaultTitle,
-    description:
-      'World-class polycarbonate materials for demanding industrial applications.',
+    description: 'World-class polycarbonate materials for demanding industrial applications.',
     images: ['/og-image.jpg'],
   },
   robots: {
@@ -70,15 +76,22 @@ export const viewport: Viewport = {
 // Admin / portal / distributor / print routes get their own shells.
 export default function RootLayout({ children }: { children: React.ReactNode }) {
   return (
-    <html lang="en" suppressHydrationWarning className={`${inter.variable} ${spaceGrotesk.variable}`}>
+    <html
+      lang="en"
+      suppressHydrationWarning
+      className={`${inter.variable} ${spaceGrotesk.variable}`}
+    >
       <head>
         <OrganizationJsonLd />
       </head>
       <body className="min-h-screen bg-background font-sans antialiased">
-        <ThemeProvider attribute="class" defaultTheme="light" enableSystem disableTransitionOnChange>
-          <DistributorPromoProvider>
-            {children}
-          </DistributorPromoProvider>
+        <ThemeProvider
+          attribute="class"
+          defaultTheme="light"
+          enableSystem
+          disableTransitionOnChange
+        >
+          <DistributorPromoProvider>{children}</DistributorPromoProvider>
         </ThemeProvider>
         <Analytics />
         <SpeedInsights />

@@ -54,7 +54,13 @@ export function ProductFilters() {
     router.push('/products');
   }
 
-  const hasFilters = search || category !== 'all' || industry !== 'all' || brand !== 'all' || sort !== 'name-asc' || instock === '1';
+  const hasFilters =
+    search ||
+    category !== 'all' ||
+    industry !== 'all' ||
+    brand !== 'all' ||
+    sort !== 'name-asc' ||
+    instock === '1';
 
   return (
     <div className="bg-muted/50 border border-border rounded-lg p-5">
@@ -66,7 +72,10 @@ export function ProductFilters() {
       <div className="flex flex-col lg:flex-row gap-3">
         {/* Search */}
         <div className="relative flex-1">
-          <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" aria-hidden="true" />
+          <Search
+            className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground"
+            aria-hidden="true"
+          />
           <Input
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -79,13 +88,20 @@ export function ProductFilters() {
 
         {/* Category */}
         <div className="w-full lg:w-52">
-          <Select value={category} onValueChange={(v) => { setCategory(v); }}>
+          <Select
+            value={category}
+            onValueChange={(v) => {
+              setCategory(v);
+            }}
+          >
             <SelectTrigger aria-label="Filter by material type">
               <SelectValue placeholder="All Materials" />
             </SelectTrigger>
             <SelectContent>
               {productCategories.map((opt) => (
-                <SelectItem key={opt} value={opt}>{productCategoryLabels[opt] ?? opt}</SelectItem>
+                <SelectItem key={opt} value={opt}>
+                  {productCategoryLabels[opt] ?? opt}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -93,13 +109,20 @@ export function ProductFilters() {
 
         {/* Industry */}
         <div className="w-full lg:w-56">
-          <Select value={industry} onValueChange={(v) => { setIndustry(v); }}>
+          <Select
+            value={industry}
+            onValueChange={(v) => {
+              setIndustry(v);
+            }}
+          >
             <SelectTrigger aria-label="Filter by industry">
               <SelectValue placeholder="All Industries" />
             </SelectTrigger>
             <SelectContent>
               {industryOptions.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -107,13 +130,20 @@ export function ProductFilters() {
 
         {/* Brand */}
         <div className="w-full lg:w-56">
-          <Select value={brand} onValueChange={(v) => { setBrand(v); }}>
+          <Select
+            value={brand}
+            onValueChange={(v) => {
+              setBrand(v);
+            }}
+          >
             <SelectTrigger aria-label="Filter by brand">
               <SelectValue placeholder="All Brands" />
             </SelectTrigger>
             <SelectContent>
               {brandOptions.map((opt) => (
-                <SelectItem key={opt.value} value={opt.value}>{opt.label}</SelectItem>
+                <SelectItem key={opt.value} value={opt.value}>
+                  {opt.label}
+                </SelectItem>
               ))}
             </SelectContent>
           </Select>
@@ -121,7 +151,12 @@ export function ProductFilters() {
 
         {/* Sort */}
         <div className="w-full lg:w-48">
-          <Select value={sort} onValueChange={(v) => { setSort(v); }}>
+          <Select
+            value={sort}
+            onValueChange={(v) => {
+              setSort(v);
+            }}
+          >
             <SelectTrigger aria-label="Sort products">
               <SelectValue placeholder="Name A-Z" />
             </SelectTrigger>
@@ -157,12 +192,7 @@ export function ProductFilters() {
             Show Products
           </Button>
           {hasFilters && (
-            <Button
-              onClick={reset}
-              variant="ghost"
-              size="icon"
-              aria-label="Clear all filters"
-            >
+            <Button onClick={reset} variant="ghost" size="icon" aria-label="Clear all filters">
               <X className="h-4 w-4" />
             </Button>
           )}

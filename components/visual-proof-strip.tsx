@@ -17,9 +17,12 @@ export function VisualProofStrip() {
           className="text-center mb-8"
         >
           <span className="tag-pill bg-brand-500 text-white mb-3 inline-block">IN THE FIELD</span>
-          <h2 className="text-2xl md:text-3xl font-bold text-white font-display">Material Meets Application</h2>
+          <h2 className="text-2xl md:text-3xl font-bold text-white font-display">
+            Material Meets Application
+          </h2>
           <p className="text-white/50 text-sm mt-2 max-w-xl mx-auto">
-            Supercars, luxury patios, commercial canopies — see the material performing where it matters.
+            Supercars, luxury patios, commercial canopies — see the material performing where it
+            matters.
           </p>
         </motion.div>
 

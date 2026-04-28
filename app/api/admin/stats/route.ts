@@ -1,16 +1,11 @@
 import { NextResponse } from 'next/server';
-import { getCloudflareContext } from '@opennextjs/cloudflare';
-import type { D1Database } from '@cloudflare/workers-types';
-
-async function getDB(): Promise<D1Database | null> {
-  const { env } = await getCloudflareContext({ async: true });
-  return ((env as Record<string, unknown>)['DB'] as D1Database) ?? null;
-}
+import { apiJsonError } from '@/lib/api-json-error';
+import { getD1 } from '@/lib/d1';
 
 export async function GET() {
   try {
-    const db = await getDB();
-    if (!db) return NextResponse.json({ error: 'Database not available' }, { status: 503 });
+    const db = await getD1();
+    if (!db) return apiJsonError('Database not available', 503);
 
     const [
       ordersByStatus,
@@ -25,28 +20,55 @@ export async function GET() {
     ] = await Promise.all([
       db.prepare(`SELECT status, COUNT(*) as count FROM orders GROUP BY status`).all(),
       db.prepare(`SELECT status, COUNT(*) as count FROM quotes GROUP BY status`).all(),
-      db.prepare(`SELECT
+      db
+        .prepare(
+          `SELECT
           (SELECT COUNT(*) FROM distributor_submissions) as totalDist,
           (SELECT COUNT(*) FROM contact_submissions) as totalContact
-        `).first<{ totalDist: number; totalContact: number }>(),
-      db.prepare(`SELECT status, COUNT(*) as count FROM distributor_submissions GROUP BY status`).all(),
-      db.prepare(`SELECT
+        `
+        )
+        .first<{ totalDist: number; totalContact: number }>(),
+      db
+        .prepare(`SELECT status, COUNT(*) as count FROM distributor_submissions GROUP BY status`)
+        .all(),
+      db
+        .prepare(
+          `SELECT
           SUM(total) as totalRevenue,
           SUM(CASE WHEN paymentStatus='paid' THEN total ELSE 0 END) as paidRevenue,
           SUM(CASE WHEN paymentStatus='unpaid' THEN total ELSE 0 END) as unpaidRevenue,
           SUM(CASE WHEN paymentStatus='partial' THEN total ELSE 0 END) as partialRevenue,
           COUNT(*) as totalOrders
-        FROM orders`).first<{
-          totalRevenue: number; paidRevenue: number;
-          unpaidRevenue: number; partialRevenue: number; totalOrders: number;
+        FROM orders`
+        )
+        .first<{
+          totalRevenue: number;
+          paidRevenue: number;
+          unpaidRevenue: number;
+          partialRevenue: number;
+          totalOrders: number;
         }>(),
-      db.prepare(`SELECT id, referenceId, customerName, customerCompany, total, currency, status, paymentStatus, createdAt
-        FROM orders ORDER BY createdAt DESC LIMIT 6`).all(),
-      db.prepare(`SELECT id, referenceId, customerName, customerEmail, status, currency, createdAt
-        FROM quotes ORDER BY createdAt DESC LIMIT 6`).all(),
-      db.prepare(`SELECT id, fullName, companyName, status, discountTier, createdAt
-        FROM distributor_submissions ORDER BY createdAt DESC LIMIT 5`).all(),
-      db.prepare(`SELECT COUNT(*) as count FROM distributor_quotes WHERE status='pending'`).first<{ count: number }>(),
+      db
+        .prepare(
+          `SELECT id, referenceId, customerName, customerCompany, total, currency, status, paymentStatus, createdAt
+        FROM orders ORDER BY createdAt DESC LIMIT 6`
+        )
+        .all(),
+      db
+        .prepare(
+          `SELECT id, referenceId, customerName, customerEmail, status, currency, createdAt
+        FROM quotes ORDER BY createdAt DESC LIMIT 6`
+        )
+        .all(),
+      db
+        .prepare(
+          `SELECT id, fullName, companyName, status, discountTier, createdAt
+        FROM distributor_submissions ORDER BY createdAt DESC LIMIT 5`
+        )
+        .all(),
+      db
+        .prepare(`SELECT COUNT(*) as count FROM distributor_quotes WHERE status='pending'`)
+        .first<{ count: number }>(),
     ]);
 
     // Shape order stats map
@@ -89,8 +111,9 @@ export async function GET() {
       orders: {
         total: revenueResult?.totalOrders ?? 0,
         byStatus: orderMap,
-        needsAttention: (orderMap['pending'] ?? 0),
-        unpaid: (orderMap['pending'] ?? 0) + (orderMap['confirmed'] ?? 0) + (orderMap['processing'] ?? 0),
+        needsAttention: orderMap['pending'] ?? 0,
+        unpaid:
+          (orderMap['pending'] ?? 0) + (orderMap['confirmed'] ?? 0) + (orderMap['processing'] ?? 0),
       },
 
       // Quotes
@@ -117,6 +140,6 @@ export async function GET() {
     });
   } catch (error) {
     console.error('Error fetching stats:', error);
-    return NextResponse.json({ error: 'Failed to fetch stats' }, { status: 500 });
+    return apiJsonError('Failed to fetch stats', 500);
   }
 }

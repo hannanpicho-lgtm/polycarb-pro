@@ -10,7 +10,13 @@ export function FormHoneypot() {
       <input type="hidden" name="submittedAt" value={String(submittedAt)} />
       <div aria-hidden="true" className="sr-only">
         <label htmlFor="companyWebsite">Company website</label>
-        <input id="companyWebsite" name="companyWebsite" type="text" tabIndex={-1} autoComplete="off" />
+        <input
+          id="companyWebsite"
+          name="companyWebsite"
+          type="text"
+          tabIndex={-1}
+          autoComplete="off"
+        />
       </div>
     </>
   );

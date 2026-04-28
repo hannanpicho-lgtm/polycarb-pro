@@ -9,7 +9,10 @@ function VerifyContent() {
   const token = searchParams.get('token');
 
   useEffect(() => {
-    if (!token) { router.replace('/distributor?error=missing_token'); return; }
+    if (!token) {
+      router.replace('/distributor?error=missing_token');
+      return;
+    }
     router.replace(`/api/distributor/verify?token=${token}`);
   }, [token, router]);
 
@@ -24,5 +27,9 @@ function VerifyContent() {
 }
 
 export default function DistributorVerifyPage() {
-  return <Suspense><VerifyContent /></Suspense>;
+  return (
+    <Suspense>
+      <VerifyContent />
+    </Suspense>
+  );
 }

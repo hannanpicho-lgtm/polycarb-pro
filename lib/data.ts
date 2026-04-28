@@ -70,6 +70,9 @@ export interface Brand {
   country: string;
   description: string;
   grades: string[];
+  specialties?: string[];
+  flagshipSeries?: string;
+  leadTime?: string;
 }
 
 export interface Testimonial {
@@ -174,7 +177,11 @@ export const datasheetLibrary: DatasheetDocument[] = [
     publishedAt: '2026-04-08',
     type: 'Brochure',
     materialFamily: 'Polycarbonate',
-    relatedProductSlugs: ['lexan-thermoclear-multiwall', 'sabic-lexan-940-resin', 'lexan-exl-pc-siloxane-copolymer'],
+    relatedProductSlugs: [
+      'lexan-thermoclear-multiwall',
+      'sabic-lexan-940-resin',
+      'lexan-exl-pc-siloxane-copolymer',
+    ],
   },
   {
     id: 'ds-lg-lupoy-1201-10',
@@ -318,7 +325,13 @@ export const datasheetLibrary: DatasheetDocument[] = [
   },
 ];
 
-export type GalleryCategory = 'automotive' | 'architecture' | 'canopy' | 'industrial' | 'medical' | 'materials';
+export type GalleryCategory =
+  | 'automotive'
+  | 'architecture'
+  | 'canopy'
+  | 'industrial'
+  | 'medical'
+  | 'materials';
 
 export type GalleryComposition = 'wide' | 'detail' | 'product' | 'material';
 
@@ -391,7 +404,7 @@ export interface SpectacularGallerySelectionDiagnostics {
   healthNotes: string[];
 }
 
-const GALLERY_DIAGNOSTIC_THRESHOLDS = {
+const _GALLERY_DIAGNOSTIC_THRESHOLDS = {
   duplicatePressureMin: 2,
   diversityMin: 0.75,
   uniquenessMin: 0.8,
@@ -531,8 +544,10 @@ function inferGalleryCategory(src: string): GalleryCategory {
   if (/(medical|device)/.test(value)) return 'medical';
   if (/(electronic|electronics|enclosure|hammond|pcb)/.test(value)) return 'industrial';
   if (/(guard|window|vent|machine|industrial)/.test(value)) return 'industrial';
-  if (/(roof|canopy|balcony|terrace|patio|sunpal|danpatherm|installed)/.test(value)) return 'canopy';
-  if (/(sheet|resin|material|spools|polycarbonate-1|what-is-polycarbonate|l1600|l960)/.test(value)) return 'materials';
+  if (/(roof|canopy|balcony|terrace|patio|sunpal|danpatherm|installed)/.test(value))
+    return 'canopy';
+  if (/(sheet|resin|material|spools|polycarbonate-1|what-is-polycarbonate|l1600|l960)/.test(value))
+    return 'materials';
   return 'architecture';
 }
 
@@ -542,7 +557,8 @@ function inferGalleryComposition(src: string): GalleryComposition {
 
   const value = src.toLowerCase();
   if (/(laser|detail|device|feature|vent|hood|bonnet|closeup)/.test(value)) return 'detail';
-  if (/(spools|material|resin|sheet|polycarbonate-1|what-is-polycarbonate|l1600|l960)/.test(value)) return 'material';
+  if (/(spools|material|resin|sheet|polycarbonate-1|what-is-polycarbonate|l1600|l960)/.test(value))
+    return 'material';
   if (/(enclosure|parts|hammond|electronic|guard|roofing)/.test(value)) return 'product';
   return 'wide';
 }
@@ -570,7 +586,11 @@ export const pictureGalleryItems: GalleryImage[] = pictureGalleryImages.map((src
   composition: inferGalleryComposition(src),
 }));
 
-function scoreGalleryTransition(previous: GalleryImage | undefined, candidate: GalleryImage, index: number) {
+function scoreGalleryTransition(
+  previous: GalleryImage | undefined,
+  candidate: GalleryImage,
+  index: number
+) {
   let score = 0;
 
   if (!previous) {
@@ -614,7 +634,7 @@ function balanceGalleryItems(items: GalleryImage[]) {
 
 export const curatedPictureGalleryItems: GalleryImage[] = balanceGalleryItems(pictureGalleryItems);
 
-function findGalleryImage(
+function _findGalleryImage(
   images: GalleryImage[],
   used: Set<string>,
   predicate: (image: GalleryImage) => boolean
@@ -626,7 +646,7 @@ function findGalleryImage(
   return match;
 }
 
-function fallbackGalleryImage(
+function _fallbackGalleryImage(
   images: GalleryImage[],
   used: Set<string>,
   predicate?: (image: GalleryImage) => boolean
@@ -685,7 +705,13 @@ export const products: Product[] = [
     shortDescription: 'General-purpose optically clear polycarbonate sheet with UV protection.',
     description:
       'Makrolon® 2407 is a high-quality, optically transparent polycarbonate sheet delivering outstanding impact resistance and long-term UV stability. Ideal for architectural glazing, safety barriers, and display applications. The co-extruded UV-protective layer ensures exceptional weathering performance with minimal yellowing over time.',
-    applications: ['Architectural glazing', 'Safety barriers', 'Signage', 'Machine guards', 'Display panels'],
+    applications: [
+      'Architectural glazing',
+      'Safety barriers',
+      'Signage',
+      'Machine guards',
+      'Display panels',
+    ],
     industries: ['construction', 'safety', 'consumer'],
     features: [
       '250× more impact resistant than glass',
@@ -719,7 +745,8 @@ export const products: Product[] = [
     grade: 'Thermoclear 2UV',
     category: 'sheets',
     subtype: 'Multiwall Sheet',
-    shortDescription: 'Lightweight multiwall PC sheet with superior thermal insulation for roofing & facades.',
+    shortDescription:
+      'Lightweight multiwall PC sheet with superior thermal insulation for roofing & facades.',
     description:
       'LEXAN™ Thermoclear® multiwall polycarbonate sheets offer excellent thermal insulation combined with high light transmission. The twin or multi-wall structure creates air chambers that reduce heat transfer, making it ideal for greenhouse, patio roofing, and curtain wall systems. Both sides protected with UV co-extrusion.',
     applications: ['Greenhouse panels', 'Patio roofing', 'Skylights', 'Curtain walls', 'Carports'],
@@ -758,7 +785,13 @@ export const products: Product[] = [
     shortDescription: 'High-flow optical-grade PC resin for precision injection molded parts.',
     description:
       'LEXAN™ 940 is a premium optical-grade polycarbonate resin engineered for precision injection molding of lenses, light guides, and optical components. Its exceptional clarity, tight molecular-weight distribution, and excellent flow properties allow for complex thin-wall geometries with minimal residual stress.',
-    applications: ['Headlamp lenses', 'Light guides', 'Optical diffusers', 'CD/DVD substrates', 'Medical optics'],
+    applications: [
+      'Headlamp lenses',
+      'Light guides',
+      'Optical diffusers',
+      'CD/DVD substrates',
+      'Medical optics',
+    ],
     industries: ['automotive', 'optical', 'medical', 'electronics'],
     features: [
       '>92% light transmittance',
@@ -830,7 +863,8 @@ export const products: Product[] = [
     grade: 'Calibre EP5030',
     category: 'resins',
     subtype: 'Flame Retardant Grade',
-    shortDescription: 'UL 94 V-0 rated PC resin for demanding electronic & electrical applications.',
+    shortDescription:
+      'UL 94 V-0 rated PC resin for demanding electronic & electrical applications.',
     description:
       'Calibre™ EP5030 is a halogen-free, UL 94 V-0 rated polycarbonate resin offering outstanding flame retardancy without compromising mechanical performance. Formulated for thin-wall electrical enclosures, EV battery housings, and consumer electronics where strict fire safety standards apply.',
     applications: [
@@ -914,7 +948,12 @@ export const products: Product[] = [
     shortDescription: 'PDO copolymer PC resin with HDT >160 °C for demanding thermal environments.',
     description:
       "Iupilon® H-3000 is a high-heat polycarbonate copolymer based on PDO (1,1-bis(4-hydroxyphenyl)-3,3,5-trimethylcyclohexane) offering a heat deflection temperature exceeding 160 °C while maintaining PC's signature toughness and optical clarity.",
-    applications: ['LED reflectors', 'Automotive lamps', 'High-current connectors', 'Under-hood sensors'],
+    applications: [
+      'LED reflectors',
+      'Automotive lamps',
+      'High-current connectors',
+      'Under-hood sensors',
+    ],
     industries: ['automotive', 'electronics', 'optical'],
     features: [
       'HDT >160 °C (0.45 MPa)',
@@ -934,7 +973,10 @@ export const products: Product[] = [
     featured: false,
     tags: ['high-heat', 'copolymer', 'automotive', 'PDO'],
     image: '/pictures/bmw-laserlights-i8-03.jpg',
-    datasheetUrl: getProductCatalogueUrl('iupilon-h3000-high-heat', 'Mitsubishi Engineering Plastics'),
+    datasheetUrl: getProductCatalogueUrl(
+      'iupilon-h3000-high-heat',
+      'Mitsubishi Engineering Plastics'
+    ),
   },
   {
     id: '8',
@@ -947,7 +989,13 @@ export const products: Product[] = [
     shortDescription: 'Clear, impact-resistant polycarbonate rods for machined components.',
     description:
       'Our PCR-NAT extruded polycarbonate rods are manufactured from virgin general-purpose PC resin and are machined to precision tolerances. Ideal for bearing bushings, sight gauges, prototyping, and structural spacers. Available in diameters 6 mm – 200 mm in standard 1 m or 2 m lengths.',
-    applications: ['Bearing bushings', 'Spacers', 'Sight gauges', 'Prototypes', 'Structural components'],
+    applications: [
+      'Bearing bushings',
+      'Spacers',
+      'Sight gauges',
+      'Prototypes',
+      'Structural components',
+    ],
     industries: ['construction', 'electronics', 'consumer'],
     features: [
       'Virgin GP PC material',
@@ -977,7 +1025,8 @@ export const products: Product[] = [
     grade: 'Lupoy GP1000M',
     category: 'resins',
     subtype: 'General Purpose Grade',
-    shortDescription: 'Transparent general-purpose PC resin for consumer electronics and appliance housings.',
+    shortDescription:
+      'Transparent general-purpose PC resin for consumer electronics and appliance housings.',
     description:
       'Lupoy® GP1000M is a versatile, optically clear general-purpose polycarbonate resin from LG Chem offering a balanced combination of transparency, impact resistance, and processability. Its consistent melt flow and tight specification control make it a reliable choice for injection-molded consumer electronics, appliance covers, and protective housings. Complies with major regulatory requirements including RoHS and REACH.',
     applications: [
@@ -1008,7 +1057,8 @@ export const products: Product[] = [
     inStock: true,
     featured: false,
     tags: ['general-purpose', 'transparent', 'consumer', 'appliance'],
-    image: '/pictures/Materials-for-Consumer-Electronics-Manufacturing-Hero-2048x1366-1-1200x900.jpg',
+    image:
+      '/pictures/Materials-for-Consumer-Electronics-Manufacturing-Hero-2048x1366-1-1200x900.jpg',
     datasheetUrl: getProductCatalogueUrl('lupoy-gp1000m-general-purpose', 'LG Chem'),
   },
   {
@@ -1019,7 +1069,8 @@ export const products: Product[] = [
     grade: 'LEXAN EXL',
     category: 'specialty',
     subtype: 'PC-Siloxane Copolymer',
-    shortDescription: 'High-impact PC-siloxane copolymer retaining toughness down to –40 °C for automotive & outdoor use.',
+    shortDescription:
+      'High-impact PC-siloxane copolymer retaining toughness down to –40 °C for automotive & outdoor use.',
     description:
       'LEXAN™ EXL is a PC-siloxane block copolymer engineered to deliver exceptional ductile impact performance at sub-zero temperatures — maintaining no-break Notched Izod values down to –40 °C where standard PC grades become brittle. The siloxane blocks also improve chemical resistance and paint adhesion without requiring primers, making it the material of choice for automotive exterior cladding, safety helmets, and outdoor enclosure systems.',
     applications: [
@@ -1063,21 +1114,38 @@ export const products: Product[] = [
     category: 'sheets',
     subtype: 'UV/IR Filtering Sheet',
     shortDescription: 'Advanced solar control sheet absorbing 99% IR for reduced glare and heat.',
-    description: 'Makrolon® 2805 provides intelligent energy management through infrared absorption, maintaining visual clarity while cutting solar heat gain by up to 60%. Perfect for automotive sunroofs, architectural skylights, and conservatories.',
+    description:
+      'Makrolon® 2805 provides intelligent energy management through infrared absorption, maintaining visual clarity while cutting solar heat gain by up to 60%. Perfect for automotive sunroofs, architectural skylights, and conservatories.',
     applications: ['Automotive sunroofs', 'Skylights', 'Conservatory glazing', 'Display windows'],
     industries: ['automotive', 'construction', 'consumer'],
-    features: ['99% IR absorption', 'High light transmittance', 'Reduces glare', 'Energy-efficient'],
-    specifications: { density: '1.20 g/cm³', tensileStrength: '62 MPa', lightTransmittance: '75%', heatDeflection: '127 °C' },
+    features: [
+      '99% IR absorption',
+      'High light transmittance',
+      'Reduces glare',
+      'Energy-efficient',
+    ],
+    specifications: {
+      density: '1.20 g/cm³',
+      tensileStrength: '62 MPa',
+      lightTransmittance: '75%',
+      heatDeflection: '127 °C',
+    },
     certifications: ['ISO 9001', 'CE Marked'],
     inStock: true,
     featured: true,
     tags: ['solar-control', 'UV-filtering', 'energy-efficient'],
-        image: '/pictures/luxury-balcony-polycarbonate-roof.jpg',
+    image: '/pictures/luxury-balcony-polycarbonate-roof.jpg',
     datasheetUrl: getProductCatalogueUrl('makrolon-2805-solar-control-sheet', 'Covestro'),
     promo: {
       text: '20% Off Solar Control – Cut Energy Costs 60%',
-      benefits: ['Absorbs 99% of infrared radiation', 'Maintains 75% light transmittance for visibility', 'Reduces air-conditioning costs up to 40%', 'Proven in automotive OEM applications'],
-      testimonial: 'Installing Makrolon 2805 in our conservatory reduced summer cooling costs dramatically while keeping the space bright and comfortable.',
+      benefits: [
+        'Absorbs 99% of infrared radiation',
+        'Maintains 75% light transmittance for visibility',
+        'Reduces air-conditioning costs up to 40%',
+        'Proven in automotive OEM applications',
+      ],
+      testimonial:
+        'Installing Makrolon 2805 in our conservatory reduced summer cooling costs dramatically while keeping the space bright and comfortable.',
       ctaText: 'Calculate Your Savings',
       ctaLink: '/contact',
     },
@@ -1091,16 +1159,22 @@ export const products: Product[] = [
     category: 'sheets',
     subtype: 'Premium Solid Sheet',
     shortDescription: 'Premium solid sheet with superior surface finish and high gloss properties.',
-    description: 'LEXAN™ LX combines optical clarity with an exceptionally smooth surface finish for applications requiring premium aesthetics. Post-formable and highly resistant to yellowing even in harsh UV environments.',
+    description:
+      'LEXAN™ LX combines optical clarity with an exceptionally smooth surface finish for applications requiring premium aesthetics. Post-formable and highly resistant to yellowing even in harsh UV environments.',
     applications: ['Display windows', 'Premium signage', 'Light diffusers', 'Protective barriers'],
     industries: ['construction', 'consumer'],
     features: ['High gloss finish', 'Premium clarity', 'UV stable', 'Post-formable'],
-    specifications: { density: '1.20 g/cm³', tensileStrength: '63 MPa', lightTransmittance: '92%', heatDeflection: '128 °C' },
+    specifications: {
+      density: '1.20 g/cm³',
+      tensileStrength: '63 MPa',
+      lightTransmittance: '92%',
+      heatDeflection: '128 °C',
+    },
     certifications: ['ISO 9001', 'UL 94 V-2'],
     inStock: true,
     featured: false,
     tags: ['premium', 'clear', 'glossy', 'aesthetic'],
-        image: '/pictures/polycarbonate-roofing-1.jpg',
+    image: '/pictures/polycarbonate-roofing-1.jpg',
     datasheetUrl: getProductCatalogueUrl('lexan-lx-polycarbonate-sheet', 'SABIC'),
   },
   {
@@ -1112,16 +1186,27 @@ export const products: Product[] = [
     category: 'sheets',
     subtype: 'General Purpose Sheet',
     shortDescription: 'Versatile general-purpose PC sheet for diverse glazing applications.',
-    description: 'Calibre™ natural solid sheet delivers reliable performance across architectural and industrial glazing, protective barriers, and light-diffusion applications. Excellent balance of cost and performance.',
-    applications: ['Architectural glazing', 'Machine guards', 'Safety barriers', 'Protective covers'],
+    description:
+      'Calibre™ natural solid sheet delivers reliable performance across architectural and industrial glazing, protective barriers, and light-diffusion applications. Excellent balance of cost and performance.',
+    applications: [
+      'Architectural glazing',
+      'Machine guards',
+      'Safety barriers',
+      'Protective covers',
+    ],
     industries: ['construction', 'safety'],
     features: ['Cost-effective', 'Impact resistant', 'UV protected', 'Easy to thermoform'],
-    specifications: { density: '1.20 g/cm³', tensileStrength: '62 MPa', lightTransmittance: '88%', heatDeflection: '127 °C' },
+    specifications: {
+      density: '1.20 g/cm³',
+      tensileStrength: '62 MPa',
+      lightTransmittance: '88%',
+      heatDeflection: '127 °C',
+    },
     certifications: ['ISO 9001', 'RoHS'],
     inStock: true,
     featured: false,
     tags: ['general-purpose', 'cost-effective', 'versatile'],
-        image: '/pictures/danpatherm-gallery.jpg',
+    image: '/pictures/danpatherm-gallery.jpg',
     datasheetUrl: getProductCatalogueUrl('calibre-solid-sheet-natural', 'Trinseo'),
   },
   {
@@ -1132,12 +1217,19 @@ export const products: Product[] = [
     grade: 'Panlite TW',
     category: 'sheets',
     subtype: 'Twinwall Sheet',
-    shortDescription: 'Lightweight twinwall sheet offering superior thermal insulation for roofing applications.',
-    description: 'Panlite® twinwall combines the lightweight construction of multiwall sheets with thermal efficiency, making it ideal for greenhouses, conservatories, and industrial skylights.',
+    shortDescription:
+      'Lightweight twinwall sheet offering superior thermal insulation for roofing applications.',
+    description:
+      'Panlite® twinwall combines the lightweight construction of multiwall sheets with thermal efficiency, making it ideal for greenhouses, conservatories, and industrial skylights.',
     applications: ['Greenhouse panels', 'Industrial skylights', 'Conservatory roofing', 'Pergolas'],
     industries: ['construction', 'agriculture'],
     features: ['Thermal insulation', 'Lightweight', 'Dual UV protection', 'Long-lasting'],
-    specifications: { density: '1.18 g/cm³', tensileStrength: '52 MPa', lightTransmittance: '82%', thicknessRange: '6–12 mm' },
+    specifications: {
+      density: '1.18 g/cm³',
+      tensileStrength: '52 MPa',
+      lightTransmittance: '82%',
+      thicknessRange: '6–12 mm',
+    },
     certifications: ['ISO 9001', 'CE Marked'],
     inStock: true,
     featured: false,
@@ -1153,18 +1245,28 @@ export const products: Product[] = [
     grade: 'Iupilon AS',
     category: 'sheets',
     subtype: 'Architectural Sheet',
-    shortDescription: 'Architectural-grade PC sheet combining clarity with durability for facade applications.',
-    description: 'Iupilon® architectural sheet delivers superior durability and aesthetics for building envelopes, interior partitions, and design-forward glazing systems.',
+    shortDescription:
+      'Architectural-grade PC sheet combining clarity with durability for facade applications.',
+    description:
+      'Iupilon® architectural sheet delivers superior durability and aesthetics for building envelopes, interior partitions, and design-forward glazing systems.',
     applications: ['Facade glazing', 'Interior partitions', 'Design panels', 'Atrium glazing'],
     industries: ['construction'],
     features: ['Design freedom', 'High durability', 'Excellent clarity', 'Integrated functions'],
-    specifications: { density: '1.20 g/cm³', tensileStrength: '62 MPa', lightTransmittance: '90%', heatDeflection: '130 °C' },
+    specifications: {
+      density: '1.20 g/cm³',
+      tensileStrength: '62 MPa',
+      lightTransmittance: '90%',
+      heatDeflection: '130 °C',
+    },
     certifications: ['ISO 9001', 'REACH'],
     inStock: true,
     featured: true,
     tags: ['architectural', 'facade', 'design'],
-        image: '/pictures/terrace-behind-house-made-beams-260nw-2665808521.webp',
-    datasheetUrl: getProductCatalogueUrl('iupilon-pc-sheet-architectural', 'Mitsubishi Engineering Plastics'),
+    image: '/pictures/terrace-behind-house-made-beams-260nw-2665808521.webp',
+    datasheetUrl: getProductCatalogueUrl(
+      'iupilon-pc-sheet-architectural',
+      'Mitsubishi Engineering Plastics'
+    ),
   },
   {
     id: '16',
@@ -1175,16 +1277,22 @@ export const products: Product[] = [
     category: 'sheets',
     subtype: 'Solid Sheet',
     shortDescription: 'Crystal-clear solid PC sheet for premium glazing and display applications.',
-    description: 'Lupoy® clear solid sheet combines optical clarity with excellent impact resistance, offering a superior alternative to glass for high-performance glazing requirements.',
+    description:
+      'Lupoy® clear solid sheet combines optical clarity with excellent impact resistance, offering a superior alternative to glass for high-performance glazing requirements.',
     applications: ['Display windows', 'Premium glazing', 'Light diffusers', 'Protective barriers'],
     industries: ['construction', 'consumer'],
     features: ['Crystal clear', 'Impact resistant', 'UV stable', 'Post-formable'],
-    specifications: { density: '1.20 g/cm³', tensileStrength: '62 MPa', lightTransmittance: '90%', heatDeflection: '127 °C' },
+    specifications: {
+      density: '1.20 g/cm³',
+      tensileStrength: '62 MPa',
+      lightTransmittance: '90%',
+      heatDeflection: '127 °C',
+    },
     certifications: ['ISO 9001', 'RoHS'],
     inStock: true,
     featured: false,
     tags: ['clear', 'display', 'premium'],
-        image: '/pictures/installed-polycarbonate-window-vent.png',
+    image: '/pictures/installed-polycarbonate-window-vent.png',
     datasheetUrl: getProductCatalogueUrl('lupoy-pc-sheet-clear', 'LG Chem'),
   },
   // ─── Additional Rod Products ────────────────────────────────────────────
@@ -1197,16 +1305,27 @@ export const products: Product[] = [
     category: 'rods',
     subtype: 'Smoke Tinted Rod',
     shortDescription: 'Smoke-tinted extruded PC rods for aesthetic and functional applications.',
-    description: 'Smoke-tinted PC rods combine light filtering capability with mechanical strength. Ideal for decorative applications, light diffusion, and privacy screens.',
-    applications: ['Decorative elements', 'Light diffusers', 'Privacy screens', 'Design components'],
+    description:
+      'Smoke-tinted PC rods combine light filtering capability with mechanical strength. Ideal for decorative applications, light diffusion, and privacy screens.',
+    applications: [
+      'Decorative elements',
+      'Light diffusers',
+      'Privacy screens',
+      'Design components',
+    ],
     industries: ['construction', 'consumer'],
     features: ['Aesthetic appeal', 'Light filtering', 'Machinable', 'Durable'],
-    specifications: { density: '1.20 g/cm³', tensileStrength: '62 MPa', heatDeflection: '127 °C', thicknessRange: 'Ø 6 – 200 mm' },
+    specifications: {
+      density: '1.20 g/cm³',
+      tensileStrength: '62 MPa',
+      heatDeflection: '127 °C',
+      thicknessRange: 'Ø 6 – 200 mm',
+    },
     certifications: ['RoHS'],
     inStock: true,
     featured: false,
     tags: ['tinted', 'decorative', 'rod'],
-        image: '/pictures/s-l960 (1).webp',
+    image: '/pictures/s-l960 (1).webp',
     datasheetUrl: getProductCatalogueUrl('pc-extruded-rod-smoke-tinted', 'Covestro PC'),
   },
   {
@@ -1217,17 +1336,24 @@ export const products: Product[] = [
     grade: 'LEXAN Rod AX',
     category: 'rods',
     subtype: 'Coextruded Rod',
-    shortDescription: 'Polycarbonate rod with an acrylic co-extruded surface for superior scratch resistance.',
-    description: 'LEXAN™ coextruded rods combine PC toughness with an acrylic hard-coat surface layer, delivering scratch resistance and optical clarity in demanding applications.',
+    shortDescription:
+      'Polycarbonate rod with an acrylic co-extruded surface for superior scratch resistance.',
+    description:
+      'LEXAN™ coextruded rods combine PC toughness with an acrylic hard-coat surface layer, delivering scratch resistance and optical clarity in demanding applications.',
     applications: ['Sight glasses', 'Protective tubes', 'Decorative items', 'Technical components'],
     industries: ['automotive', 'electronics'],
     features: ['Scratch-resistant', 'Tough core', 'Optical clarity', 'Precision machined'],
-    specifications: { density: '1.20 g/cm³', tensileStrength: '62 MPa', heatDeflection: '127 °C', thicknessRange: 'Ø 8 – 150 mm' },
+    specifications: {
+      density: '1.20 g/cm³',
+      tensileStrength: '62 MPa',
+      heatDeflection: '127 °C',
+      thicknessRange: 'Ø 8 – 150 mm',
+    },
     certifications: ['ISO 9001'],
     inStock: false,
     featured: false,
     tags: ['coextruded', 'scratch-resistant', 'rod'],
-        image: '/pictures/s-l960 (2).webp',
+    image: '/pictures/s-l960 (2).webp',
     datasheetUrl: getProductCatalogueUrl('lexan-rod-acrylic-polycarbonate', 'SABIC'),
   },
   {
@@ -1238,17 +1364,29 @@ export const products: Product[] = [
     grade: 'Calibre Tube NC',
     category: 'rods',
     subtype: 'Extruded Tube',
-    shortDescription: 'Heat-shrinkable and standard extruded PC tubes for engineering and design applications.',
-    description: 'Calibre™ PC tubes offer consistent wall thickness and dimensional stability for pressure vessels, protective sleeves, and industrial components.',
-    applications: ['Protective sleeves', 'Fluid containers', 'Engineering components', 'Decorative tubes'],
+    shortDescription:
+      'Heat-shrinkable and standard extruded PC tubes for engineering and design applications.',
+    description:
+      'Calibre™ PC tubes offer consistent wall thickness and dimensional stability for pressure vessels, protective sleeves, and industrial components.',
+    applications: [
+      'Protective sleeves',
+      'Fluid containers',
+      'Engineering components',
+      'Decorative tubes',
+    ],
     industries: ['electronics', 'consumer'],
     features: ['Precise dimensions', 'Chemically resistant', 'Easy to customize', 'Durable'],
-    specifications: { density: '1.20 g/cm³', tensileStrength: '60 MPa', heatDeflection: '127 °C', thicknessRange: 'ID 4 – 100 mm' },
+    specifications: {
+      density: '1.20 g/cm³',
+      tensileStrength: '60 MPa',
+      heatDeflection: '127 °C',
+      thicknessRange: 'ID 4 – 100 mm',
+    },
     certifications: ['ISO 9001'],
     inStock: true,
     featured: false,
     tags: ['tube', 'extruded', 'engineering'],
-        image: '/pictures/s-l960 (3).webp',
+    image: '/pictures/s-l960 (3).webp',
     datasheetUrl: getProductCatalogueUrl('calibre-pc-tube-natural', 'Trinseo'),
   },
   {
@@ -1260,16 +1398,32 @@ export const products: Product[] = [
     category: 'rods',
     subtype: 'Medical Grade Rod',
     shortDescription: 'ISO 10993 biocompatible PC rods for medical device machining.',
-    description: 'Panlite® medical-grade PC rods offer biocompatibility, sterilization stability, and precision machinability for custom medical components and surgical instruments.',
-    applications: ['Surgical instrument components', 'Medical device housings', 'Diagnostic probe shafts', 'Biomedical structures'],
+    description:
+      'Panlite® medical-grade PC rods offer biocompatibility, sterilization stability, and precision machinability for custom medical components and surgical instruments.',
+    applications: [
+      'Surgical instrument components',
+      'Medical device housings',
+      'Diagnostic probe shafts',
+      'Biomedical structures',
+    ],
     industries: ['medical'],
-    features: ['ISO 10993 compliant', 'Sterilization stable', 'Precise machining', 'Batch traceability'],
-    specifications: { density: '1.20 g/cm³', tensileStrength: '62 MPa', heatDeflection: '129 °C', thicknessRange: 'Ø 6 – 100 mm' },
+    features: [
+      'ISO 10993 compliant',
+      'Sterilization stable',
+      'Precise machining',
+      'Batch traceability',
+    ],
+    specifications: {
+      density: '1.20 g/cm³',
+      tensileStrength: '62 MPa',
+      heatDeflection: '129 °C',
+      thicknessRange: 'Ø 6 – 100 mm',
+    },
     certifications: ['ISO 10993', 'ISO 13485', 'FDA'],
     inStock: true,
     featured: true,
     tags: ['medical', 'biocompatible', 'rod'],
-        image: '/pictures/s-l960 (6).webp',
+    image: '/pictures/s-l960 (6).webp',
     datasheetUrl: getProductCatalogueUrl('panlite-rod-medical-grade', 'Teijin'),
   },
   {
@@ -1281,17 +1435,36 @@ export const products: Product[] = [
     category: 'rods',
     subtype: 'High-Temperature Rod',
     shortDescription: 'High-heat PC rods maintaining toughness at temperatures up to 160 °C.',
-    description: 'Iupilon® high-heat rods retain impact resistance and dimensional stability in thermal environments, ideal for automotive underhood and industrial high-temperature applications.',
-    applications: ['Automotive engine components', 'Thermal sensor housings', 'High-temperature bearings', 'Industrial connectors'],
+    description:
+      'Iupilon® high-heat rods retain impact resistance and dimensional stability in thermal environments, ideal for automotive underhood and industrial high-temperature applications.',
+    applications: [
+      'Automotive engine components',
+      'Thermal sensor housings',
+      'High-temperature bearings',
+      'Industrial connectors',
+    ],
     industries: ['automotive', 'electronics'],
-    features: ['160+ °C capability', 'Impact resistant', 'Dimensional stability', 'Precision machined'],
-    specifications: { density: '1.21 g/cm³', tensileStrength: '66 MPa', heatDeflection: '163 °C', thicknessRange: 'Ø 6 – 150 mm' },
+    features: [
+      '160+ °C capability',
+      'Impact resistant',
+      'Dimensional stability',
+      'Precision machined',
+    ],
+    specifications: {
+      density: '1.21 g/cm³',
+      tensileStrength: '66 MPa',
+      heatDeflection: '163 °C',
+      thicknessRange: 'Ø 6 – 150 mm',
+    },
     certifications: ['ISO 9001', 'REACH'],
     inStock: false,
     featured: false,
     tags: ['high-temperature', 'heat-resistant', 'rod'],
-        image: '/pictures/s-l960 (4).webp',
-    datasheetUrl: getProductCatalogueUrl('iupilon-rod-heat-resistant', 'Mitsubishi Engineering Plastics'),
+    image: '/pictures/s-l960 (4).webp',
+    datasheetUrl: getProductCatalogueUrl(
+      'iupilon-rod-heat-resistant',
+      'Mitsubishi Engineering Plastics'
+    ),
   },
   {
     id: '22',
@@ -1302,16 +1475,22 @@ export const products: Product[] = [
     category: 'rods',
     subtype: 'Transparent Rod',
     shortDescription: 'Crystal-clear PC rods for optical and aesthetic applications.',
-    description: 'Lupoy® transparent rods combine exceptional optical clarity with mechanical toughness, suitable for sight glasses, light guides, and precision components.',
+    description:
+      'Lupoy® transparent rods combine exceptional optical clarity with mechanical toughness, suitable for sight glasses, light guides, and precision components.',
     applications: ['Sight glasses', 'Light guides', 'Optical components', 'Protective covers'],
     industries: ['automotive', 'optical'],
     features: ['Crystal clear', 'Impact tough', 'Machinable', 'Precision tolerances'],
-    specifications: { density: '1.20 g/cm³', tensileStrength: '62 MPa', heatDeflection: '130 °C', thicknessRange: 'Ø 6 – 200 mm' },
+    specifications: {
+      density: '1.20 g/cm³',
+      tensileStrength: '62 MPa',
+      heatDeflection: '130 °C',
+      thicknessRange: 'Ø 6 – 200 mm',
+    },
     certifications: ['ISO 9001', 'RoHS'],
     inStock: true,
     featured: true,
     tags: ['transparent', 'optical', 'rod'],
-        image: '/pictures/s-l960 (5).webp',
+    image: '/pictures/s-l960 (5).webp',
     datasheetUrl: getProductCatalogueUrl('lupoy-rod-transparent', 'LG Chem'),
   },
   {
@@ -1323,16 +1502,22 @@ export const products: Product[] = [
     category: 'rods',
     subtype: 'Thick Section Plate',
     shortDescription: 'Extruded PC plates up to 100 mm thick for structural bearing applications.',
-    description: 'Thick-section PC plates offer superior strength and rigidity for load-bearing structures, structural spacers, and precision machined components.',
+    description:
+      'Thick-section PC plates offer superior strength and rigidity for load-bearing structures, structural spacers, and precision machined components.',
     applications: ['Bearing blocks', 'Structural spacers', 'Machine bases', 'Precision mounts'],
     industries: ['construction', 'consumer'],
     features: ['Thick sections available', 'Structural strength', 'Machinable', 'Durable'],
-    specifications: { density: '1.20 g/cm³', tensileStrength: '62 MPa', heatDeflection: '127 °C', thicknessRange: '10 – 100 mm' },
+    specifications: {
+      density: '1.20 g/cm³',
+      tensileStrength: '62 MPa',
+      heatDeflection: '127 °C',
+      thicknessRange: '10 – 100 mm',
+    },
     certifications: ['RoHS', 'ISO 9001'],
     inStock: false,
     featured: false,
     tags: ['thick-section', 'structural', 'plate'],
-        image: '/pictures/s-l1600.webp',
+    image: '/pictures/s-l1600.webp',
     datasheetUrl: getProductCatalogueUrl('pc-plate-thick-section', 'Covestro PC'),
   },
   // ─── Additional Resin Products ─────────────────────────────────────────
@@ -1345,16 +1530,27 @@ export const products: Product[] = [
     category: 'resins',
     subtype: 'Optical Specialty Grade',
     shortDescription: 'Optical-grade resin engineered for anti-reflective coating compatibility.',
-    description: 'Makrolon® AR1000 is formulated for precision optical molding with superior anti-reflective coating adhesion, ideal for camera lenses and precision optical instruments.',
+    description:
+      'Makrolon® AR1000 is formulated for precision optical molding with superior anti-reflective coating adhesion, ideal for camera lenses and precision optical instruments.',
     applications: ['Camera lenses', 'Optical instruments', 'Precision optics', 'Display screens'],
     industries: ['optical', 'electronics', 'consumer'],
-    features: ['AR coating compatible', 'Optical clarity', 'Low birefringence', 'Precision moldable'],
-    specifications: { density: '1.20 g/cm³', tensileStrength: '65 MPa', lightTransmittance: '92%', meltFlowIndex: '10 g/10 min' },
+    features: [
+      'AR coating compatible',
+      'Optical clarity',
+      'Low birefringence',
+      'Precision moldable',
+    ],
+    specifications: {
+      density: '1.20 g/cm³',
+      tensileStrength: '65 MPa',
+      lightTransmittance: '92%',
+      meltFlowIndex: '10 g/10 min',
+    },
     certifications: ['ISO 9001'],
     inStock: true,
     featured: true,
     tags: ['optical', 'anti-reflective', 'resin'],
-        image: '/pictures/BMW-Laser-light-detail-on-G15-8-Series.jpg',
+    image: '/pictures/BMW-Laser-light-detail-on-G15-8-Series.jpg',
     datasheetUrl: getProductCatalogueUrl('covestro-makrolon-ar1000-antireflective', 'Covestro'),
   },
   {
@@ -1366,16 +1562,27 @@ export const products: Product[] = [
     category: 'resins',
     subtype: 'Food-Safe Grade',
     shortDescription: 'Food-contact compliant PC resin for beverage and food-service containers.',
-    description: 'LEXAN™ FP is specifically formulated to meet FDA 21 CFR 177.1580 food-contact requirements, ideal for reusable beverage containers, microwave-safe dishes, and food-service items.',
-    applications: ['Reusable beverage bottles', 'Food storage containers', 'Microwave-safe dishes', 'Food-service items'],
+    description:
+      'LEXAN™ FP is specifically formulated to meet FDA 21 CFR 177.1580 food-contact requirements, ideal for reusable beverage containers, microwave-safe dishes, and food-service items.',
+    applications: [
+      'Reusable beverage bottles',
+      'Food storage containers',
+      'Microwave-safe dishes',
+      'Food-service items',
+    ],
     industries: ['consumer'],
     features: ['BPA-free', 'FDA compliant', 'Microwave stable', 'Dishwasher safe'],
-    specifications: { density: '1.20 g/cm³', tensileStrength: '60 MPa', heatDeflection: '130 °C', meltFlowIndex: '12 g/10 min' },
+    specifications: {
+      density: '1.20 g/cm³',
+      tensileStrength: '60 MPa',
+      heatDeflection: '130 °C',
+      meltFlowIndex: '12 g/10 min',
+    },
     certifications: ['FDA 21 CFR 177.1580', 'NSF', 'ISO 9001'],
     inStock: true,
     featured: true,
     tags: ['food-safe', 'FDA', 'resin'],
-        image: '/pictures/PC-plastic-application-in-consumer-electronic.webp',
+    image: '/pictures/PC-plastic-application-in-consumer-electronic.webp',
     datasheetUrl: getProductCatalogueUrl('sabic-lexan-fp-food-contact', 'SABIC'),
   },
   {
@@ -1386,17 +1593,29 @@ export const products: Product[] = [
     grade: 'Calibre 2100',
     category: 'resins',
     subtype: 'Transparent Premium Grade',
-    shortDescription: 'High-transparency PC resin for premium consumer goods and optical applications.',
-    description: 'Calibre™ 2100 delivers exceptional optical clarity and minimal flow lines, making it ideal for transparent housings, light covers, and precision optical molding.',
-    applications: ['Transparent housings', 'Light covers', 'Optical components', 'Premium consumer goods'],
+    shortDescription:
+      'High-transparency PC resin for premium consumer goods and optical applications.',
+    description:
+      'Calibre™ 2100 delivers exceptional optical clarity and minimal flow lines, making it ideal for transparent housings, light covers, and precision optical molding.',
+    applications: [
+      'Transparent housings',
+      'Light covers',
+      'Optical components',
+      'Premium consumer goods',
+    ],
     industries: ['electronics', 'consumer', 'optical'],
     features: ['High transparency', 'Minimal flow lines', 'Premium clarity', 'Surface gloss'],
-    specifications: { density: '1.20 g/cm³', tensileStrength: '61 MPa', lightTransmittance: '91%', meltFlowIndex: '9 g/10 min' },
+    specifications: {
+      density: '1.20 g/cm³',
+      tensileStrength: '61 MPa',
+      lightTransmittance: '91%',
+      meltFlowIndex: '9 g/10 min',
+    },
     certifications: ['UL 94 HB', 'ISO 9001'],
     inStock: true,
     featured: false,
     tags: ['transparent', 'optical', 'premium'],
-        image: '/pictures/closeup-spools-with-multicolored-plastic-wires-d-printers-1-1024x683.jpg',
+    image: '/pictures/closeup-spools-with-multicolored-plastic-wires-d-printers-1-1024x683.jpg',
     datasheetUrl: getProductCatalogueUrl('trinseo-calibre-2100-transparent', 'Trinseo'),
   },
   {
@@ -1408,16 +1627,27 @@ export const products: Product[] = [
     category: 'resins',
     subtype: 'Halogen-Free FR Grade',
     shortDescription: 'UL 94 V-0 rated halogen-free PC resin for safety-critical applications.',
-    description: 'Lupoy® FR offers excellent flame retardancy without halogens, meeting stringent flammability standards for electronic enclosures and consumer safety products.',
-    applications: ['Electrical enclosures', 'Safety equipment', 'Consumer electronics', 'Appliance housings'],
+    description:
+      'Lupoy® FR offers excellent flame retardancy without halogens, meeting stringent flammability standards for electronic enclosures and consumer safety products.',
+    applications: [
+      'Electrical enclosures',
+      'Safety equipment',
+      'Consumer electronics',
+      'Appliance housings',
+    ],
     industries: ['electronics', 'consumer', 'safety'],
     features: ['UL 94 V-0', 'Halogen-free', 'Safety certified', 'Reliable FR performance'],
-    specifications: { density: '1.22 g/cm³', tensileStrength: '59 MPa', heatDeflection: '125 °C', flamabilityRating: 'UL 94 V-0' },
+    specifications: {
+      density: '1.22 g/cm³',
+      tensileStrength: '59 MPa',
+      heatDeflection: '125 °C',
+      flamabilityRating: 'UL 94 V-0',
+    },
     certifications: ['UL 94 V-0', 'RoHS', 'REACH'],
     inStock: true,
     featured: true,
     tags: ['flame-retardant', 'halogen-free', 'safety'],
-        image: '/pictures/machine-guard-polycarbonate.webp',
+    image: '/pictures/machine-guard-polycarbonate.webp',
     datasheetUrl: getProductCatalogueUrl('lg-chem-lupoy-fr-flame-retardant', 'LG Chem'),
   },
   // ─── Additional Specialty Products ──────────────────────────────────────
@@ -1430,8 +1660,14 @@ export const products: Product[] = [
     category: 'specialty',
     subtype: 'UV-Stabilized Compound',
     shortDescription: 'Advanced UV-stabilized PC compound for long-term outdoor applications.',
-    description: 'Panlite® UV+ combines exceptional UV stability with the toughness of polycarbonate, engineered for outdoor equipment, agricultural structures, and long-life protective barriers.',
-    applications: ['Outdoor barriers', 'Agricultural equipment', 'Long-life covers', 'Environmental housings'],
+    description:
+      'Panlite® UV+ combines exceptional UV stability with the toughness of polycarbonate, engineered for outdoor equipment, agricultural structures, and long-life protective barriers.',
+    applications: [
+      'Outdoor barriers',
+      'Agricultural equipment',
+      'Long-life covers',
+      'Environmental housings',
+    ],
     industries: ['agriculture', 'construction'],
     features: ['Extended UV stability', 'Outdoor-rated', 'Excellent toughness', 'Color stable'],
     specifications: { density: '1.20 g/cm³', tensileStrength: '62 MPa', heatDeflection: '130 °C' },
@@ -1439,7 +1675,7 @@ export const products: Product[] = [
     inStock: true,
     featured: false,
     tags: ['UV-resistant', 'outdoor', 'specialty'],
-        image: '/pictures/terrace-behind-house-made-beams-260nw-2665798029.webp',
+    image: '/pictures/terrace-behind-house-made-beams-260nw-2665798029.webp',
     datasheetUrl: getProductCatalogueUrl('teijin-panlite-uv-resistant-specialty', 'Teijin'),
   },
   {
@@ -1450,18 +1686,33 @@ export const products: Product[] = [
     grade: 'Iupilon FR+',
     category: 'specialty',
     subtype: 'Fire-Rated Compound',
-    shortDescription: 'Premium fire-rated PC compound for high-safety applications requiring both FR and impact performance.',
-    description: 'Iupilon® FR+ combines UL 94 V-0 flame retardancy with exceptional impact resistance, meeting the most demanding safety requirements in construction and transportation.',
-    applications: ['Building panels', 'Transit components', 'Safety enclosures', 'Fire-resistant barriers'],
+    shortDescription:
+      'Premium fire-rated PC compound for high-safety applications requiring both FR and impact performance.',
+    description:
+      'Iupilon® FR+ combines UL 94 V-0 flame retardancy with exceptional impact resistance, meeting the most demanding safety requirements in construction and transportation.',
+    applications: [
+      'Building panels',
+      'Transit components',
+      'Safety enclosures',
+      'Fire-resistant barriers',
+    ],
     industries: ['construction', 'safety'],
     features: ['UL 94 V-0', 'High impact', 'Fire resistant', 'Premium FR'],
-    specifications: { density: '1.25 g/cm³', tensileStrength: '65 MPa', heatDeflection: '140 °C', flamabilityRating: 'UL 94 V-0' },
+    specifications: {
+      density: '1.25 g/cm³',
+      tensileStrength: '65 MPa',
+      heatDeflection: '140 °C',
+      flamabilityRating: 'UL 94 V-0',
+    },
     certifications: ['UL 94 V-0', 'REACH', 'ISO 9001'],
     inStock: true,
     featured: false,
     tags: ['fire-rated', 'V-0', 'safety'],
-        image: '/pictures/automotive-lightweighting.avif',
-    datasheetUrl: getProductCatalogueUrl('mitsubishi-iupilon-fire-rated-specialty', 'Mitsubishi Engineering Plastics'),
+    image: '/pictures/automotive-lightweighting.avif',
+    datasheetUrl: getProductCatalogueUrl(
+      'mitsubishi-iupilon-fire-rated-specialty',
+      'Mitsubishi Engineering Plastics'
+    ),
   },
   {
     id: '30',
@@ -1471,22 +1722,40 @@ export const products: Product[] = [
     grade: 'Makrolon ESD',
     category: 'specialty',
     subtype: 'ESD-Safe Compound',
-    shortDescription: 'Electrostatically dissipative (ESD) PC compound protecting sensitive electronics.',
-    description: 'Makrolon® ESD is engineered to safely dissipate static charges, protecting sensitive electronic components during manufacturing and handling. Essential for semiconductor and precision instrument applications.',
-    applications: ['ESD-safe equipment', 'Semiconductor protection', 'Electronics enclosures', 'Precision instrument housings'],
+    shortDescription:
+      'Electrostatically dissipative (ESD) PC compound protecting sensitive electronics.',
+    description:
+      'Makrolon® ESD is engineered to safely dissipate static charges, protecting sensitive electronic components during manufacturing and handling. Essential for semiconductor and precision instrument applications.',
+    applications: [
+      'ESD-safe equipment',
+      'Semiconductor protection',
+      'Electronics enclosures',
+      'Precision instrument housings',
+    ],
     industries: ['electronics'],
-    features: ['ESD-safe (10⁶–10⁹ Ω)', 'Static dissipative', 'Component protection', 'Safe handling'],
+    features: [
+      'ESD-safe (10⁶–10⁹ Ω)',
+      'Static dissipative',
+      'Component protection',
+      'Safe handling',
+    ],
     specifications: { density: '1.20 g/cm³', tensileStrength: '62 MPa', heatDeflection: '127 °C' },
     certifications: ['ESD-SAC 11.11', 'ISO 9001'],
     inStock: true,
     featured: true,
     tags: ['ESD', 'electrostatic', 'electronics'],
-        image: '/pictures/hammond.jpg',
+    image: '/pictures/hammond.jpg',
     datasheetUrl: getProductCatalogueUrl('covestro-makrolon-esd-electrostatic', 'Covestro'),
     promo: {
       text: 'Save 25% – ESD Protection Your Semiconductors Deserve',
-      benefits: ['ESD-SAC 11.11 certified for safe dissipation', 'Stable conductivity (10⁶–10⁹ Ω) across lifecycle', 'Tested for zero component failures', 'Batch documentation included'],
-      testimonial: 'Makrolon ESD has become our standard for all semiconductor packaging. The consistency and certification eliminated our ESD-related defect costs entirely.',
+      benefits: [
+        'ESD-SAC 11.11 certified for safe dissipation',
+        'Stable conductivity (10⁶–10⁹ Ω) across lifecycle',
+        'Tested for zero component failures',
+        'Batch documentation included',
+      ],
+      testimonial:
+        'Makrolon ESD has become our standard for all semiconductor packaging. The consistency and certification eliminated our ESD-related defect costs entirely.',
       ctaText: 'Request ESD Test Report',
       ctaLink: '/contact',
     },
@@ -1499,17 +1768,29 @@ export const products: Product[] = [
     grade: 'LEXAN BR',
     category: 'specialty',
     subtype: 'Ballistic Grade',
-    shortDescription: 'Premium ballistic-resistant PC compound for security and protection applications.',
-    description: 'LEXAN™ BR is a specialized polycarbonate formulation engineered to meet NIJ ballistic protection standards, delivering transparent armor solutions for security applications.',
-    applications: ['Ballistic protection panels', 'Security glazing', 'Protective barriers', 'Armored enclosures'],
+    shortDescription:
+      'Premium ballistic-resistant PC compound for security and protection applications.',
+    description:
+      'LEXAN™ BR is a specialized polycarbonate formulation engineered to meet NIJ ballistic protection standards, delivering transparent armor solutions for security applications.',
+    applications: [
+      'Ballistic protection panels',
+      'Security glazing',
+      'Protective barriers',
+      'Armored enclosures',
+    ],
     industries: ['safety'],
     features: ['NIJ rated', 'Ballistic protection', 'Transparent armor', 'Impact resistant'],
-    specifications: { density: '1.22 g/cm³', tensileStrength: '68 MPa', impactStrength: 'Ballistic rated', heatDeflection: '135 °C' },
+    specifications: {
+      density: '1.22 g/cm³',
+      tensileStrength: '68 MPa',
+      impactStrength: 'Ballistic rated',
+      heatDeflection: '135 °C',
+    },
     certifications: ['NIJ', 'ISO 9001', 'EN 356'],
     inStock: false,
     featured: false,
     tags: ['ballistic', 'armor', 'security'],
-        image: '/pictures/s-l960 (10).webp',
+    image: '/pictures/s-l960 (10).webp',
     datasheetUrl: getProductCatalogueUrl('lexan-ballistic-resistant-compound', 'SABIC'),
   },
   {
@@ -1520,12 +1801,24 @@ export const products: Product[] = [
     grade: 'Calibre AH',
     category: 'specialty',
     subtype: 'Automotive High-Heat',
-    shortDescription: 'High-temperature PC compound engineered for demanding automotive underhood environments.',
-    description: 'Calibre™ AH is formulated to withstand sustained high-temperature exposure in automotive engine compartments while maintaining impact resistance and dimensional stability.',
-    applications: ['Engine bay covers', 'Air intake manifolds', 'Cooling fan housings', 'Thermal barriers'],
+    shortDescription:
+      'High-temperature PC compound engineered for demanding automotive underhood environments.',
+    description:
+      'Calibre™ AH is formulated to withstand sustained high-temperature exposure in automotive engine compartments while maintaining impact resistance and dimensional stability.',
+    applications: [
+      'Engine bay covers',
+      'Air intake manifolds',
+      'Cooling fan housings',
+      'Thermal barriers',
+    ],
     industries: ['automotive'],
     features: ['150+ °C continuous', 'Underhood stable', 'High impact', 'Dimension stable'],
-    specifications: { density: '1.21 g/cm³', tensileStrength: '64 MPa', heatDeflection: '150 °C', meltFlowIndex: '7 g/10 min' },
+    specifications: {
+      density: '1.21 g/cm³',
+      tensileStrength: '64 MPa',
+      heatDeflection: '150 °C',
+      meltFlowIndex: '7 g/10 min',
+    },
     certifications: ['ISO 9001', 'REACH', 'Automotive standards'],
     inStock: true,
     featured: false,
@@ -1541,17 +1834,29 @@ export const products: Product[] = [
     grade: 'Lupoy IM',
     category: 'specialty',
     subtype: 'Impact-Modified Grade',
-    shortDescription: 'Enhanced impact-modified PC compound for extreme cold-temperature applications.',
-    description: 'Lupoy® IM maintains exceptional toughness even at cryogenic temperatures, making it ideal for cold-climate equipment, freezer components, and arctic-rated applications.',
-    applications: ['Freezer components', 'Cold-climate equipment', 'Arctic applications', 'Low-temperature enclosures'],
+    shortDescription:
+      'Enhanced impact-modified PC compound for extreme cold-temperature applications.',
+    description:
+      'Lupoy® IM maintains exceptional toughness even at cryogenic temperatures, making it ideal for cold-climate equipment, freezer components, and arctic-rated applications.',
+    applications: [
+      'Freezer components',
+      'Cold-climate equipment',
+      'Arctic applications',
+      'Low-temperature enclosures',
+    ],
     industries: ['safety', 'consumer'],
     features: ['Cryogenic stable', 'Low-temp tough', 'Impact resistant', 'Reliable at –50 °C'],
-    specifications: { density: '1.20 g/cm³', tensileStrength: '60 MPa', heatDeflection: '125 °C', impactStrength: 'No break at –50 °C' },
+    specifications: {
+      density: '1.20 g/cm³',
+      tensileStrength: '60 MPa',
+      heatDeflection: '125 °C',
+      impactStrength: 'No break at –50 °C',
+    },
     certifications: ['ISO 9001', 'REACH'],
     inStock: false,
     featured: false,
     tags: ['impact-modified', 'cold-temperature', 'specialty'],
-        image: '/pictures/machine-guard-types.webp',
+    image: '/pictures/machine-guard-types.webp',
     datasheetUrl: getProductCatalogueUrl('lupoy-impact-modified-specialty', 'LG Chem'),
   },
   // ─── Medical Device Products ────────────────────────────────────────────
@@ -1563,22 +1868,40 @@ export const products: Product[] = [
     grade: 'Makrolon MD',
     category: 'resins',
     subtype: 'Medical Grade',
-    shortDescription: 'ISO 10993-compliant medical-grade PC for surgical instruments and diagnostic devices.',
-    description: 'Makrolon® Medical-Grade combines biocompatibility, sterilization stability (gamma and EtO), and batch traceability required for critical medical applications including surgical implants and diagnostic optics.',
-    applications: ['Surgical instrument components', 'Diagnostic imaging housings', 'Fluid pathway components', 'Patient interface parts'],
+    shortDescription:
+      'ISO 10993-compliant medical-grade PC for surgical instruments and diagnostic devices.',
+    description:
+      'Makrolon® Medical-Grade combines biocompatibility, sterilization stability (gamma and EtO), and batch traceability required for critical medical applications including surgical implants and diagnostic optics.',
+    applications: [
+      'Surgical instrument components',
+      'Diagnostic imaging housings',
+      'Fluid pathway components',
+      'Patient interface parts',
+    ],
     industries: ['medical'],
-    features: ['ISO 10993 certified', 'Gamma & EtO stable', 'Batch traceable', 'Dimensional stable'],
+    features: [
+      'ISO 10993 certified',
+      'Gamma & EtO stable',
+      'Batch traceable',
+      'Dimensional stable',
+    ],
     specifications: { density: '1.20 g/cm³', tensileStrength: '62 MPa', heatDeflection: '130 °C' },
     certifications: ['ISO 10993-1', 'ISO 10993-5', 'ISO 13485', 'FDA'],
     inStock: true,
     featured: true,
     tags: ['medical', 'biocompatible', 'ISO-10993'],
-        image: '/pictures/s-l1600 (1).webp',
+    image: '/pictures/s-l1600 (1).webp',
     datasheetUrl: getProductCatalogueUrl('makrolon-medical-grade-iso-10993', 'Covestro'),
     promo: {
       text: '15% Off Medical-Grade – FDA Certified',
-      benefits: ['Batch-traceable for GMP compliance', 'Dual sterilization stable (EtO + Gamma)', 'Complete biocompatibility documentation', 'Expedited samples available'],
-      testimonial: 'Makrolon Medical has become the trusted choice for our surgical implant components. The batch traceability and proven sterilization stability saves us months in validation.',
+      benefits: [
+        'Batch-traceable for GMP compliance',
+        'Dual sterilization stable (EtO + Gamma)',
+        'Complete biocompatibility documentation',
+        'Expedited samples available',
+      ],
+      testimonial:
+        'Makrolon Medical has become the trusted choice for our surgical implant components. The batch traceability and proven sterilization stability saves us months in validation.',
       ctaText: 'Get Medical Sample Kit',
       ctaLink: '/contact',
     },
@@ -1591,17 +1914,29 @@ export const products: Product[] = [
     grade: 'LEXAN Medical Optical',
     category: 'resins',
     subtype: 'Medical Optical',
-    shortDescription: 'Medical-grade optical PC for intraocular lenses (IOLs) and ophthalmic devices.',
-    description: 'LEXAN™ Medical Optical meets FDA and ISO 10993 requirements for intraocular lens applications, delivering exceptional optical clarity (<2% haze) combined with biocompatibility.',
-    applications: ['Intraocular lenses', 'Ophthalmic sensors', 'Diagnostic lens assemblies', 'Ophthalmic devices'],
+    shortDescription:
+      'Medical-grade optical PC for intraocular lenses (IOLs) and ophthalmic devices.',
+    description:
+      'LEXAN™ Medical Optical meets FDA and ISO 10993 requirements for intraocular lens applications, delivering exceptional optical clarity (<2% haze) combined with biocompatibility.',
+    applications: [
+      'Intraocular lenses',
+      'Ophthalmic sensors',
+      'Diagnostic lens assemblies',
+      'Ophthalmic devices',
+    ],
     industries: ['medical'],
     features: ['<2% haze (optical)', 'IOL-compatible', 'Biocompatible', 'Optically clear'],
-    specifications: { density: '1.20 g/cm³', tensileStrength: '62 MPa', lightTransmittance: '92%', heatDeflection: '130 °C' },
+    specifications: {
+      density: '1.20 g/cm³',
+      tensileStrength: '62 MPa',
+      lightTransmittance: '92%',
+      heatDeflection: '130 °C',
+    },
     certifications: ['ISO 10993-1', 'FDA 21 CFR 886.1200', 'ISO 13485'],
     inStock: true,
     featured: true,
     tags: ['medical', 'optical', 'IOL'],
-        image: '/pictures/s-l1600 (2).webp',
+    image: '/pictures/s-l1600 (2).webp',
     datasheetUrl: getProductCatalogueUrl('lexan-medical-optical-lens-compound', 'SABIC'),
   },
   {
@@ -1612,17 +1947,29 @@ export const products: Product[] = [
     grade: 'Calibre Medical',
     category: 'resins',
     subtype: 'Medical Device Grade',
-    shortDescription: 'ISO 10993 medical-grade PC for multiuse medical devices and reusable instruments.',
-    description: 'Calibre™ Medical delivers robust sterilization stability (multiple gamma and EtO cycles) and reliable leach resistance, perfect for reusable surgical instruments and devices.',
-    applications: ['Reusable surgical instruments', 'Autoclavable device housings', 'Multi-use diagnostic tools', 'Sterilizable components'],
+    shortDescription:
+      'ISO 10993 medical-grade PC for multiuse medical devices and reusable instruments.',
+    description:
+      'Calibre™ Medical delivers robust sterilization stability (multiple gamma and EtO cycles) and reliable leach resistance, perfect for reusable surgical instruments and devices.',
+    applications: [
+      'Reusable surgical instruments',
+      'Autoclavable device housings',
+      'Multi-use diagnostic tools',
+      'Sterilizable components',
+    ],
     industries: ['medical'],
-    features: ['Multi-cycle sterilization', 'ISO 10993 compliant', 'Leach resistant', 'Dimensional stable'],
+    features: [
+      'Multi-cycle sterilization',
+      'ISO 10993 compliant',
+      'Leach resistant',
+      'Dimensional stable',
+    ],
     specifications: { density: '1.20 g/cm³', tensileStrength: '62 MPa', heatDeflection: '130 °C' },
     certifications: ['ISO 10993', 'ISO 13485', 'FDA'],
     inStock: true,
     featured: true,
     tags: ['medical', 'multiuse', 'sterilizable'],
-        image: '/pictures/s-l1600 (3).webp',
+    image: '/pictures/s-l1600 (3).webp',
     datasheetUrl: getProductCatalogueUrl('calibre-medical-multiuse-devices', 'Trinseo'),
   },
   {
@@ -1633,17 +1980,29 @@ export const products: Product[] = [
     grade: 'Panlite Medical DI',
     category: 'resins',
     subtype: 'Medical Imaging Grade',
-    shortDescription: 'Medical-grade PC for ultrasound probe housings and diagnostic imaging device enclosures.',
-    description: 'Panlite® Medical DI is optimized for diagnostic device applications requiring excellent acoustic coupling properties while maintaining full ISO 10993 biocompatibility.',
-    applications: ['Ultrasound probe housings', 'Diagnostic scanners', 'Imaging sensor covers', 'Medical probe enclosures'],
+    shortDescription:
+      'Medical-grade PC for ultrasound probe housings and diagnostic imaging device enclosures.',
+    description:
+      'Panlite® Medical DI is optimized for diagnostic device applications requiring excellent acoustic coupling properties while maintaining full ISO 10993 biocompatibility.',
+    applications: [
+      'Ultrasound probe housings',
+      'Diagnostic scanners',
+      'Imaging sensor covers',
+      'Medical probe enclosures',
+    ],
     industries: ['medical'],
-    features: ['Acoustic optimized', 'ISO 10993 compliant', 'Gamma & EtO stable', 'Signal transparent'],
+    features: [
+      'Acoustic optimized',
+      'ISO 10993 compliant',
+      'Gamma & EtO stable',
+      'Signal transparent',
+    ],
     specifications: { density: '1.20 g/cm³', tensileStrength: '62 MPa', heatDeflection: '130 °C' },
     certifications: ['ISO 10993-1', 'ISO 13485', 'FDA'],
     inStock: true,
     featured: true,
     tags: ['medical', 'diagnostic', 'imaging'],
-        image: '/pictures/s-l1600 (4).webp',
+    image: '/pictures/s-l1600 (4).webp',
     datasheetUrl: getProductCatalogueUrl('panlite-medical-diagnostic-imaging', 'Teijin'),
   },
   {
@@ -1654,9 +2013,16 @@ export const products: Product[] = [
     grade: 'Iupilon Medical FP',
     category: 'resins',
     subtype: 'Medical Fluid Path',
-    shortDescription: 'Medical-grade PC for blood/fluid contact components in diagnostic and therapeutic devices.',
-    description: 'Iupilon® Medical FP meets ISO 10993 blood contactability requirements, ideal for infusion sets, fluid pathways, and blood-contacting analyzer components.',
-    applications: ['Blood-contacting pathways', 'Infusion set components', 'Fluid analyzer cartridges', 'Therapeutic fluid holders'],
+    shortDescription:
+      'Medical-grade PC for blood/fluid contact components in diagnostic and therapeutic devices.',
+    description:
+      'Iupilon® Medical FP meets ISO 10993 blood contactability requirements, ideal for infusion sets, fluid pathways, and blood-contacting analyzer components.',
+    applications: [
+      'Blood-contacting pathways',
+      'Infusion set components',
+      'Fluid analyzer cartridges',
+      'Therapeutic fluid holders',
+    ],
     industries: ['medical'],
     features: ['Blood compatible', 'ISO 10993 certified', 'Low extractables', 'Transparent'],
     specifications: { density: '1.20 g/cm³', tensileStrength: '62 MPa', heatDeflection: '130 °C' },
@@ -1664,8 +2030,11 @@ export const products: Product[] = [
     inStock: true,
     featured: false,
     tags: ['medical', 'fluid-path', 'blood-compatible'],
-        image: '/pictures/s-l1600 (5).webp',
-    datasheetUrl: getProductCatalogueUrl('iupilon-medical-fluid-path', 'Mitsubishi Engineering Plastics'),
+    image: '/pictures/s-l1600 (5).webp',
+    datasheetUrl: getProductCatalogueUrl(
+      'iupilon-medical-fluid-path',
+      'Mitsubishi Engineering Plastics'
+    ),
   },
   {
     id: '39',
@@ -1675,9 +2044,16 @@ export const products: Product[] = [
     grade: 'Lupoy Medical Dental',
     category: 'resins',
     subtype: 'Dental Grade',
-    shortDescription: 'Biocompatible PC for dental device components and orthodontic appliance housings.',
-    description: 'Lupoy® Medical Dental combines biocompatibility with sufficient hardness for dental devices, including appliance housings, temporary fix components, and tooth-contacting parts.',
-    applications: ['Orthodontic appliance cases', 'Temporary prosthetic guides', 'Dental device housings', 'Tooth-contacting components'],
+    shortDescription:
+      'Biocompatible PC for dental device components and orthodontic appliance housings.',
+    description:
+      'Lupoy® Medical Dental combines biocompatibility with sufficient hardness for dental devices, including appliance housings, temporary fix components, and tooth-contacting parts.',
+    applications: [
+      'Orthodontic appliance cases',
+      'Temporary prosthetic guides',
+      'Dental device housings',
+      'Tooth-contacting components',
+    ],
     industries: ['medical'],
     features: ['Oral biocompatible', 'Autoclavable', 'Tooth-shade colors', 'FDA cleared'],
     specifications: { density: '1.20 g/cm³', tensileStrength: '62 MPa', heatDeflection: '130 °C' },
@@ -1685,7 +2061,7 @@ export const products: Product[] = [
     inStock: true,
     featured: false,
     tags: ['medical', 'dental', 'oral'],
-        image: '/pictures/s-l960 (7).webp',
+    image: '/pictures/s-l960 (7).webp',
     datasheetUrl: getProductCatalogueUrl('lupoy-medical-dental-applications', 'LG Chem'),
   },
   {
@@ -1696,17 +2072,34 @@ export const products: Product[] = [
     grade: 'Makrolon Prosthetic',
     category: 'resins',
     subtype: 'Sports Medicine',
-    shortDescription: 'Medical-grade PC for prosthetic devices and orthotic components requiring high durability.',
-    description: 'Makrolon® Prosthetic combines biocompatibility, mechanical strength, and durability for prosthetic sockets, ankle-foot orthosis (AFO) shells, and sports rehabilitation devices.',
-    applications: ['Prosthetic sockets', 'Orthotic shells', 'Sports knee braces', 'Rehabilitation device housings'],
+    shortDescription:
+      'Medical-grade PC for prosthetic devices and orthotic components requiring high durability.',
+    description:
+      'Makrolon® Prosthetic combines biocompatibility, mechanical strength, and durability for prosthetic sockets, ankle-foot orthosis (AFO) shells, and sports rehabilitation devices.',
+    applications: [
+      'Prosthetic sockets',
+      'Orthotic shells',
+      'Sports knee braces',
+      'Rehabilitation device housings',
+    ],
     industries: ['medical'],
-    features: ['High durability', 'ISO 10993 compliant', 'Weight optimized', 'Thermoplastically formable'],
-    specifications: { density: '1.20 g/cm³', tensileStrength: '62 MPa', heatDeflection: '130 °C', impactStrength: 'High' },
+    features: [
+      'High durability',
+      'ISO 10993 compliant',
+      'Weight optimized',
+      'Thermoplastically formable',
+    ],
+    specifications: {
+      density: '1.20 g/cm³',
+      tensileStrength: '62 MPa',
+      heatDeflection: '130 °C',
+      impactStrength: 'High',
+    },
     certifications: ['ISO 10993', 'ISO 13485', 'FDA'],
     inStock: true,
     featured: false,
     tags: ['medical', 'prosthetics', 'orthotic'],
-        image: '/pictures/s-l960 (8).webp',
+    image: '/pictures/s-l960 (8).webp',
     datasheetUrl: getProductCatalogueUrl('makrolon-medical-sports-prosthetics', 'Covestro'),
   },
   {
@@ -1717,17 +2110,29 @@ export const products: Product[] = [
     grade: 'LEXAN Medical Guard',
     category: 'resins',
     subtype: 'Medical Safety',
-    shortDescription: 'Medical-grade PC offering ballistic and impact protection for surgical and clinical environments.',
-    description: 'LEXAN™ Medical Guard combines ISO 10993 biocompatibility with exceptional impact resistance for protective barriers, surgical shields, and clinical equipment guards.',
-    applications: ['Protective surgical barriers', 'Operating room shields', 'Patient protection barriers', 'Clinical equipment guards'],
+    shortDescription:
+      'Medical-grade PC offering ballistic and impact protection for surgical and clinical environments.',
+    description:
+      'LEXAN™ Medical Guard combines ISO 10993 biocompatibility with exceptional impact resistance for protective barriers, surgical shields, and clinical equipment guards.',
+    applications: [
+      'Protective surgical barriers',
+      'Operating room shields',
+      'Patient protection barriers',
+      'Clinical equipment guards',
+    ],
     industries: ['medical'],
     features: ['Impact resistant', 'ISO 10993 compliant', 'Sterilizable', 'Barrier certified'],
-    specifications: { density: '1.20 g/cm³', tensileStrength: '62 MPa', impactStrength: 'Ballistic rated', heatDeflection: '130 °C' },
+    specifications: {
+      density: '1.20 g/cm³',
+      tensileStrength: '62 MPa',
+      impactStrength: 'Ballistic rated',
+      heatDeflection: '130 °C',
+    },
     certifications: ['ISO 10993', 'ISO 13485', 'FDA', 'EN 356'],
     inStock: true,
     featured: false,
     tags: ['medical', 'safety', 'barrier'],
-        image: '/pictures/s-l960 (9).webp',
+    image: '/pictures/s-l960 (9).webp',
     datasheetUrl: getProductCatalogueUrl('lexan-medical-surgical-safety-guards', 'SABIC'),
   },
 ];
@@ -1745,7 +2150,12 @@ export const applications: Application[] = [
     icon: 'Car',
     image: '/pictures/se-bmw-8-series-vert-7.jpg',
     products: ['3', '11', '21', '32'],
-    benefits: ['50% lighter than glass', 'Design freedom', 'Integrated functions', 'Scratch-resistant coatings'],
+    benefits: [
+      '50% lighter than glass',
+      'Design freedom',
+      'Integrated functions',
+      'Scratch-resistant coatings',
+    ],
   },
   {
     id: 'construction',
@@ -1757,7 +2167,12 @@ export const applications: Application[] = [
     icon: 'Building2',
     image: '/pictures/terrace-behind-house-made-beams-260nw-2666112465.webp',
     products: ['2', '13', '14', '15'],
-    benefits: ['250× impact over glass', 'Thermal insulation', 'UV protection', 'Rapid installation'],
+    benefits: [
+      '250× impact over glass',
+      'Thermal insulation',
+      'UV protection',
+      'Rapid installation',
+    ],
   },
   {
     id: 'medical',
@@ -1769,7 +2184,12 @@ export const applications: Application[] = [
     icon: 'Stethoscope',
     image: '/pictures/polycarbonate-enclosure-features.jpg',
     products: ['34', '35', '36', '37', '38'],
-    benefits: ['ISO 10993 compliant', 'EtO & gamma stable', 'Optical clarity', 'Batch traceability'],
+    benefits: [
+      'ISO 10993 compliant',
+      'EtO & gamma stable',
+      'Optical clarity',
+      'Batch traceability',
+    ],
   },
   {
     id: 'electronics',
@@ -1805,7 +2225,12 @@ export const applications: Application[] = [
     icon: 'ShieldCheck',
     image: '/pictures/machine-guard-polycarbonate.webp',
     products: ['1', '29', '31', '41'],
-    benefits: ['10× stronger than acrylic', 'EN 356 certified grades', 'Ballistic options', 'Lightweight armour'],
+    benefits: [
+      '10× stronger than acrylic',
+      'EN 356 certified grades',
+      'Ballistic options',
+      'Lightweight armour',
+    ],
   },
   {
     id: 'agriculture',
@@ -1817,7 +2242,12 @@ export const applications: Application[] = [
     icon: 'Sprout',
     image: '/pictures/sunpal-banner.jpg',
     products: ['2', '14', '28'],
-    benefits: ['Diffuse light boosts yields', 'U-value as low as 1.1 W/m²K', '50-year UV stability', 'Impact-safe vs. glass hail damage'],
+    benefits: [
+      'Diffuse light boosts yields',
+      'U-value as low as 1.1 W/m²K',
+      '50-year UV stability',
+      'Impact-safe vs. glass hail damage',
+    ],
   },
   {
     id: 'consumer',
@@ -1829,7 +2259,12 @@ export const applications: Application[] = [
     icon: 'ShoppingBag',
     image: '/pictures/polycarbonate-enclosure-features.jpg',
     products: ['16', '26', '39', '40'],
-    benefits: ['Lightweight vs. metals & glass', 'Impact resistant', 'Easy to colour & texture', 'BPA-free food-contact grades available'],
+    benefits: [
+      'Lightweight vs. metals & glass',
+      'Impact resistant',
+      'Easy to colour & texture',
+      'BPA-free food-contact grades available',
+    ],
   },
 ];
 
@@ -1841,48 +2276,72 @@ export const brands: Brand[] = [
     name: 'Covestro – Makrolon®',
     logo: '/logos/covestro.svg',
     country: 'Germany',
-    description: 'World-leading PC producer. Makrolon® and Bayfol® brands cover general-purpose through specialty grades.',
+    description:
+      'World-leading PC producer. Makrolon® and Bayfol® brands cover general-purpose through specialty grades.',
     grades: ['Makrolon 2407', 'Makrolon 2858', 'Makrolon GF30', 'Bayfol HX'],
+    specialties: ['Optical sheets', 'Flame-retardant grades', 'Weatherable glazing'],
+    flagshipSeries: 'Makrolon 2407 / 2858',
+    leadTime: '2-4 weeks',
   },
   {
     id: 'sabic',
     name: 'SABIC – LEXAN™',
     logo: '/logos/sabic.svg',
     country: 'Saudi Arabia / Netherlands',
-    description: 'Extensive LEXAN™ portfolio from optical to structural grades, including Thermoclear® sheet systems.',
+    description:
+      'Extensive LEXAN™ portfolio from optical to structural grades, including Thermoclear® sheet systems.',
     grades: ['LEXAN 940', 'LEXAN 121R', 'LEXAN EXL', 'Thermoclear 2UV'],
+    specialties: ['Multiwall systems', 'High-impact resin', 'Electrical housings'],
+    flagshipSeries: 'LEXAN 940',
+    leadTime: '2-5 weeks',
   },
   {
     id: 'trinseo',
     name: 'Trinseo – Calibre™',
     logo: '/logos/trinseo.svg',
     country: 'USA',
-    description: 'Calibre™ PC and PC/ABS blends offering balanced cost-performance for automotive and consumer products.',
+    description:
+      'Calibre™ PC and PC/ABS blends offering balanced cost-performance for automotive and consumer products.',
     grades: ['Calibre 301-10', 'Calibre EP5030', 'Calibre 200-3'],
+    specialties: ['PC/ABS blends', 'Thin-wall injection', 'General-purpose molding'],
+    flagshipSeries: 'Calibre 301-10',
+    leadTime: '3-5 weeks',
   },
   {
     id: 'teijin',
     name: 'Teijin – Panlite®',
     logo: '/logos/teijin.svg',
     country: 'Japan',
-    description: 'Japanese engineering plastics leader. Panlite® medical and optical grades are renowned for purity.',
+    description:
+      'Japanese engineering plastics leader. Panlite® medical and optical grades are renowned for purity.',
     grades: ['Panlite L-1225', 'Panlite AD-5503', 'Panlite TN-8065'],
+    specialties: ['Medical compliance', 'Optical clarity', 'High-purity resin'],
+    flagshipSeries: 'Panlite AD-5503',
+    leadTime: '3-6 weeks',
   },
   {
     id: 'mitsubishi',
     name: 'Mitsubishi – Iupilon®',
     logo: '/logos/mitsubishi.svg',
     country: 'Japan',
-    description: 'Iupilon® covers standard through high-heat copolymer grades for automotive and electronics sectors.',
+    description:
+      'Iupilon® covers standard through high-heat copolymer grades for automotive and electronics sectors.',
     grades: ['Iupilon H-3000', 'Iupilon S-2000', 'Iupilon E-2000'],
+    specialties: ['High-heat copolymers', 'Automotive modules', 'Dimensional stability'],
+    flagshipSeries: 'Iupilon H-3000',
+    leadTime: '3-6 weeks',
   },
   {
     id: 'lgnci',
     name: 'LG Chem – Lupoy®',
     logo: '/logos/lgchem.svg',
     country: 'South Korea',
-    description: 'Lupoy® range includes transparent, opaque, and alloy grades for consumer electronics and appliances.',
+    description:
+      'Lupoy® range includes transparent, opaque, and alloy grades for consumer electronics and appliances.',
     grades: ['Lupoy GP1000M', 'Lupoy PC1100', 'Lupoy HI1001'],
+    specialties: ['Consumer electronics', 'Appliance housings', 'Balanced toughness'],
+    flagshipSeries: 'Lupoy GP1000M',
+    leadTime: '2-5 weeks',
   },
 ];
 
@@ -1896,7 +2355,7 @@ export const testimonials: Testimonial[] = [
     company: 'Tier-1 Automotive OEM',
     industry: 'automotive',
     quote:
-      "Covestro PC supplied Makrolon GF30 for our EV battery bracket program with zero lot rejections across 18 months of production. Their application engineers resolved our weld-line issue in two weeks. Genuinely impressive technical support.",
+      'Covestro PC supplied Makrolon GF30 for our EV battery bracket program with zero lot rejections across 18 months of production. Their application engineers resolved our weld-line issue in two weeks. Genuinely impressive technical support.',
     rating: 5,
   },
   {
@@ -1906,7 +2365,7 @@ export const testimonials: Testimonial[] = [
     company: 'ArchGlass International',
     industry: 'construction',
     quote:
-      "We switched from a conventional glazing supplier to Covestro PC for a major stadium project. LEXAN Thermoclear delivery was on schedule, technical datasheets were comprehensive, and their project team was available throughout the certification process.",
+      'We switched from a conventional glazing supplier to Covestro PC for a major stadium project. LEXAN Thermoclear delivery was on schedule, technical datasheets were comprehensive, and their project team was available throughout the certification process.',
     rating: 5,
   },
   {
@@ -1916,7 +2375,7 @@ export const testimonials: Testimonial[] = [
     company: 'MedTech Innovations',
     industry: 'medical',
     quote:
-      "Finding ISO 10993-compliant PC resin with full traceability used to be a nightmare. Covestro PC maintains dedicated medical-grade inventory and provides Certificate of Conformance with every shipment. A supplier we genuinely trust.",
+      'Finding ISO 10993-compliant PC resin with full traceability used to be a nightmare. Covestro PC maintains dedicated medical-grade inventory and provides Certificate of Conformance with every shipment. A supplier we genuinely trust.',
     rating: 5,
   },
   {
@@ -2072,21 +2531,6 @@ export const homepageHeroSlides: HomepageHeroSlide[] = [
 export const homepageHeroImageSources = homepageHeroSlides.map((slide) => slide.image);
 
 export const homepageCinematicBandImage = '/pictures/ABAF2013-B764-4E6D-9796-21B89EFA1905.jpg';
-
-function buildHomepageReservedGallerySources() {
-  const reservedSources = [
-    ...homepageHeroImageSources,
-    homepageCinematicBandImage,
-    ...getFeaturedProducts().map((product) => product.image),
-    ...blogPosts.map((post) => post.image),
-    ...homepageVisualProofPanels.map((panel) => panel.src),
-  ];
-
-  const gallerySources = new Set(curatedPictureGalleryItems.map((image) => image.src));
-  return new Set<string>(reservedSources.filter((source) => gallerySources.has(source)));
-}
-
-const homepageReservedGallerySources = buildHomepageReservedGallerySources();
 
 const spectacularMarqueeItems: GalleryShowcaseCard[] = curatedPictureGalleryItems.map((image) => {
   const { label, href } = galleryLabelAndHref(image.category);

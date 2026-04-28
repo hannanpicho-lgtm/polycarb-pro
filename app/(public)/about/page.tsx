@@ -12,8 +12,7 @@ import { applications, brands, products } from '@/lib/data';
 
 export const metadata: Metadata = {
   title: `About ${siteConfig.company.shortName}`,
-  description:
-    `${siteConfig.company.name} is a specialist supplier of premium polycarbonate sheets, rods, and resins, supporting global OEM and fabrication teams since ${siteConfig.company.foundedYear}.`,
+  description: `${siteConfig.company.name} is a specialist supplier of premium polycarbonate sheets, rods, and resins, supporting global OEM and fabrication teams since ${siteConfig.company.foundedYear}.`,
 };
 
 const yearsInBusiness = new Date().getFullYear() - siteConfig.company.foundedYear;
@@ -29,22 +28,26 @@ const values = [
   {
     icon: CheckCircle2,
     title: 'Material Authenticity',
-    description: 'Every product ships with full Certificate of Conformance and traceable lot documentation from the original manufacturer.',
+    description:
+      'Every product ships with full Certificate of Conformance and traceable lot documentation from the original manufacturer.',
   },
   {
     icon: Globe,
     title: 'Global Logistics Network',
-    description: 'Warehousing in North America, Europe, and Asia-Pacific ensures fast local delivery with competitive lead times.',
+    description:
+      'Warehousing in North America, Europe, and Asia-Pacific ensures fast local delivery with competitive lead times.',
   },
   {
     icon: Award,
     title: 'Technical Excellence',
-    description: 'Our applications engineers hold degrees in polymer science and materials engineering — not just sales experience.',
+    description:
+      'Our applications engineers hold degrees in polymer science and materials engineering — not just sales experience.',
   },
   {
     icon: Users,
     title: 'Long-term Partnerships',
-    description: 'We maintain dedicated stock programs and blanket orders for high-volume customers to eliminate supply risk.',
+    description:
+      'We maintain dedicated stock programs and blanket orders for high-volume customers to eliminate supply risk.',
   },
 ];
 
@@ -54,20 +57,32 @@ export default function AboutPage() {
       {/* Hero */}
       <div className="bg-steel-950 pt-28 pb-16">
         <div className="container mx-auto">
-          <p className="text-brand-400 text-[11px] font-bold uppercase tracking-[0.15em] mb-3">About Us</p>
+          <p className="text-brand-400 text-[11px] font-bold uppercase tracking-[0.15em] mb-3">
+            About Us
+          </p>
           <h1 className="text-4xl lg:text-5xl font-bold text-white tracking-tight mb-5 max-w-2xl font-display">
             Two Decades of Polycarbonate Expertise
           </h1>
           <p className="text-white/60 text-lg max-w-2xl leading-relaxed">
-            {siteConfig.company.name} was founded in {siteConfig.company.foundedYear} with a clear mission: deliver genuinely high-performance polycarbonate
-            materials backed by real technical support. We focus on practical grade selection, dependable lead times,
-            and transparent technical documentation for every shipment.
+            {siteConfig.company.name} was founded in {siteConfig.company.foundedYear} with a clear
+            mission: deliver genuinely high-performance polycarbonate materials backed by real
+            technical support. We focus on practical grade selection, dependable lead times, and
+            transparent technical documentation for every shipment.
           </p>
           <div className="flex flex-wrap gap-4 mt-8">
-            <Button asChild size="lg" className="bg-brand-500 hover:bg-brand-600 text-white font-bold">
+            <Button
+              asChild
+              size="lg"
+              className="bg-brand-500 hover:bg-brand-600 text-white font-bold"
+            >
               <Link href="/contact?source=about-hero">Get in Touch</Link>
             </Button>
-            <Button asChild size="lg" variant="outline" className="border-white/30 text-white hover:bg-white/10">
+            <Button
+              asChild
+              size="lg"
+              variant="outline"
+              className="border-white/30 text-white hover:bg-white/10"
+            >
               <Link href="/products">Explore Products</Link>
             </Button>
           </div>
@@ -81,7 +96,9 @@ export default function AboutPage() {
             {stats.map((s) => (
               <div key={s.label} className="text-center">
                 <div className="text-4xl font-black text-white mb-1">{s.value}</div>
-                <div className="text-white/70 text-xs uppercase tracking-widest font-semibold">{s.label}</div>
+                <div className="text-white/70 text-xs uppercase tracking-widest font-semibold">
+                  {s.label}
+                </div>
               </div>
             ))}
           </div>
@@ -92,9 +109,12 @@ export default function AboutPage() {
       <div className="bg-background py-16">
         <div className="container mx-auto">
           <div className="text-center mb-12">
-            <h2 className="text-3xl font-bold text-foreground mb-3 font-display">What Sets Us Apart</h2>
+            <h2 className="text-3xl font-bold text-foreground mb-3 font-display">
+              What Sets Us Apart
+            </h2>
             <p className="text-muted-foreground max-w-xl mx-auto text-sm">
-              We've built our reputation on non-negotiable quality standards, deep technical knowledge, and supply-chain reliability our customers can plan around.
+              We've built our reputation on non-negotiable quality standards, deep technical
+              knowledge, and supply-chain reliability our customers can plan around.
             </p>
           </div>
 
@@ -103,7 +123,10 @@ export default function AboutPage() {
               const Icon = v.icon;
               return (
                 <div key={v.title} className="flex gap-5 p-6 border border-border rounded-lg">
-                  <Icon className="h-7 w-7 text-brand-500 flex-shrink-0 mt-0.5" aria-hidden="true" />
+                  <Icon
+                    className="h-7 w-7 text-brand-500 flex-shrink-0 mt-0.5"
+                    aria-hidden="true"
+                  />
                   <div>
                     <h3 className="font-bold text-foreground mb-2">{v.title}</h3>
                     <p className="text-sm text-muted-foreground leading-relaxed">{v.description}</p>
@@ -118,22 +141,40 @@ export default function AboutPage() {
       {/* Our story — Strategic Innovation Section */}
       <div className="bg-muted/40 py-16">
         <div className="container mx-auto max-w-3xl">
-          <h2 className="text-2xl font-bold text-foreground mb-5 font-display">Strategic Innovation Driving Industrial Transformation</h2>
+          <h2 className="text-2xl font-bold text-foreground mb-5 font-display">
+            Strategic Innovation Driving Industrial Transformation
+          </h2>
           <div className="prose prose-sm text-muted-foreground max-w-none space-y-5">
             <p>
-              Since 2003, {siteConfig.company.name} has advanced polycarbonate as a strategic material enabling the technologies shaping tomorrow's industries. More than a chemical company, {siteConfig.company.name} is a technical partner translating material innovation into measurable industrial impact.
+              Since 2003, {siteConfig.company.name} has advanced polycarbonate as a strategic
+              material enabling the technologies shaping tomorrow's industries. More than a chemical
+              company, {siteConfig.company.name} is a technical partner translating material
+              innovation into measurable industrial impact.
             </p>
             <p>
-              Polycarbonate's unique balance of optical clarity, mechanical strength, and lightweight properties is fundamental to sectors in rapid transformation: electric mobility, smart infrastructure, medical devices, and precision electronics. These aren't theoretical applications—they represent proven, expanding markets built on advanced material science and demonstrated performance.
+              Polycarbonate's unique balance of optical clarity, mechanical strength, and
+              lightweight properties is fundamental to sectors in rapid transformation: electric
+              mobility, smart infrastructure, medical devices, and precision electronics. These
+              aren't theoretical applications—they represent proven, expanding markets built on
+              advanced material science and demonstrated performance.
             </p>
             <p>
-              What distinguishes {siteConfig.company.name} is the ability to scale innovation from concept to market. Whether enabling extended EV range through lightweight components, delivering optical-grade clarity for critical medical housings, or powering next-generation building systems, polycarbonate provides the performance and reliability premium applications demand.
+              What distinguishes {siteConfig.company.name} is the ability to scale innovation from
+              concept to market. Whether enabling extended EV range through lightweight components,
+              delivering optical-grade clarity for critical medical housings, or powering
+              next-generation building systems, polycarbonate provides the performance and
+              reliability premium applications demand.
             </p>
             <p>
-              Sustainability anchors this strategy. We are advancing circular production systems designed to meet surging global demand while reducing environmental impact—making polycarbonate a foundation for responsible, high-performance industrial growth.
+              Sustainability anchors this strategy. We are advancing circular production systems
+              designed to meet surging global demand while reducing environmental impact—making
+              polycarbonate a foundation for responsible, high-performance industrial growth.
             </p>
             <p>
-              As industries transition toward efficiency, sustainability, and technological advancement, polycarbonate has become structurally essential to competitive success. {siteConfig.company.name} stands as the trusted partner for organizations committed to innovation-driven value creation and long-term advantage in markets that matter.
+              As industries transition toward efficiency, sustainability, and technological
+              advancement, polycarbonate has become structurally essential to competitive success.{' '}
+              {siteConfig.company.name} stands as the trusted partner for organizations committed to
+              innovation-driven value creation and long-term advantage in markets that matter.
             </p>
           </div>
         </div>
@@ -143,10 +184,15 @@ export default function AboutPage() {
       <div className="bg-background py-16">
         <div className="container mx-auto">
           <div className="text-center mb-12">
-            <p className="text-xs font-bold uppercase tracking-widest text-brand-500 mb-2">See It In Action</p>
-            <h2 className="text-3xl font-bold text-foreground mb-3 font-display">Real-World Polycarbonate Excellence</h2>
+            <p className="text-xs font-bold uppercase tracking-widest text-brand-500 mb-2">
+              See It In Action
+            </p>
+            <h2 className="text-3xl font-bold text-foreground mb-3 font-display">
+              Real-World Polycarbonate Excellence
+            </h2>
             <p className="text-muted-foreground max-w-2xl mx-auto">
-              From cutting-edge automotive components to architectural glazing, medical housings to precision electronics — polycarbonate delivers across industries.
+              From cutting-edge automotive components to architectural glazing, medical housings to
+              precision electronics — polycarbonate delivers across industries.
             </p>
           </div>
           <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
@@ -281,11 +327,18 @@ export default function AboutPage() {
       <div className="bg-steel-950 py-14">
         <div className="container mx-auto text-center">
           <TrendingUp className="h-12 w-12 text-brand-400 mx-auto mb-4" aria-hidden="true" />
-          <h2 className="text-2xl font-bold text-white mb-3 font-display">Ready to work with us?</h2>
+          <h2 className="text-2xl font-bold text-white mb-3 font-display">
+            Ready to work with us?
+          </h2>
           <p className="text-white/60 text-sm mb-7 max-w-md mx-auto">
-            Whether you need a single sample or a long-term supply agreement, our team will respond within 1 business day.
+            Whether you need a single sample or a long-term supply agreement, our team will respond
+            within 1 business day.
           </p>
-          <Button asChild size="lg" className="bg-brand-500 hover:bg-brand-600 text-white font-bold">
+          <Button
+            asChild
+            size="lg"
+            className="bg-brand-500 hover:bg-brand-600 text-white font-bold"
+          >
             <Link href="/contact?source=about-bottom-cta">Contact Sales</Link>
           </Button>
         </div>

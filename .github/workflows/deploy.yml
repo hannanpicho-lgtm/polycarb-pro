@@ -1,4 +1,4 @@
-name: Deploy to Cloudflare
+name: Production Git Deploy Contract
 
 on:
   push:
@@ -6,83 +6,129 @@ on:
   workflow_dispatch:
     inputs:
       reason:
-        description: 'Reason for manual deploy'
+        description: 'Reason for manual run'
         required: false
         default: 'Manual trigger'
 
 concurrency:
-  group: deploy-production
+  group: production-git-contract
   cancel-in-progress: false
 
 jobs:
-  deploy:
-    name: Build & Deploy Worker
+  commit-push-trigger:
+    name: Enforce commit -> push -> deploy trigger
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 15
     environment:
       name: production
       url: https://covestroppc.com
 
     permissions:
-      contents: read
-      deployments: write
+      contents: write
+    env:
+      HUSKY: '0'
 
     steps:
-      - name: Checkout
+      - name: Checkout branch with push credentials
         uses: actions/checkout@v4
         with:
-          fetch-depth: 1
+          fetch-depth: 0
+          persist-credentials: true
 
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: 20
-          cache: npm
-
-      - name: Install dependencies
-        run: npm ci
-
-      - name: Type-check
-        run: npm run type-check
-
-      - name: Build (OpenNext + Cloudflare)
-        env:
-          NODE_OPTIONS: --max-old-space-size=8192
-          NEXT_PUBLIC_GIT_SHA: ${{ github.sha }}
-          NEXT_PUBLIC_BUILD_TIME: ${{ github.event.head_commit.timestamp || github.event.repository.updated_at }}
-          NEXT_PUBLIC_SITE_URL: ${{ vars.NEXT_PUBLIC_SITE_URL || 'https://covestroppc.com' }}
-        run: npm run cf:build
-
-      - name: Deploy with Wrangler
-        uses: cloudflare/wrangler-action@v3
-        with:
-          apiToken: ${{ secrets.CLOUDFLARE_API_TOKEN }}
-          accountId: ${{ secrets.CLOUDFLARE_ACCOUNT_ID }}
-          command: deploy
-          wranglerVersion: '4.83.0'
-
-      - name: Smoke test /api/version
+      - name: Record branch and baseline commit
+        id: baseline
         run: |
-          sleep 8
-          echo "Probing covestroppc.com..."
-          curl --fail --retry 5 --retry-delay 3 --max-time 15 \
-            https://covestroppc.com/api/version | tee /tmp/version.json
-          grep -q '"ok":true' /tmp/version.json
+          set -euo pipefail
+          echo "branch=${GITHUB_REF_NAME}" >> "$GITHUB_OUTPUT"
+          echo "baseline_sha=$(git rev-parse HEAD)" >> "$GITHUB_OUTPUT"
 
-      - name: Summary
+      - name: Detect uncommitted or untracked changes
+        id: changes
+        run: |
+          set -euo pipefail
+          if [ -n "$(git status --porcelain)" ]; then
+            echo "has_changes=true" >> "$GITHUB_OUTPUT"
+          else
+            echo "has_changes=false" >> "$GITHUB_OUTPUT"
+          fi
+
+      - name: Stage, commit, and push required changes
+        id: commit_push
+        if: steps.changes.outputs.has_changes == 'true'
+        run: |
+          set -euo pipefail
+
+          git config user.name "github-actions[bot]"
+          git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+
+          git add -A
+          if git diff --cached --quiet; then
+            echo "Detected changes but nothing was staged. Failing by contract."
+            exit 1
+          fi
+
+          git commit -m "chore(ci): enforce commit-push-deploy contract"
+          committed_sha="$(git rev-parse HEAD)"
+          git push origin "HEAD:${GITHUB_REF_NAME}"
+
+          if ! git ls-remote --exit-code --heads origin "${GITHUB_REF_NAME}" >/tmp/remote_head.txt; then
+            echo "Could not verify remote branch head after push."
+            exit 1
+          fi
+
+          remote_sha="$(cut -f1 /tmp/remote_head.txt)"
+          if [ "${remote_sha}" != "${committed_sha}" ]; then
+            echo "Push verification failed: remote SHA ${remote_sha} does not match committed SHA ${committed_sha}."
+            exit 1
+          fi
+
+          echo "committed_sha=${committed_sha}" >> "$GITHUB_OUTPUT"
+          echo "push_success=true" >> "$GITHUB_OUTPUT"
+
+      - name: Set final commit and deploy-trigger status
+        id: result
+        run: |
+          set -euo pipefail
+
+          if [ "${{ steps.changes.outputs.has_changes }}" = "true" ]; then
+            committed_sha="${{ steps.commit_push.outputs.committed_sha }}"
+            push_success="${{ steps.commit_push.outputs.push_success }}"
+            if [ -z "${committed_sha}" ] || [ "${push_success}" != "true" ]; then
+              echo "Contract failure: changes existed but commit/push did not complete."
+              exit 1
+            fi
+          else
+            committed_sha="${{ steps.baseline.outputs.baseline_sha }}"
+            push_success="not-required-no-changes"
+          fi
+
+          if [ "${{ steps.baseline.outputs.branch }}" = "main" ]; then
+            deploy_trigger_met="true"
+          else
+            deploy_trigger_met="false"
+          fi
+
+          echo "final_sha=${committed_sha}" >> "$GITHUB_OUTPUT"
+          echo "push_success=${push_success}" >> "$GITHUB_OUTPUT"
+          echo "deploy_trigger_met=${deploy_trigger_met}" >> "$GITHUB_OUTPUT"
+
+      - name: Fail if deployment trigger condition is not met
+        if: steps.result.outputs.deploy_trigger_met != 'true'
+        run: |
+          echo "Contract failure: branch is not main; Cloudflare Pages production deploy trigger is not met."
+          exit 1
+
+      - name: Summary and explicit outputs
         if: always()
         run: |
-          echo "### Deploy Summary" >> $GITHUB_STEP_SUMMARY
+          echo "### Production Git Deploy Contract" >> "$GITHUB_STEP_SUMMARY"
           echo "" >> $GITHUB_STEP_SUMMARY
-          echo "- **Commit**: \`${{ github.sha }}\`" >> $GITHUB_STEP_SUMMARY
+          echo "- **Branch**: \`${{ steps.baseline.outputs.branch }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Changes detected**: \`${{ steps.changes.outputs.has_changes }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Commit hash**: \`${{ steps.result.outputs.final_sha }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Push success**: \`${{ steps.result.outputs.push_success }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Deploy trigger condition met**: \`${{ steps.result.outputs.deploy_trigger_met }}\`" >> "$GITHUB_STEP_SUMMARY"
+          echo "- **Deploy mode**: Cloudflare Pages Git integration (push to \`main\`)" >> "$GITHUB_STEP_SUMMARY"
           echo "- **Actor**: ${{ github.actor }}" >> $GITHUB_STEP_SUMMARY
           echo "- **Trigger**: ${{ github.event_name }}" >> $GITHUB_STEP_SUMMARY
           echo "- **URL**: https://covestroppc.com" >> $GITHUB_STEP_SUMMARY
-          if [ -f /tmp/version.json ]; then
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "**/api/version response:**" >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`json" >> $GITHUB_STEP_SUMMARY
-            cat /tmp/version.json >> $GITHUB_STEP_SUMMARY
-            echo "" >> $GITHUB_STEP_SUMMARY
-            echo "\`\`\`" >> $GITHUB_STEP_SUMMARY
-          fi

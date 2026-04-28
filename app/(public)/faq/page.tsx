@@ -34,7 +34,7 @@ const faqSections: FaqSection[] = [
       },
       {
         q: 'What does UL94 flame rating mean and which grades carry it?',
-        a: 'UL94 is Underwriters Laboratories\' standard for polymer flammability. V-0 is the most stringent level — the material must self-extinguish within 10 seconds and not drip flaming particles. V-2 allows dripping but still self-extinguishes. Many of our Covestro Makrolon, SABIC Lexan, and Trinseo EMERGE grades carry V-0 ratings at relevant thicknesses; specific certification data is noted in each product datasheet.',
+        a: "UL94 is Underwriters Laboratories' standard for polymer flammability. V-0 is the most stringent level — the material must self-extinguish within 10 seconds and not drip flaming particles. V-2 allows dripping but still self-extinguishes. Many of our Covestro Makrolon, SABIC Lexan, and Trinseo EMERGE grades carry V-0 ratings at relevant thicknesses; specific certification data is noted in each product datasheet.",
       },
       {
         q: 'Can polycarbonate be used outdoors without UV degradation?',
@@ -76,11 +76,11 @@ const faqSections: FaqSection[] = [
     items: [
       {
         q: 'How do I obtain a Certificate of Conformance (CoC)?',
-        a: 'A CoC is provided with every shipment at no additional charge. For critical applications or regulated industries, we can also provide the manufacturer\'s original mill certificate and lot traceability documentation. Requests for supplemental documentation should be noted on your purchase order.',
+        a: "A CoC is provided with every shipment at no additional charge. For critical applications or regulated industries, we can also provide the manufacturer's original mill certificate and lot traceability documentation. Requests for supplemental documentation should be noted on your purchase order.",
       },
       {
         q: 'Where can I download product datasheets and technical data sheets (TDS)?',
-        a: 'Product-specific datasheets are available directly on each product page and from our Technical Downloads library at /resources. If you cannot find the datasheet for a specific grade or lot, contact our technical team and we will supply the manufacturer\'s current version.',
+        a: "Product-specific datasheets are available directly on each product page and from our Technical Downloads library at /resources. If you cannot find the datasheet for a specific grade or lot, contact our technical team and we will supply the manufacturer's current version.",
       },
       {
         q: 'Do your products carry RoHS and REACH compliance?',
@@ -122,7 +122,7 @@ const faqSections: FaqSection[] = [
       },
       {
         q: 'How long does polycarbonate last in service?',
-        a: 'When correctly specified and installed, UV-stabilised polycarbonate sheet can perform for 15–25+ years in outdoor applications. In protected or indoor environments, service life commonly exceeds 30 years. Polycarbonate\'s long service life is one of its key sustainability advantages over glass alternatives in terms of whole-life carbon.',
+        a: "When correctly specified and installed, UV-stabilised polycarbonate sheet can perform for 15–25+ years in outdoor applications. In protected or indoor environments, service life commonly exceeds 30 years. Polycarbonate's long service life is one of its key sustainability advantages over glass alternatives in terms of whole-life carbon.",
       },
     ],
   },
@@ -153,12 +153,15 @@ export default function FaqPage() {
 
       <div className="bg-steel-950 pt-28 pb-12">
         <div className="container mx-auto">
-          <p className="text-brand-400 text-[11px] font-bold uppercase tracking-[0.15em] mb-2">Knowledge Base</p>
+          <p className="text-brand-400 text-[11px] font-bold uppercase tracking-[0.15em] mb-2">
+            Knowledge Base
+          </p>
           <h1 className="text-4xl lg:text-5xl font-bold text-white tracking-tight mb-3 font-display">
             Frequently Asked Questions
           </h1>
           <p className="text-white/65 text-base max-w-3xl leading-relaxed">
-            Engineering-grade answers to common questions about polycarbonate materials, ordering, documentation, processing, and sustainability.
+            Engineering-grade answers to common questions about polycarbonate materials, ordering,
+            documentation, processing, and sustainability.
           </p>
         </div>
       </div>
@@ -170,7 +173,10 @@ export default function FaqPage() {
             {faqSections.map((section) => (
               <a
                 key={section.section}
-                href={`#${section.section.toLowerCase().replace(/\s+&\s+/g, '-').replace(/\s+/g, '-')}`}
+                href={`#${section.section
+                  .toLowerCase()
+                  .replace(/\s+&\s+/g, '-')
+                  .replace(/\s+/g, '-')}`}
                 className="text-xs font-semibold px-3 py-1.5 rounded-full border border-border text-muted-foreground hover:border-brand-300 hover:text-brand-700 transition-colors"
               >
                 {section.section}
@@ -182,11 +188,16 @@ export default function FaqPage() {
             {faqSections.map((section) => (
               <section
                 key={section.section}
-                id={section.section.toLowerCase().replace(/\s+&\s+/g, '-').replace(/\s+/g, '-')}
+                id={section.section
+                  .toLowerCase()
+                  .replace(/\s+&\s+/g, '-')
+                  .replace(/\s+/g, '-')}
               >
                 <div className="flex items-center gap-3 mb-6">
                   <ChevronDown className="h-5 w-5 text-brand-500" aria-hidden="true" />
-                  <h2 className="text-xl font-bold text-foreground font-display">{section.section}</h2>
+                  <h2 className="text-xl font-bold text-foreground font-display">
+                    {section.section}
+                  </h2>
                 </div>
 
                 <div className="space-y-4">
@@ -196,7 +207,9 @@ export default function FaqPage() {
                       className="group border border-border rounded-lg bg-card overflow-hidden"
                     >
                       <summary className="flex items-start justify-between gap-4 px-5 py-4 cursor-pointer list-none select-none hover:bg-muted/40 transition-colors">
-                        <span className="text-sm font-semibold text-foreground leading-snug">{item.q}</span>
+                        <span className="text-sm font-semibold text-foreground leading-snug">
+                          {item.q}
+                        </span>
                         <ChevronDown
                           className="h-4 w-4 text-muted-foreground flex-shrink-0 mt-0.5 transition-transform duration-200 group-open:rotate-180"
                           aria-hidden="true"
@@ -216,7 +229,8 @@ export default function FaqPage() {
           <div className="mt-14 rounded-xl bg-brand-500 p-8 text-center text-white">
             <h2 className="text-xl font-bold mb-2 font-display">Still have questions?</h2>
             <p className="text-white/80 text-sm mb-5 max-w-md mx-auto">
-              Our applications engineers are available {siteConfig.contact.businessHours} to answer technical grade-selection and processing questions.
+              Our applications engineers are available {siteConfig.contact.businessHours} to answer
+              technical grade-selection and processing questions.
             </p>
             <Button asChild variant="white" size="lg" className="font-bold">
               <Link href="/contact?source=faq-cta">Talk to an Engineer</Link>

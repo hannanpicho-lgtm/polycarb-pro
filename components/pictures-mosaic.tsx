@@ -1,6 +1,10 @@
 import Image from 'next/image';
 import Link from 'next/link';
-import { curatedPictureGalleryItems, type GalleryCategory, type GalleryComposition } from '@/lib/data';
+import {
+  curatedPictureGalleryItems,
+  type GalleryCategory,
+  type GalleryComposition,
+} from '@/lib/data';
 
 interface PicturesMosaicProps {
   limit?: number;
@@ -8,7 +12,10 @@ interface PicturesMosaicProps {
 }
 
 export function PicturesMosaic({ limit, showCta = false }: PicturesMosaicProps) {
-  const images = typeof limit === 'number' ? curatedPictureGalleryItems.slice(0, limit) : curatedPictureGalleryItems;
+  const images =
+    typeof limit === 'number'
+      ? curatedPictureGalleryItems.slice(0, limit)
+      : curatedPictureGalleryItems;
   const eagerCount = showCta ? 2 : 1;
 
   const categoryClassMap: Record<GalleryCategory, string> = {
@@ -32,10 +39,15 @@ export function PicturesMosaic({ limit, showCta = false }: PicturesMosaicProps) 
       <div className="container mx-auto">
         <div className="flex items-end justify-between gap-4 mb-8">
           <div>
-            <span className="tag-pill bg-brand-500 text-white mb-3 inline-block">VISUAL LIBRARY</span>
-            <h2 className="text-2xl md:text-3xl font-black text-foreground">Project & Material Gallery</h2>
+            <span className="tag-pill bg-brand-500 text-white mb-3 inline-block">
+              VISUAL LIBRARY
+            </span>
+            <h2 className="text-2xl md:text-3xl font-black text-foreground">
+              Project & Material Gallery
+            </h2>
             <p className="text-sm text-muted-foreground mt-2 max-w-2xl">
-              Real-world polycarbonate visuals across automotive, architecture, machine guards, and canopy systems.
+              Real-world polycarbonate visuals across automotive, architecture, machine guards, and
+              canopy systems.
             </p>
           </div>
           {showCta ? (

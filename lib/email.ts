@@ -9,10 +9,13 @@ import { Resend } from 'resend';
 const RESEND_KEY = process.env.RESEND_API_KEY ?? '';
 const FROM_ORDERS = 'Covestro Polycarbonates <orders@covestroppc.com>';
 const FROM_NOREPLY = 'Covestro PC <noreply@covestroppc.com>';
-const ADMIN_EMAIL = process.env.ADMIN_NOTIFY_EMAIL ?? process.env.RESEND_TO_EMAIL ?? 'admin@covestroppc.com';
+const ADMIN_EMAIL =
+  process.env.ADMIN_NOTIFY_EMAIL ?? process.env.RESEND_TO_EMAIL ?? 'admin@covestroppc.com';
 const SITE_URL = process.env.NEXT_PUBLIC_SITE_URL ?? 'https://covestroppc.com';
 
-function resend() { return new Resend(RESEND_KEY); }
+function resend() {
+  return new Resend(RESEND_KEY);
+}
 
 // ── Shared layout wrapper ─────────────────────────────────────────────────────
 function wrap(body: string): string {
@@ -69,12 +72,15 @@ export async function sendQuoteSubmittedConfirmation(opts: {
   products: { name: string; qty: number; unit: string }[];
 }) {
   if (!RESEND_KEY) return { ok: false, error: 'RESEND_API_KEY not set' };
-  const rows = opts.products.map(p =>
-    `<tr>
+  const rows = opts.products
+    .map(
+      (p) =>
+        `<tr>
        <td style="padding:8px 12px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#374151">${p.name}</td>
        <td style="padding:8px 12px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#64748b;text-align:right">${p.qty} ${p.unit}</td>
      </tr>`
-  ).join('');
+    )
+    .join('');
 
   const body = `
 <h1 style="margin:0 0 6px;font-size:22px;font-weight:800;color:#0f172a;line-height:1.2">Quote Request Received</h1>
@@ -115,12 +121,15 @@ export async function sendNewQuoteAdminAlert(opts: {
   message?: string;
 }) {
   if (!RESEND_KEY) return { ok: false, error: 'RESEND_API_KEY not set' };
-  const rows = opts.products.map(p =>
-    `<tr>
+  const rows = opts.products
+    .map(
+      (p) =>
+        `<tr>
        <td style="padding:7px 12px;border-bottom:1px solid #f1f5f9;font-size:13px">${p.name}</td>
        <td style="padding:7px 12px;border-bottom:1px solid #f1f5f9;font-size:13px;text-align:right">${p.qty} ${p.unit}</td>
      </tr>`
-  ).join('');
+    )
+    .join('');
 
   const body = `
 <h1 style="margin:0 0 6px;font-size:20px;font-weight:800;color:#0f172a">New Quote Request</h1>
@@ -165,7 +174,8 @@ export async function sendQuoteToCustomer(opts: {
   expiresAt?: string;
 }) {
   if (!RESEND_KEY) return { ok: false, error: 'RESEND_API_KEY not set' };
-  const fmt = (n: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: opts.currency }).format(n);
+  const fmt = (n: number) =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: opts.currency }).format(n);
   const portalUrl = `${SITE_URL}/portal`;
 
   const body = `
@@ -179,9 +189,13 @@ export async function sendQuoteToCustomer(opts: {
       <p style="margin:6px 0 0;color:#ffffff;font-size:32px;font-weight:800;line-height:1">${fmt(opts.quotedAmount)}</p>
     </td>
   </tr>
-  ${opts.expiresAt ? `<tr><td style="padding:12px 24px;background:#f8fafc;font-size:12px;color:#64748b;border-top:1px solid #e2e8f0">
+  ${
+    opts.expiresAt
+      ? `<tr><td style="padding:12px 24px;background:#f8fafc;font-size:12px;color:#64748b;border-top:1px solid #e2e8f0">
     ⏱ This quote is valid until <strong>${new Date(opts.expiresAt).toLocaleDateString('en-US', { day: 'numeric', month: 'long', year: 'numeric' })}</strong>
-  </td></tr>` : ''}
+  </td></tr>`
+      : ''
+  }
 </table>
 
 ${opts.adminMessage ? `<div style="background:#f0f9ff;border:1px solid #bae6fd;border-radius:8px;padding:14px 16px;margin-bottom:24px"><p style="margin:0;font-size:13px;color:#0369a1;line-height:1.6"><strong>Note from our team:</strong><br>${opts.adminMessage}</p></div>` : ''}
@@ -213,7 +227,8 @@ export async function sendQuoteAcceptedEmails(opts: {
   currency: string;
 }) {
   if (!RESEND_KEY) return { ok: false, error: 'RESEND_API_KEY not set' };
-  const fmt = (n: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: opts.currency }).format(n);
+  const fmt = (n: number) =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: opts.currency }).format(n);
 
   // Customer email
   const customerBody = `
@@ -262,21 +277,25 @@ ${btn('View order in Admin', `${SITE_URL}/admin/orders`)}`;
 
 // ── 5. Order status update ────────────────────────────────────────────────────
 const STATUS_SUBJECT: Record<string, string> = {
-  confirmed:  'Your order has been confirmed',
+  confirmed: 'Your order has been confirmed',
   processing: 'Your order is being processed',
-  shipped:    'Your order has shipped!',
-  delivered:  'Your order has been delivered',
-  cancelled:  'Your order has been cancelled',
+  shipped: 'Your order has shipped!',
+  delivered: 'Your order has been delivered',
+  cancelled: 'Your order has been cancelled',
 };
 const STATUS_INTRO: Record<string, string> = {
-  confirmed:  "We've confirmed your order and it's queued for processing.",
-  processing: "Our team is actively preparing your order for dispatch.",
-  shipped:    "Your order is on its way — expect delivery within your agreed timeframe.",
-  delivered:  "Your order has been marked as delivered. We hope everything arrived perfectly.",
-  cancelled:  "Your order has been cancelled. Please contact us if this was unexpected.",
+  confirmed: "We've confirmed your order and it's queued for processing.",
+  processing: 'Our team is actively preparing your order for dispatch.',
+  shipped: 'Your order is on its way — expect delivery within your agreed timeframe.',
+  delivered: 'Your order has been marked as delivered. We hope everything arrived perfectly.',
+  cancelled: 'Your order has been cancelled. Please contact us if this was unexpected.',
 };
 const STATUS_EMOJI: Record<string, string> = {
-  confirmed: '✅', processing: '⚙️', shipped: '🚚', delivered: '📦', cancelled: '❌',
+  confirmed: '✅',
+  processing: '⚙️',
+  shipped: '🚚',
+  delivered: '📦',
+  cancelled: '❌',
 };
 
 export async function sendOrderStatusEmail(opts: {
@@ -291,18 +310,22 @@ export async function sendOrderStatusEmail(opts: {
   items?: { productName: string; qty: number; unit: string; unitPrice: number }[];
 }) {
   if (!RESEND_KEY) return { ok: false, error: 'RESEND_API_KEY not set' };
-  const fmt = (n: number) => new Intl.NumberFormat('en-US', { style: 'currency', currency: opts.currency }).format(n);
+  const fmt = (n: number) =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: opts.currency }).format(n);
   const subject = STATUS_SUBJECT[opts.status] ?? `Order update — ${opts.referenceId}`;
-  const intro   = STATUS_INTRO[opts.status]   ?? 'Your order has been updated.';
-  const emoji   = STATUS_EMOJI[opts.status]   ?? '📋';
+  const intro = STATUS_INTRO[opts.status] ?? 'Your order has been updated.';
+  const emoji = STATUS_EMOJI[opts.status] ?? '📋';
 
-  const itemRows = (opts.items ?? []).map(i =>
-    `<tr>
+  const itemRows = (opts.items ?? [])
+    .map(
+      (i) =>
+        `<tr>
        <td style="padding:8px 12px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#374151">${i.productName}</td>
        <td style="padding:8px 12px;border-bottom:1px solid #f1f5f9;font-size:13px;color:#64748b;text-align:center">${i.qty} ${i.unit}</td>
        <td style="padding:8px 12px;border-bottom:1px solid #f1f5f9;font-size:13px;font-weight:600;color:#374151;text-align:right">${fmt(i.unitPrice * i.qty)}</td>
      </tr>`
-  ).join('');
+    )
+    .join('');
 
   const body = `
 <h1 style="margin:0 0 6px;font-size:22px;font-weight:800;color:#0f172a">${emoji} ${subject}</h1>
@@ -316,11 +339,15 @@ ${opts.trackingNumber ? `<div style="background:#f0fdf4;border:1px solid #bbf7d0
   <tr style="background:#f8fafc">
     <td colspan="3" style="padding:10px 12px;font-size:11px;font-weight:700;color:#64748b;text-transform:uppercase;letter-spacing:0.05em">Order ${refBadge(opts.referenceId)}</td>
   </tr>
-  ${itemRows ? `<tr style="background:#f8fafc">
+  ${
+    itemRows
+      ? `<tr style="background:#f8fafc">
     <th style="padding:8px 12px;font-size:11px;font-weight:600;color:#94a3b8;text-align:left;border-bottom:1px solid #e2e8f0">Product</th>
     <th style="padding:8px 12px;font-size:11px;font-weight:600;color:#94a3b8;text-align:center;border-bottom:1px solid #e2e8f0">Qty</th>
     <th style="padding:8px 12px;font-size:11px;font-weight:600;color:#94a3b8;text-align:right;border-bottom:1px solid #e2e8f0">Line Total</th>
-  </tr><tbody>${itemRows}</tbody>` : ''}
+  </tr><tbody>${itemRows}</tbody>`
+      : ''
+  }
   <tr>
     <td colspan="2" style="padding:12px;font-weight:700;font-size:14px;color:#1e293b;text-align:right;border-top:1px solid #e2e8f0">Order Total</td>
     <td style="padding:12px;font-weight:800;font-size:15px;color:#0087C3;text-align:right;border-top:1px solid #e2e8f0">${fmt(opts.total)}</td>
@@ -340,11 +367,7 @@ ${btn('Track this order', `${SITE_URL}/track?ref=${opts.referenceId}`)}
 }
 
 // ── 6. Magic link — customer portal ──────────────────────────────────────────
-export async function sendPortalMagicLink(opts: {
-  to: string;
-  token: string;
-  ttlMinutes: number;
-}) {
+export async function sendPortalMagicLink(opts: { to: string; token: string; ttlMinutes: number }) {
   if (!RESEND_KEY) return { ok: false, error: 'RESEND_API_KEY not set' };
   const link = `${SITE_URL}/portal/verify?token=${opts.token}`;
 
@@ -414,10 +437,14 @@ export async function sendDistributorApplicationEmails(opts: {
 <div style="background:#f8fafc;border:1px solid #e2e8f0;border-radius:10px;padding:20px;margin-bottom:24px">
   <p style="margin:0 0 12px;font-size:13px;font-weight:700;color:#374151;text-transform:uppercase;letter-spacing:0.05em">What happens next</p>
   <table width="100%" cellpadding="0" cellspacing="0">
-    ${['Application review (24–48 hrs)', `Initial call to ${opts.phone}`, 'Agreement & onboarding'].map((s, i) =>
-      `<tr><td style="padding:8px 0;font-size:13px;color:#374151;vertical-align:top">
+    ${['Application review (24–48 hrs)', `Initial call to ${opts.phone}`, 'Agreement & onboarding']
+      .map(
+        (s, i) =>
+          `<tr><td style="padding:8px 0;font-size:13px;color:#374151;vertical-align:top">
         <span style="display:inline-block;width:22px;height:22px;background:#0087C3;color:#fff;border-radius:50%;text-align:center;line-height:22px;font-size:11px;font-weight:700;margin-right:10px">${i + 1}</span>${s}
-      </td></tr>`).join('')}
+      </td></tr>`
+      )
+      .join('')}
   </table>
 </div>
 
@@ -428,17 +455,36 @@ ${btn('Explore product catalog', `${SITE_URL}/products`)}`;
 <p style="margin:0 0 20px;font-size:14px;color:#64748b">Action required: review and follow up within 24 hours.</p>
 <table width="100%" cellpadding="0" cellspacing="0" style="margin-bottom:20px">
   ${[
-    ['Name', opts.fullName], ['Company', opts.companyName], ['Email', opts.to],
-    ['Phone', opts.phone], ['Business Type', opts.businessType],
-    ['Territories', opts.countries.join(', ')], ['Est. Annual Volume', opts.estimatedAnnualVolume],
-  ].map(([k, v]) => `<tr><td style="padding:6px 0;font-size:13px;color:#64748b;width:160px">${k}</td><td style="font-size:13px;font-weight:600;color:#0f172a">${v}</td></tr>`).join('')}
+    ['Name', opts.fullName],
+    ['Company', opts.companyName],
+    ['Email', opts.to],
+    ['Phone', opts.phone],
+    ['Business Type', opts.businessType],
+    ['Territories', opts.countries.join(', ')],
+    ['Est. Annual Volume', opts.estimatedAnnualVolume],
+  ]
+    .map(
+      ([k, v]) =>
+        `<tr><td style="padding:6px 0;font-size:13px;color:#64748b;width:160px">${k}</td><td style="font-size:13px;font-weight:600;color:#0f172a">${v}</td></tr>`
+    )
+    .join('')}
 </table>
 ${opts.message ? `<div style="background:#fefce8;border:1px solid #fde68a;border-radius:8px;padding:12px 16px;margin-bottom:20px"><p style="margin:0;font-size:13px;color:#92400e">${opts.message}</p></div>` : ''}
 ${btn('View in Admin', `${SITE_URL}/admin/distributors`)}`;
 
   const [r1, r2] = await Promise.all([
-    resend().emails.send({ from: FROM_NOREPLY, to: [opts.to], subject: '✅ Your Covestro Distributor Application — What\'s Next?', html: wrap(confirmBody) }),
-    resend().emails.send({ from: FROM_NOREPLY, to: [ADMIN_EMAIL], subject: `🚀 New Distributor Application: ${opts.companyName}`, html: wrap(adminBody) }),
+    resend().emails.send({
+      from: FROM_NOREPLY,
+      to: [opts.to],
+      subject: "✅ Your Covestro Distributor Application — What's Next?",
+      html: wrap(confirmBody),
+    }),
+    resend().emails.send({
+      from: FROM_NOREPLY,
+      to: [ADMIN_EMAIL],
+      subject: `🚀 New Distributor Application: ${opts.companyName}`,
+      html: wrap(adminBody),
+    }),
   ]);
   return { ok: !r1.error && !r2.error };
 }

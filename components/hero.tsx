@@ -20,7 +20,8 @@ export function Hero() {
     return () => clearInterval(id);
   }, [paused]);
 
-  const prev = () => setCurrent((c) => (c - 1 + homepageHeroSlides.length) % homepageHeroSlides.length);
+  const prev = () =>
+    setCurrent((c) => (c - 1 + homepageHeroSlides.length) % homepageHeroSlides.length);
   const next = () => setCurrent((c) => (c + 1) % homepageHeroSlides.length);
 
   const slide = homepageHeroSlides[current]!;
@@ -111,9 +112,7 @@ export function Hero() {
               </h1>
 
               {/* Subheadline */}
-              <p className="text-lg text-white/75 leading-relaxed max-w-md">
-                {slide.subheadline}
-              </p>
+              <p className="text-lg text-white/75 leading-relaxed max-w-md">{slide.subheadline}</p>
 
               {/* CTAs */}
               <div className="flex flex-wrap gap-4 pt-2">

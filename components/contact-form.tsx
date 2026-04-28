@@ -26,9 +26,13 @@ function SubmitBtn() {
       className="w-full bg-brand-500 hover:bg-brand-600 text-white font-bold"
     >
       {pending ? (
-        <><Loader2 className="h-4 w-4 mr-2 animate-spin" /> Sending…</>
+        <>
+          <Loader2 className="h-4 w-4 mr-2 animate-spin" /> Sending…
+        </>
       ) : (
-        <><Send className="h-4 w-4 mr-2" /> Send Message</>
+        <>
+          <Send className="h-4 w-4 mr-2" /> Send Message
+        </>
       )}
     </Button>
   );
@@ -58,7 +62,11 @@ interface ContactFormProps {
   };
 }
 
-export function ContactForm({ initialSubject = '', initialMessage = '', hiddenContext }: ContactFormProps) {
+export function ContactForm({
+  initialSubject = '',
+  initialMessage = '',
+  hiddenContext,
+}: ContactFormProps) {
   const [state, formAction] = useActionState<FormState, FormData>(submitContactForm, null);
 
   React.useEffect(() => {
@@ -78,7 +86,9 @@ export function ContactForm({ initialSubject = '', initialMessage = '', hiddenCo
         <h3 className="font-bold text-xl text-foreground">Message Sent!</h3>
         <p className="text-muted-foreground text-sm max-w-sm">{state.message}</p>
         {state.data?.submissionId ? (
-          <p className="text-[11px] text-muted-foreground/80 font-mono">Ref: {state.data.submissionId}</p>
+          <p className="text-[11px] text-muted-foreground/80 font-mono">
+            Ref: {state.data.submissionId}
+          </p>
         ) : null}
       </div>
     );
@@ -89,18 +99,42 @@ export function ContactForm({ initialSubject = '', initialMessage = '', hiddenCo
   return (
     <form action={formAction} className="space-y-5" noValidate>
       <FormHoneypot />
-      {hiddenContext?.leadSource ? <input type="hidden" name="leadSource" value={hiddenContext.leadSource} /> : null}
-      {hiddenContext?.compareSlugs ? <input type="hidden" name="compareSlugs" value={hiddenContext.compareSlugs} /> : null}
-      {hiddenContext?.compareNames ? <input type="hidden" name="compareNames" value={hiddenContext.compareNames} /> : null}
-      {hiddenContext?.compareOnlyDiff ? <input type="hidden" name="compareOnlyDiff" value={hiddenContext.compareOnlyDiff} /> : null}
-      {hiddenContext?.sourcePath ? <input type="hidden" name="sourcePath" value={hiddenContext.sourcePath} /> : null}
-      {hiddenContext?.landingPath ? <input type="hidden" name="landingPath" value={hiddenContext.landingPath} /> : null}
-      {hiddenContext?.utmSource ? <input type="hidden" name="utmSource" value={hiddenContext.utmSource} /> : null}
-      {hiddenContext?.utmMedium ? <input type="hidden" name="utmMedium" value={hiddenContext.utmMedium} /> : null}
-      {hiddenContext?.utmCampaign ? <input type="hidden" name="utmCampaign" value={hiddenContext.utmCampaign} /> : null}
-      {hiddenContext?.gclid ? <input type="hidden" name="gclid" value={hiddenContext.gclid} /> : null}
-      {hiddenContext?.msclkid ? <input type="hidden" name="msclkid" value={hiddenContext.msclkid} /> : null}
-      {hiddenContext?.fbclid ? <input type="hidden" name="fbclid" value={hiddenContext.fbclid} /> : null}
+      {hiddenContext?.leadSource ? (
+        <input type="hidden" name="leadSource" value={hiddenContext.leadSource} />
+      ) : null}
+      {hiddenContext?.compareSlugs ? (
+        <input type="hidden" name="compareSlugs" value={hiddenContext.compareSlugs} />
+      ) : null}
+      {hiddenContext?.compareNames ? (
+        <input type="hidden" name="compareNames" value={hiddenContext.compareNames} />
+      ) : null}
+      {hiddenContext?.compareOnlyDiff ? (
+        <input type="hidden" name="compareOnlyDiff" value={hiddenContext.compareOnlyDiff} />
+      ) : null}
+      {hiddenContext?.sourcePath ? (
+        <input type="hidden" name="sourcePath" value={hiddenContext.sourcePath} />
+      ) : null}
+      {hiddenContext?.landingPath ? (
+        <input type="hidden" name="landingPath" value={hiddenContext.landingPath} />
+      ) : null}
+      {hiddenContext?.utmSource ? (
+        <input type="hidden" name="utmSource" value={hiddenContext.utmSource} />
+      ) : null}
+      {hiddenContext?.utmMedium ? (
+        <input type="hidden" name="utmMedium" value={hiddenContext.utmMedium} />
+      ) : null}
+      {hiddenContext?.utmCampaign ? (
+        <input type="hidden" name="utmCampaign" value={hiddenContext.utmCampaign} />
+      ) : null}
+      {hiddenContext?.gclid ? (
+        <input type="hidden" name="gclid" value={hiddenContext.gclid} />
+      ) : null}
+      {hiddenContext?.msclkid ? (
+        <input type="hidden" name="msclkid" value={hiddenContext.msclkid} />
+      ) : null}
+      {hiddenContext?.fbclid ? (
+        <input type="hidden" name="fbclid" value={hiddenContext.fbclid} />
+      ) : null}
 
       {state?.message && !state.success && (
         <div className="bg-destructive/10 border border-destructive/30 text-destructive text-sm rounded px-4 py-3">
@@ -111,19 +145,38 @@ export function ContactForm({ initialSubject = '', initialMessage = '', hiddenCo
       <div className="grid grid-cols-2 gap-4">
         <div>
           <Label htmlFor="firstName">First Name *</Label>
-          <Input id="firstName" name="firstName" autoComplete="given-name" className="mt-1.5" required />
+          <Input
+            id="firstName"
+            name="firstName"
+            autoComplete="given-name"
+            className="mt-1.5"
+            required
+          />
           <FieldError errors={errors['firstName']} />
         </div>
         <div>
           <Label htmlFor="lastName">Last Name *</Label>
-          <Input id="lastName" name="lastName" autoComplete="family-name" className="mt-1.5" required />
+          <Input
+            id="lastName"
+            name="lastName"
+            autoComplete="family-name"
+            className="mt-1.5"
+            required
+          />
           <FieldError errors={errors['lastName']} />
         </div>
       </div>
 
       <div>
         <Label htmlFor="email">Business Email *</Label>
-        <Input id="email" name="email" type="email" autoComplete="email" className="mt-1.5" required />
+        <Input
+          id="email"
+          name="email"
+          type="email"
+          autoComplete="email"
+          className="mt-1.5"
+          required
+        />
         <FieldError errors={errors['email']} />
       </div>
 
@@ -134,13 +187,25 @@ export function ContactForm({ initialSubject = '', initialMessage = '', hiddenCo
 
       <div>
         <Label htmlFor="subject">Subject *</Label>
-        <Input id="subject" name="subject" className="mt-1.5" defaultValue={initialSubject} required />
+        <Input
+          id="subject"
+          name="subject"
+          className="mt-1.5"
+          defaultValue={initialSubject}
+          required
+        />
         <FieldError errors={errors['subject']} />
       </div>
 
       <div>
         <Label htmlFor="message">Message *</Label>
-        <Textarea id="message" name="message" className="mt-1.5 min-h-36" defaultValue={initialMessage} required />
+        <Textarea
+          id="message"
+          name="message"
+          className="mt-1.5 min-h-36"
+          defaultValue={initialMessage}
+          required
+        />
         <FieldError errors={errors['message']} />
       </div>
 

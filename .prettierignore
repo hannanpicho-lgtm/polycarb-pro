@@ -1,0 +1,12 @@
+node_modules
+.next
+out
+build
+.open-next
+open-next
+.wrangler
+package-lock.json
+public/datasheets
+.continue
+public/pictures
+*.min.js

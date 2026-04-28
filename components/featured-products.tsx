@@ -5,11 +5,9 @@ import Image from 'next/image';
 import { useState } from 'react';
 import { motion } from 'framer-motion';
 import { ArrowRight, CheckCircle2, Download, Zap } from 'lucide-react';
-import { Badge } from '@/components/ui/badge';
 import { Button } from '@/components/ui/button';
 import { Card, CardContent } from '@/components/ui/card';
 import { ProductPromoModal } from '@/components/product-promo-modal';
-import { getFeaturedProducts } from '@/lib/data';
 import { getCatalogueLinkProps } from '@/lib/utils';
 import type { ProductCategory, Product } from '@/lib/data';
 
@@ -29,12 +27,17 @@ const item = {
   show: { opacity: 1, y: 0, transition: { duration: 0.5, ease: 'easeOut' } },
 };
 
-export function FeaturedProducts() {
-  const featured = getFeaturedProducts();
+interface FeaturedProductsProps {
+  products: Product[];
+}
+
+export function FeaturedProducts({ products: featured }: FeaturedProductsProps) {
   const [promoState, setPromoState] = useState<{ isOpen: boolean; product: Product | null }>({
     isOpen: false,
     product: null,
   });
+
+  if (featured.length === 0) return null;
 
   const handleOpenPromo = (product: Product) => {
     setPromoState({ isOpen: true, product });
@@ -50,12 +53,15 @@ export function FeaturedProducts() {
         {/* Header */}
         <div className="flex flex-col sm:flex-row sm:items-end justify-between gap-4 mb-10">
           <div>
-            <p className="text-xs font-bold uppercase tracking-[0.15em] text-brand-500 mb-2">Featured Products</p>
+            <p className="text-xs font-bold uppercase tracking-[0.15em] text-brand-500 mb-2">
+              Featured Products
+            </p>
             <h2 id="featured-products-heading" className="section-heading font-display">
               Top Grades, Ready to Ship
             </h2>
             <p className="section-subheading mt-2">
-              Industry-proven polycarbonate — trusted by OEMs, converters, and fabrication teams worldwide.
+              Industry-proven polycarbonate — trusted by OEMs, converters, and fabrication teams
+              worldwide.
             </p>
           </div>
           <Button asChild variant="outline" className="flex-shrink-0">
@@ -126,7 +132,10 @@ export function FeaturedProducts() {
                   {/* Key features */}
                   {product.features.slice(0, 2).map((f) => (
                     <div key={f} className="flex items-start gap-2 mt-2">
-                      <CheckCircle2 className="h-3.5 w-3.5 text-brand-500 mt-0.5 flex-shrink-0" aria-hidden="true" />
+                      <CheckCircle2
+                        className="h-3.5 w-3.5 text-brand-500 mt-0.5 flex-shrink-0"
+                        aria-hidden="true"
+                      />
                       <span className="text-xs text-muted-foreground">{f}</span>
                     </div>
                   ))}
@@ -139,7 +148,7 @@ export function FeaturedProducts() {
                     >
                       View Details <ArrowRight className="h-3.5 w-3.5" />
                     </Link>
-                    
+
                     {/* Promo Button */}
                     {product.promo && (
                       <Button
@@ -154,18 +163,32 @@ export function FeaturedProducts() {
 
                     <div className="flex items-center justify-between gap-2">
                       {product.datasheetUrl ? (
-                        <Button asChild size="icon" variant="ghost" className="h-8 w-8" aria-label={`Download catalogue for ${product.name}`}>
+                        <Button
+                          asChild
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8"
+                          aria-label={`Download catalogue for ${product.name}`}
+                        >
                           <a {...getCatalogueLinkProps(product.datasheetUrl)}>
                             <Download className="h-4 w-4" />
                           </a>
                         </Button>
                       ) : (
-                        <Button size="icon" variant="ghost" className="h-8 w-8" disabled aria-label={`Catalogue unavailable for ${product.name}`}>
+                        <Button
+                          size="icon"
+                          variant="ghost"
+                          className="h-8 w-8"
+                          disabled
+                          aria-label={`Catalogue unavailable for ${product.name}`}
+                        >
                           <Download className="h-4 w-4" />
                         </Button>
                       )}
                       <Button asChild size="sm" variant="outline" className="flex-1">
-                        <Link href={`/quote?product=${product.slug}&source=featured-products`}>Request Quote</Link>
+                        <Link href={`/quote?product=${product.slug}&source=featured-products`}>
+                          Request Quote
+                        </Link>
                       </Button>
                     </div>
                   </div>

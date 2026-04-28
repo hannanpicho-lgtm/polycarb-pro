@@ -12,29 +12,29 @@
  *  - Quote status → 'rejected'
  */
 import { NextRequest, NextResponse } from 'next/server';
-import { getCloudflareContext } from '@opennextjs/cloudflare';
-import type { D1Database } from '@cloudflare/workers-types';
-import { verifySessionCookie, PORTAL_COOKIE } from '@/lib/portal-auth';
+import { apiJsonError } from '@/lib/api-json-error';
+import { getD1 } from '@/lib/d1';
+import { getPortalSessionEmail } from '@/lib/portal-auth';
 import { sendQuoteAcceptedEmails } from '@/lib/email';
-
-async function getDB(): Promise<D1Database | null> {
-  const { env } = await getCloudflareContext({ async: true });
-  return ((env as Record<string, unknown>)['DB'] as D1Database) ?? null;
-}
 
 export async function POST(request: NextRequest) {
   try {
-    const sessionCookie = request.cookies.get(PORTAL_COOKIE)?.value;
-    const email = sessionCookie ? await verifySessionCookie(sessionCookie) : null;
-    if (!email) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+    const email = await getPortalSessionEmail(request);
+    if (!email) return apiJsonError('Not authenticated', 401);
 
-    const { quoteId, action } = await request.json() as { quoteId: string; action: 'accept' | 'decline' };
+    const { quoteId, action } = (await request.json()) as {
+      quoteId: string;
+      action: 'accept' | 'decline';
+    };
     if (!quoteId || !['accept', 'decline'].includes(action)) {
-      return NextResponse.json({ error: 'quoteId and action (accept|decline) required' }, { status: 400 });
+      return NextResponse.json(
+        { error: 'quoteId and action (accept|decline) required' },
+        { status: 400 }
+      );
     }
 
-    const db = await getDB();
-    if (!db) return NextResponse.json({ error: 'DB unavailable' }, { status: 503 });
+    const db = await getD1();
+    if (!db) return apiJsonError('DB unavailable', 503);
 
     // Load and verify ownership
     const quote = await db
@@ -45,15 +45,23 @@ export async function POST(request: NextRequest) {
       )
       .bind(quoteId, email)
       .first<{
-        id: string; referenceId: string; customerName: string;
-        customerEmail: string; customerCompany?: string;
-        currency: string; quotedAmount?: number; status: string;
+        id: string;
+        referenceId: string;
+        customerName: string;
+        customerEmail: string;
+        customerCompany?: string;
+        currency: string;
+        quotedAmount?: number;
+        status: string;
       }>();
 
-    if (!quote) return NextResponse.json({ error: 'Quote not found' }, { status: 404 });
+    if (!quote) return apiJsonError('Quote not found', 404);
 
     if (!['quoted', 'pending', 'reviewed'].includes(quote.status)) {
-      return NextResponse.json({ error: `Cannot ${action} a quote with status "${quote.status}"` }, { status: 422 });
+      return NextResponse.json(
+        { error: `Cannot ${action} a quote with status "${quote.status}"` },
+        { status: 422 }
+      );
     }
 
     const now = new Date().toISOString();
@@ -69,7 +77,10 @@ export async function POST(request: NextRequest) {
 
     // ── Accept ──────────────────────────────────────────────────────────────
     if (!quote.quotedAmount || quote.quotedAmount <= 0) {
-      return NextResponse.json({ error: 'Quote has no priced amount yet — cannot accept' }, { status: 422 });
+      return NextResponse.json(
+        { error: 'Quote has no priced amount yet — cannot accept' },
+        { status: 422 }
+      );
     }
 
     // Create order
@@ -85,17 +96,26 @@ export async function POST(request: NextRequest) {
          VALUES (?, ?, ?, ?, ?, ?, ?, 'confirmed', 'unpaid', ?, 0, ?, ?, ?, ?)`
       )
       .bind(
-        orderId, orderRef,
-        quote.customerName, quote.customerEmail, quote.customerCompany ?? null,
-        quote.id, quote.currency,
-        quote.quotedAmount, quote.quotedAmount, // subtotal = total (shipping added manually)
-        now, now, now
+        orderId,
+        orderRef,
+        quote.customerName,
+        quote.customerEmail,
+        quote.customerCompany ?? null,
+        quote.id,
+        quote.currency,
+        quote.quotedAmount,
+        quote.quotedAmount, // subtotal = total (shipping added manually)
+        now,
+        now,
+        now
       )
       .run();
 
     // Update quote status
     await db
-      .prepare(`UPDATE quotes SET status = 'accepted', convertedToOrderId = ?, updatedAt = ? WHERE id = ?`)
+      .prepare(
+        `UPDATE quotes SET status = 'accepted', convertedToOrderId = ?, updatedAt = ? WHERE id = ?`
+      )
       .bind(orderId, now, quoteId)
       .run();
 
@@ -112,6 +132,6 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ ok: true, action: 'accepted', orderReferenceId: orderRef, orderId });
   } catch (error) {
     console.error('POST /api/portal/quotes/accept:', error);
-    return NextResponse.json({ error: 'Failed to process request' }, { status: 500 });
+    return apiJsonError('Failed to process request', 500);
   }
 }

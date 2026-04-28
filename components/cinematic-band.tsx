@@ -26,12 +26,17 @@ export function CinematicBand() {
             transition={{ duration: 0.7 }}
             className="max-w-xl"
           >
-            <span className="tag-pill bg-brand-500 text-white mb-4 inline-block">PROVEN PERFORMANCE</span>
+            <span className="tag-pill bg-brand-500 text-white mb-4 inline-block">
+              PROVEN PERFORMANCE
+            </span>
             <h2 className="text-3xl md:text-4xl lg:text-5xl font-bold text-white leading-tight mb-4 font-display">
-              80+ years of service life.<br />Six continents. Zero compromises.
+              80+ years of service life.
+              <br />
+              Six continents. Zero compromises.
             </h2>
             <p className="text-white/60 text-[15px] leading-relaxed mb-7 max-w-md">
-              Residential sunrooms to stadium skylights — polycarbonate outperforms glass in weight, impact resistance, thermal insulation, and UV stability.
+              Residential sunrooms to stadium skylights — polycarbonate outperforms glass in weight,
+              impact resistance, thermal insulation, and UV stability.
             </p>
             <Link
               href="/applications"

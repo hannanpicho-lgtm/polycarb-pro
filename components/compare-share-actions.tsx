@@ -93,7 +93,9 @@ export function CompareShareActions({
       },
       {
         label: 'Certifications',
-        values: selectedProducts.map((p) => (p.certifications.length > 0 ? p.certifications.join(' | ') : '—')),
+        values: selectedProducts.map((p) =>
+          p.certifications.length > 0 ? p.certifications.join(' | ') : '—'
+        ),
       },
       {
         label: 'Industries',
@@ -107,8 +109,9 @@ export function CompareShareActions({
 
     const rows = [...specRows, ...metadataRows];
     const header = ['Field', ...selectedProducts.map((p) => `${p.brand} ${p.grade}`)];
-    const csvLines = [header, ...rows.map((row) => [row.label, ...row.values])]
-      .map((line) => line.map((cell) => escapeCsv(cell)).join(','));
+    const csvLines = [header, ...rows.map((row) => [row.label, ...row.values])].map((line) =>
+      line.map((cell) => escapeCsv(cell)).join(',')
+    );
 
     const blob = new Blob([csvLines.join('\n')], { type: 'text/csv;charset=utf-8;' });
     const url = URL.createObjectURL(blob);
@@ -124,7 +127,8 @@ export function CompareShareActions({
   return (
     <div className="flex flex-col gap-2 sm:flex-row sm:items-center sm:justify-between">
       <p className="text-xs text-muted-foreground">
-        Comparing {selectedCount} grade{selectedCount !== 1 ? 's' : ''}. Share this exact setup with your team.
+        Comparing {selectedCount} grade{selectedCount !== 1 ? 's' : ''}. Share this exact setup with
+        your team.
       </p>
       <div className="flex flex-col gap-2 sm:flex-row print:hidden">
         <Button
@@ -134,18 +138,40 @@ export function CompareShareActions({
           onClick={handleCopy}
           className="w-full sm:w-auto"
         >
-          {copied ? <Check className="h-3.5 w-3.5 mr-1.5" /> : <Copy className="h-3.5 w-3.5 mr-1.5" />}
+          {copied ? (
+            <Check className="h-3.5 w-3.5 mr-1.5" />
+          ) : (
+            <Copy className="h-3.5 w-3.5 mr-1.5" />
+          )}
           {copied ? 'Copied' : 'Copy Link'}
         </Button>
-        <Button type="button" size="sm" variant="outline" onClick={handleEmail} className="w-full sm:w-auto">
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={handleEmail}
+          className="w-full sm:w-auto"
+        >
           <Mail className="h-3.5 w-3.5 mr-1.5" />
           Email Link
         </Button>
-        <Button type="button" size="sm" variant="outline" onClick={handleCsvExport} className="w-full sm:w-auto">
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={handleCsvExport}
+          className="w-full sm:w-auto"
+        >
           <FileSpreadsheet className="h-3.5 w-3.5 mr-1.5" />
           Export CSV
         </Button>
-        <Button type="button" size="sm" variant="outline" onClick={handlePrint} className="w-full sm:w-auto">
+        <Button
+          type="button"
+          size="sm"
+          variant="outline"
+          onClick={handlePrint}
+          className="w-full sm:w-auto"
+        >
           <Printer className="h-3.5 w-3.5 mr-1.5" />
           Print / PDF
         </Button>

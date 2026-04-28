@@ -26,4 +26,3 @@ const trackedEnv = {
 
 run('npx', ['opennextjs-cloudflare', 'build'], trackedEnv);
 run('npx', ['wrangler', 'deploy'], trackedEnv);
-

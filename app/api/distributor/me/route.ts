@@ -1,45 +1,61 @@
 import { NextRequest, NextResponse } from 'next/server';
-import { getCloudflareContext } from '@opennextjs/cloudflare';
-import type { D1Database } from '@cloudflare/workers-types';
+import { apiJsonError } from '@/lib/api-json-error';
+import { getD1 } from '@/lib/d1';
 import { verifyDistSessionCookie, DIST_COOKIE } from '@/lib/distributor-auth';
-
-async function getDB(): Promise<D1Database | null> {
-  const { env } = await getCloudflareContext({ async: true });
-  return ((env as Record<string, unknown>)['DB'] as D1Database) ?? null;
-}
 
 export async function GET(request: NextRequest) {
   const cookie = request.cookies.get(DIST_COOKIE)?.value;
-  if (!cookie) return NextResponse.json({ error: 'Not authenticated' }, { status: 401 });
+  if (!cookie) return apiJsonError('Not authenticated', 401);
 
   const email = await verifyDistSessionCookie(cookie);
-  if (!email) return NextResponse.json({ error: 'Invalid session' }, { status: 401 });
+  if (!email) return apiJsonError('Invalid session', 401);
 
-  const db = await getDB();
-  if (!db) return NextResponse.json({ error: 'DB unavailable' }, { status: 503 });
+  const db = await getD1();
+  if (!db) return apiJsonError('DB unavailable', 503);
 
-  const profile = await db.prepare(
-    `SELECT id, fullName, companyName, email, phone, businessType, countries,
+  const profile = await db
+    .prepare(
+      `SELECT id, fullName, companyName, email, phone, businessType, countries,
             estimatedAnnualVolume, jobTitle, status, discountTier,
             approvedAt, internalNotes, createdAt
      FROM distributor_submissions WHERE email = ? ORDER BY createdAt DESC LIMIT 1`
-  ).bind(email).first<{
-    id: string; fullName: string; companyName: string; email: string;
-    phone: string; businessType: string; countries: string;
-    estimatedAnnualVolume: string; jobTitle: string; status: string;
-    discountTier: string; approvedAt: string | null; createdAt: string;
-  }>();
+    )
+    .bind(email)
+    .first<{
+      id: string;
+      fullName: string;
+      companyName: string;
+      email: string;
+      phone: string;
+      businessType: string;
+      countries: string;
+      estimatedAnnualVolume: string;
+      jobTitle: string;
+      status: string;
+      discountTier: string;
+      approvedAt: string | null;
+      createdAt: string;
+    }>();
 
-  if (!profile) return NextResponse.json({ error: 'Distributor not found' }, { status: 404 });
+  if (!profile) return apiJsonError('Distributor not found', 404);
 
   // Load their submitted distributor quotes
-  const quotesResult = await db.prepare(
-    `SELECT id, referenceId, currency, status, products, subtotalNet, createdAt, respondedAt
+  const quotesResult = await db
+    .prepare(
+      `SELECT id, referenceId, currency, status, products, subtotalNet, createdAt, respondedAt
      FROM distributor_quotes WHERE distributorEmail = ? ORDER BY createdAt DESC LIMIT 20`
-  ).bind(email).all<{
-    id: string; referenceId: string; currency: string; status: string;
-    products: string; subtotalNet: number; createdAt: string; respondedAt: string | null;
-  }>();
+    )
+    .bind(email)
+    .all<{
+      id: string;
+      referenceId: string;
+      currency: string;
+      status: string;
+      products: string;
+      subtotalNet: number;
+      createdAt: string;
+      respondedAt: string | null;
+    }>();
 
   return NextResponse.json({
     email,

@@ -5,7 +5,8 @@ import { datasheetLibrary, getRecentDatasheets } from '@/lib/data';
 const spotlightCards = [
   {
     title: 'Primary Datasheets',
-    description: 'Start with the core spec sheets tied to our stocked polycarbonate grades and commercial resin families.',
+    description:
+      'Start with the core spec sheets tied to our stocked polycarbonate grades and commercial resin families.',
     href: '/resources?type=Primary+Datasheet&sort=brand-asc',
     icon: FileText,
     count: datasheetLibrary.filter((doc) => doc.type === 'Primary Datasheet').length,
@@ -13,7 +14,8 @@ const spotlightCards = [
   },
   {
     title: 'Brochures & Grade Guides',
-    description: 'Compare supplier portfolios, solution guides, and broader application references before narrowing to a SKU.',
+    description:
+      'Compare supplier portfolios, solution guides, and broader application references before narrowing to a SKU.',
     href: '/resources?type=Brochure&sort=brand-asc',
     icon: BookOpenText,
     count: datasheetLibrary.filter((doc) => doc.type === 'Brochure').length,
@@ -21,7 +23,8 @@ const spotlightCards = [
   },
   {
     title: 'Engineering References',
-    description: 'Surface technical notes, compliance materials, and non-polycarbonate engineering plastic references in one pass.',
+    description:
+      'Surface technical notes, compliance materials, and non-polycarbonate engineering plastic references in one pass.',
     href: '/resources?family=Engineering+Plastics&sort=title-asc',
     icon: ShieldCheck,
     count: datasheetLibrary.filter((doc) => doc.materialFamily === 'Engineering Plastics').length,
@@ -34,7 +37,9 @@ export function DatasheetSpotlight() {
   const docsThisMonth = datasheetLibrary
     .filter((doc) => {
       const published = new Date(doc.publishedAt);
-      return published.getFullYear() === now.getFullYear() && published.getMonth() === now.getMonth();
+      return (
+        published.getFullYear() === now.getFullYear() && published.getMonth() === now.getMonth()
+      );
     })
     .sort((a, b) => new Date(b.publishedAt).getTime() - new Date(a.publishedAt).getTime())
     .slice(0, 3);
@@ -42,19 +47,28 @@ export function DatasheetSpotlight() {
   const recentDocs = docsThisMonth.length > 0 ? docsThisMonth : getRecentDatasheets(3);
   const latestDoc = recentDocs[0];
   const latestStampDate = latestDoc ? new Date(latestDoc.publishedAt) : now;
-  const latestStampLabel = latestStampDate.toLocaleDateString('en-US', { month: 'long', year: 'numeric' });
+  const latestStampLabel = latestStampDate.toLocaleDateString('en-US', {
+    month: 'long',
+    year: 'numeric',
+  });
 
   return (
     <section className="bg-steel-950 py-20" aria-labelledby="datasheet-spotlight-heading">
       <div className="container mx-auto">
         <div className="flex flex-col lg:flex-row lg:items-end lg:justify-between gap-6 mb-10">
           <div className="max-w-2xl">
-            <p className="text-brand-400 text-[11px] font-bold uppercase tracking-[0.15em] mb-2">Technical Downloads</p>
-            <h2 id="datasheet-spotlight-heading" className="text-3xl md:text-4xl font-bold text-white leading-tight font-display">
+            <p className="text-brand-400 text-[11px] font-bold uppercase tracking-[0.15em] mb-2">
+              Technical Downloads
+            </p>
+            <h2
+              id="datasheet-spotlight-heading"
+              className="text-3xl md:text-4xl font-bold text-white leading-tight font-display"
+            >
               Fast routes into the datasheet library
             </h2>
             <p className="text-white/65 text-sm md:text-base leading-relaxed mt-3">
-              Jump directly into pre-filtered technical documents for supplier comparisons, core specification sheets, and engineering references.
+              Jump directly into pre-filtered technical documents for supplier comparisons, core
+              specification sheets, and engineering references.
             </p>
           </div>
 
@@ -87,12 +101,11 @@ export function DatasheetSpotlight() {
                 <h3 className="text-xl font-bold text-white font-display mb-2 group-hover:text-brand-200 transition-colors">
                   {title}
                 </h3>
-                <p className="text-sm text-white/65 leading-relaxed mb-6">
-                  {description}
-                </p>
+                <p className="text-sm text-white/65 leading-relaxed mb-6">{description}</p>
 
                 <span className="inline-flex items-center gap-2 text-sm font-semibold text-brand-300 group-hover:text-white transition-colors">
-                  Open filtered view <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
+                  Open filtered view{' '}
+                  <ArrowRight className="h-4 w-4 transition-transform group-hover:translate-x-1" />
                 </span>
               </div>
             </Link>
@@ -103,7 +116,9 @@ export function DatasheetSpotlight() {
           <div className="mt-8 rounded-2xl border border-white/10 bg-white/[0.02] p-5 lg:p-6">
             <div className="flex flex-col md:flex-row md:items-center md:justify-between gap-4 mb-5">
               <div>
-                <p className="text-brand-300 text-[11px] font-bold uppercase tracking-[0.15em] mb-1">What&apos;s New This Month</p>
+                <p className="text-brand-300 text-[11px] font-bold uppercase tracking-[0.15em] mb-1">
+                  What&apos;s New This Month
+                </p>
                 <h3 className="text-xl md:text-2xl font-display font-bold text-white">
                   Fresh technical documents
                 </h3>

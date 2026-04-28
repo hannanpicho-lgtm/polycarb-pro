@@ -17,7 +17,8 @@ class WebhookDeliveryError extends Error {
 }
 
 const resendApiKey = process.env['RESEND_API_KEY'];
-const resendFrom = process.env['RESEND_FROM_EMAIL'] ?? `Leads <no-reply@${new URL(siteConfig.site.url).hostname}>`;
+const resendFrom =
+  process.env['RESEND_FROM_EMAIL'] ?? `Leads <no-reply@${new URL(siteConfig.site.url).hostname}>`;
 const resendTo = process.env['RESEND_TO_EMAIL'] ?? siteConfig.contact.salesEmail;
 
 function normalizedString(value: unknown) {
@@ -41,7 +42,7 @@ function resolveLeadRecipients(payload: Record<string, unknown>) {
 
   const escalation =
     leadPriority === 'high'
-      ? process.env['RESEND_TO_EMAIL_HIGH_PRIORITY'] ?? process.env['RESEND_TO_EMAIL_ESCALATION']
+      ? (process.env['RESEND_TO_EMAIL_HIGH_PRIORITY'] ?? process.env['RESEND_TO_EMAIL_ESCALATION'])
       : undefined;
 
   const recipients = uniqueRecipients([
@@ -61,19 +62,29 @@ function buildLeadSubject(kind: LeadKind, payload: Record<string, unknown>) {
   const subject = normalizedString(payload['subject']);
   const email = normalizedString(payload['email']);
 
-  const labels = [priority ? `[${priority}]` : null, queue ? `[${queue}]` : null].filter(Boolean).join(' ');
+  const labels = [priority ? `[${priority}]` : null, queue ? `[${queue}]` : null]
+    .filter(Boolean)
+    .join(' ');
   const context = company ?? product ?? subject ?? email ?? 'submission';
 
-  return `${siteConfig.company.shortName} ${kind.toUpperCase()} LEAD ${labels} - ${context}`.replace(/\s+/g, ' ').trim();
+  return `${siteConfig.company.shortName} ${kind.toUpperCase()} LEAD ${labels} - ${context}`
+    .replace(/\s+/g, ' ')
+    .trim();
 }
 
 function compactRecord(entries: Record<string, unknown>) {
   return Object.fromEntries(
-    Object.entries(entries).filter(([, value]) => value !== undefined && value !== null && value !== '')
+    Object.entries(entries).filter(
+      ([, value]) => value !== undefined && value !== null && value !== ''
+    )
   );
 }
 
-function buildStructuredWebhookPayload(kind: LeadKind, payload: Record<string, unknown>, submittedAt: string) {
+function buildStructuredWebhookPayload(
+  kind: LeadKind,
+  payload: Record<string, unknown>,
+  submittedAt: string
+) {
   const submission = compactRecord({
     id: payload['_metaSubmissionId'],
     kind,
@@ -219,7 +230,9 @@ async function postWebhookWithTimeout(
     }
   } catch (error) {
     if (error instanceof Error && error.name === 'AbortError') {
-      throw new WebhookDeliveryError(`CRM webhook timed out after ${timeoutMs}ms`, { retryable: true });
+      throw new WebhookDeliveryError(`CRM webhook timed out after ${timeoutMs}ms`, {
+        retryable: true,
+      });
     }
 
     if (error instanceof WebhookDeliveryError) {

@@ -3,8 +3,7 @@
 import * as React from 'react';
 import { cn } from '@/lib/utils';
 
-interface ViewportVideoProps
-  extends Omit<React.VideoHTMLAttributes<HTMLVideoElement>, 'src'> {
+interface ViewportVideoProps extends Omit<React.VideoHTMLAttributes<HTMLVideoElement>, 'src'> {
   mp4Src: string;
   webmSrc?: string;
   pauseWhenOutOfView?: boolean;

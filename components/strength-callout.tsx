@@ -64,8 +64,8 @@ export function StrengthCallout() {
               Proven where it counts.
             </h2>
             <p className="text-white/60 text-[15px] leading-relaxed mb-8 max-w-md">
-              Full-force sledgehammer blows on installed commercial glazing — zero cracks.
-              Watch the test, then spec the material.
+              Full-force sledgehammer blows on installed commercial glazing — zero cracks. Watch the
+              test, then spec the material.
             </p>
 
             {/* Proof points */}

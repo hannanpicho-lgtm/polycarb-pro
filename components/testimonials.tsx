@@ -12,7 +12,10 @@ export function Testimonials() {
   const next = () => setCurrent((c) => (c + 1) % testimonials.length);
 
   return (
-    <section className="py-20 bg-steel-950 relative overflow-hidden" aria-labelledby="testimonials-heading">
+    <section
+      className="py-20 bg-steel-950 relative overflow-hidden"
+      aria-labelledby="testimonials-heading"
+    >
       {/* Background decoration */}
       <div className="absolute inset-0 opacity-5 pointer-events-none" aria-hidden="true">
         <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[800px] rounded-full border border-white" />
@@ -22,8 +25,13 @@ export function Testimonials() {
 
       <div className="container mx-auto relative z-10">
         <div className="text-center mb-12">
-          <p className="text-xs font-bold uppercase tracking-widest text-brand-400 mb-2">Customer Success</p>
-          <h2 id="testimonials-heading" className="text-3xl md:text-4xl font-bold text-white tracking-tight">
+          <p className="text-xs font-bold uppercase tracking-widest text-brand-400 mb-2">
+            Customer Success
+          </p>
+          <h2
+            id="testimonials-heading"
+            className="text-3xl md:text-4xl font-bold text-white tracking-tight"
+          >
             Trusted by Industry Leaders
           </h2>
         </div>
@@ -50,7 +58,9 @@ export function Testimonials() {
                 </div>
                 <div>
                   <p className="text-white font-semibold text-sm">{t.name}</p>
-                  <p className="text-white/50 text-xs">{t.title}, {t.company}</p>
+                  <p className="text-white/50 text-xs">
+                    {t.title}, {t.company}
+                  </p>
                 </div>
               </div>
             </motion.div>
@@ -79,8 +89,12 @@ export function Testimonials() {
                     {testimonials[current]!.name.charAt(0)}
                   </div>
                   <div>
-                    <p className="text-white font-semibold text-sm">{testimonials[current]!.name}</p>
-                    <p className="text-white/50 text-xs">{testimonials[current]!.title}, {testimonials[current]!.company}</p>
+                    <p className="text-white font-semibold text-sm">
+                      {testimonials[current]!.name}
+                    </p>
+                    <p className="text-white/50 text-xs">
+                      {testimonials[current]!.title}, {testimonials[current]!.company}
+                    </p>
                   </div>
                 </div>
               </motion.div>

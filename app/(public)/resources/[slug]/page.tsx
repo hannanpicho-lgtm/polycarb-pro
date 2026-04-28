@@ -167,8 +167,12 @@ export default async function ResourceDetailPage({ params }: Props) {
           >
             <ArrowLeft className="h-3.5 w-3.5" /> Back to Resources
           </Link>
-          <p className="text-brand-400 text-xs font-bold uppercase tracking-widest mb-2">{post.category}</p>
-          <h1 className="text-3xl lg:text-4xl font-black text-white tracking-tight mb-3">{post.title}</h1>
+          <p className="text-brand-400 text-xs font-bold uppercase tracking-widest mb-2">
+            {post.category}
+          </p>
+          <h1 className="text-3xl lg:text-4xl font-black text-white tracking-tight mb-3">
+            {post.title}
+          </h1>
           <p className="text-white/65 text-lg">{post.excerpt}</p>
         </div>
       </div>
@@ -190,19 +194,22 @@ export default async function ResourceDetailPage({ params }: Props) {
           ) : (
             <>
               <p>
-                This article is part of the Covestro PC technical resource center. For project support,
-                request datasheets, processing guidance, and grade recommendations from our team.
+                This article is part of the Covestro PC technical resource center. For project
+                support, request datasheets, processing guidance, and grade recommendations from our
+                team.
               </p>
               <p>
-                We can provide grade comparisons, availability guidance, and application-specific notes to
-                help your team move faster from design to production.
+                We can provide grade comparisons, availability guidance, and application-specific
+                notes to help your team move faster from design to production.
               </p>
             </>
           )}
 
           <div className="not-prose mt-8">
             <Button asChild className="bg-brand-500 hover:bg-brand-600 text-white">
-              <Link href="/contact?source=resource-detail-cta">{articleContent?.cta ?? 'Request Technical Support'}</Link>
+              <Link href="/contact?source=resource-detail-cta">
+                {articleContent?.cta ?? 'Request Technical Support'}
+              </Link>
             </Button>
           </div>
         </div>

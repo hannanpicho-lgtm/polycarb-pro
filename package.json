@@ -2,6 +2,10 @@
   "name": "polycarb-pro",
   "version": "1.0.0",
   "private": true,
+  "engines": {
+    "node": ">=20.0.0",
+    "npm": ">=10.0.0"
+  },
   "scripts": {
     "dev": "next dev --turbopack",
     "dev:stable": "npm run clean:next && npx next dev --port 3000",
@@ -11,10 +15,23 @@
     "cf:dev": "opennextjs-cloudflare build && wrangler dev",
     "cf:deploy": "opennextjs-cloudflare build && wrangler deploy",
     "cf:deploy:tracked": "node scripts/cf-deploy-tracked.mjs",
+    "pipeline:prod": "node scripts/git-contract-prod.mjs",
     "start": "next start",
-    "lint": "next lint",
+    "lint": "eslint .",
+    "lint:fix": "eslint --fix .",
     "type-check": "tsc --noEmit",
-    "clean:next": "node -e \"const fs=require('node:fs'); fs.rmSync('.next',{recursive:true,force:true});\""
+    "check": "npm run type-check && npm run lint",
+    "check:all": "npm run check && npm run format:check",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "verify": "npm run check:all && npm run build",
+    "verify:opennext": "npm run check:all && npm run cf:build",
+    "readiness:report": "node scripts/go-readiness.mjs",
+    "readiness:report:opennext": "node scripts/go-readiness.mjs --opennext",
+    "test": "vitest",
+    "test:ci": "vitest run --coverage",
+    "clean:next": "node -e \"const fs=require('node:fs'); fs.rmSync('.next',{recursive:true,force:true});\"",
+    "prepare": "husky"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.9.1",
@@ -45,18 +62,36 @@
     "tailwind-merge": "^2.5.4",
     "zod": "^3.24.1"
   },
+  "lint-staged": {
+    "*.{cjs,cts,js,jsx,mjs,mts,ts,tsx}": [
+      "eslint --fix",
+      "prettier --write"
+    ],
+    "*.{css,html,json,md,mdx,scss,yml,yaml}": "prettier --write"
+  },
   "devDependencies": {
     "@cloudflare/workers-types": "^4.20260420.1",
+    "@eslint/eslintrc": "^3.3.5",
     "@opennextjs/cloudflare": "^1.19.1",
     "@types/node": "^22",
     "@types/react": "^19",
     "@types/react-dom": "^19",
+    "@vitest/coverage-v8": "^4.1.5",
     "autoprefixer": "^10.4.20",
     "eslint": "^9",
     "eslint-config-next": "^15.2.4",
+    "eslint-config-prettier": "^10.1.8",
+    "eslint-plugin-vitest": "^0.5.4",
+    "husky": "^9.1.7",
+    "lint-staged": "^16.4.0",
     "postcss": "^8.5.1",
+    "prettier": "^3.8.3",
     "tailwindcss": "^3.4.17",
     "typescript": "^5.7.2",
+    "vitest": "^4.1.5",
     "wrangler": "^4.83.0"
+  },
+  "overrides": {
+    "uuid": "^14.0.0"
   }
 }

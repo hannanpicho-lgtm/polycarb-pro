@@ -1,5 +1,6 @@
 'use client';
 
+import Link from 'next/link';
 import { useEffect, useRef, useState } from 'react';
 import { motion, AnimatePresence } from 'framer-motion';
 import { X, CheckCircle } from 'lucide-react';
@@ -120,21 +121,25 @@ export function DistributorPromoModal({ isOpen, onClose }: DistributorPromoModal
                   {/* Banner */}
                   <DistributorPromoBanner />
 
-              {/* Form Section */}
-              <div className="px-6 py-10 sm:px-8 sm:py-12">
-                <div className="mb-8">
-                  <h3 id="distributor-title" className="text-2xl sm:text-3xl font-black text-slate-900 mb-2">
-                    Apply Now
-                  </h3>
-                  <p className="text-slate-600">
-                    Complete your application to join Covestro's distributor network. Our team will review and contact you within 24 hours.
-                  </p>
-                </div>
-                <DistributorSignupFormComponent
-                  onSuccess={handleFormSuccess}
-                  onError={handleFormError}
-                />
-              </div>
+                  {/* Form Section */}
+                  <div className="px-6 py-10 sm:px-8 sm:py-12">
+                    <div className="mb-8">
+                      <h3
+                        id="distributor-title"
+                        className="text-2xl sm:text-3xl font-black text-slate-900 mb-2"
+                      >
+                        Apply Now
+                      </h3>
+                      <p className="text-slate-600">
+                        Complete your application to join Covestro's distributor network. Our team
+                        will review and contact you within 24 hours.
+                      </p>
+                    </div>
+                    <DistributorSignupFormComponent
+                      onSuccess={handleFormSuccess}
+                      onError={handleFormError}
+                    />
+                  </div>
                 </motion.div>
               )}
 
@@ -184,14 +189,18 @@ export function DistributorPromoModal({ isOpen, onClose }: DistributorPromoModal
                     </p>
                     <div className="rounded-lg bg-blue-50 border border-blue-200 px-4 py-3">
                       <p className="text-sm font-semibold text-blue-900">
-                        ✓ A Covestro representative will contact you within 24 hours to discuss partnership opportunities.
+                        ✓ A Covestro representative will contact you within 24 hours to discuss
+                        partnership opportunities.
                       </p>
                     </div>
                     <p className="mt-6 text-sm text-slate-500">
                       In the meantime, explore our{' '}
-                      <a href="/products" className="text-blue-600 hover:text-blue-700 font-semibold">
+                      <Link
+                        href="/products"
+                        className="text-blue-600 hover:text-blue-700 font-semibold"
+                      >
                         complete product portfolio
-                      </a>
+                      </Link>
                       .
                     </p>
                   </motion.div>

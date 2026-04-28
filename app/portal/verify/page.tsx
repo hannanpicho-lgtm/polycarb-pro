@@ -9,7 +9,10 @@ function VerifyContent() {
   const token = searchParams.get('token');
 
   useEffect(() => {
-    if (!token) { router.replace('/portal?error=missing_token'); return; }
+    if (!token) {
+      router.replace('/portal?error=missing_token');
+      return;
+    }
     // Redirect to the API route which sets the cookie and redirects
     router.replace(`/api/portal/verify?token=${token}`);
   }, [token, router]);
@@ -25,5 +28,9 @@ function VerifyContent() {
 }
 
 export default function VerifyPage() {
-  return <Suspense><VerifyContent /></Suspense>;
+  return (
+    <Suspense>
+      <VerifyContent />
+    </Suspense>
+  );
 }
