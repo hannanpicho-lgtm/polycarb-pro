@@ -1,9 +1,19 @@
 import type { NextConfig } from 'next';
 
+const resolvedGitSha =
+  process.env.NEXT_PUBLIC_GIT_SHA ??
+  process.env.CF_PAGES_COMMIT_SHA ??
+  process.env.GITHUB_SHA ??
+  process.env.GIT_COMMIT_SHA ??
+  'local';
+
+const resolvedBuildTime = process.env.NEXT_PUBLIC_BUILD_TIME ?? new Date().toISOString();
+
 const nextConfig: NextConfig = {
-  // Inject build timestamp as a public env var (baked in at build time)
+  // Bake build metadata into the app so /api/version can identify deployed revision.
   env: {
-    NEXT_PUBLIC_BUILD_TIME: new Date().toISOString(),
+    NEXT_PUBLIC_BUILD_TIME: resolvedBuildTime,
+    NEXT_PUBLIC_GIT_SHA: resolvedGitSha,
   },
 
   images: {

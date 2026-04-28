@@ -1,4 +1,5 @@
 import { spawnSync } from 'node:child_process';
+import https from 'node:https';
 
 function exec(command, args, options = {}) {
   const env = { ...process.env, ...(options.env || {}) };
@@ -63,7 +64,83 @@ function verifyRemoteHead(branch, expectedSha) {
   }
 }
 
-function main() {
+function fetchJson(url) {
+  return new Promise((resolve, reject) => {
+    const req = https.get(url, { timeout: 15000 }, (res) => {
+      let body = '';
+      res.setEncoding('utf8');
+      res.on('data', (chunk) => {
+        body += chunk;
+      });
+      res.on('end', () => {
+        if ((res.statusCode || 500) >= 400) {
+          reject(new Error(`HTTP ${res.statusCode}: ${body.slice(0, 240)}`));
+          return;
+        }
+        try {
+          resolve(JSON.parse(body));
+        } catch {
+          reject(new Error(`Invalid JSON from ${url}: ${body.slice(0, 240)}`));
+        }
+      });
+    });
+
+    req.on('error', reject);
+    req.on('timeout', () => {
+      req.destroy(new Error(`Timeout fetching ${url}`));
+    });
+  });
+}
+
+function sleep(ms) {
+  return new Promise((resolve) => setTimeout(resolve, ms));
+}
+
+async function verifyProductionUpdated(expectedFullSha) {
+  const expectedShortSha = expectedFullSha.slice(0, 12);
+  const baseline = await fetchJson('https://covestroppc.com/api/version').catch(() => null);
+  const started = Date.now();
+  const timeoutMs = 12 * 60 * 1000;
+  const pollMs = 15000;
+
+  while (Date.now() - started < timeoutMs) {
+    const health = await fetchJson('https://covestroppc.com/api/health');
+    if (health?.ok !== true || health?.status !== 'ok') {
+      throw new Error('Contract failed: production health endpoint is not ok.');
+    }
+
+    const version = await fetchJson('https://covestroppc.com/api/version');
+    const commit = String(version?.commit ?? '').trim();
+    if (commit && commit !== 'local' && expectedShortSha.startsWith(commit)) {
+      return {
+        deployed: true,
+        deployCheck: 'commit-match',
+        reportedCommit: commit,
+        builtAt: String(version?.builtAt ?? 'unknown'),
+      };
+    }
+
+    // Fallback: if commit metadata is absent, accept explicit build-time change.
+    const baselineBuiltAt = baseline ? String(baseline.builtAt ?? '') : '';
+    const currentBuiltAt = String(version?.builtAt ?? '');
+    if (commit === 'local' && baselineBuiltAt && currentBuiltAt && currentBuiltAt !== baselineBuiltAt) {
+      return {
+        deployed: true,
+        deployCheck: 'build-time-changed',
+        reportedCommit: commit,
+        builtAt: currentBuiltAt,
+      };
+    }
+
+    await sleep(pollMs);
+  }
+
+  throw new Error(
+    `Contract failed: production did not reflect commit ${expectedShortSha} within timeout window.`
+  );
+}
+
+async function main() {
   const branch = getActiveBranch();
   const startSha = run('git', ['rev-parse', 'HEAD']);
 
@@ -73,6 +150,9 @@ function main() {
     commitHash: startSha,
     pushSuccess: false,
     deployTriggerConditionMet: branch === 'main',
+    productionUpdated: false,
+    productionCheckMode: 'not-run',
+    reportedProductionCommit: 'unknown',
   };
   const hookBypassEnv = { HUSKY: '0' };
 
@@ -107,16 +187,24 @@ function main() {
     );
   }
 
+  const deployStatus = await verifyProductionUpdated(result.commitHash);
+  result.productionUpdated = deployStatus.deployed;
+  result.productionCheckMode = deployStatus.deployCheck;
+  result.reportedProductionCommit = deployStatus.reportedCommit;
+
   console.log('Production contract check:');
   console.log(`- branch: ${result.branch}`);
   console.log(`- changes_detected: ${result.hasChanges}`);
   console.log(`- commit_hash: ${result.commitHash}`);
   console.log(`- push_success: ${result.pushSuccess}`);
   console.log(`- deploy_trigger_condition_met: ${result.deployTriggerConditionMet}`);
+  console.log(`- production_updated: ${result.productionUpdated}`);
+  console.log(`- production_check_mode: ${result.productionCheckMode}`);
+  console.log(`- production_reported_commit: ${result.reportedProductionCommit}`);
 }
 
 try {
-  main();
+  await main();
 } catch (error) {
   const message = error instanceof Error ? error.message : String(error);
   console.error(message);
