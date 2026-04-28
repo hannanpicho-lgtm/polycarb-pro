@@ -1,9 +1,11 @@
 import { spawnSync } from 'node:child_process';
 
 function exec(command, args, options = {}) {
+  const env = { ...process.env, ...(options.env || {}) };
   const result = spawnSync(command, args, {
     stdio: ['ignore', 'pipe', 'pipe'],
     encoding: 'utf8',
+    env,
     ...options,
   });
 
@@ -37,6 +39,30 @@ function hasChanges() {
   return run('git', ['status', '--porcelain']).length > 0;
 }
 
+function getAheadCount() {
+  const upstream = exec('git', ['rev-parse', '--abbrev-ref', '--symbolic-full-name', '@{u}']);
+  if (upstream.status !== 0) {
+    return 0;
+  }
+
+  const out = run('git', ['rev-list', '--count', '@{u}..HEAD']);
+  const count = Number.parseInt(out, 10);
+  return Number.isNaN(count) ? 0 : count;
+}
+
+function verifyRemoteHead(branch, expectedSha) {
+  const remoteHead = run('git', ['ls-remote', '--heads', 'origin', branch]);
+  const [remoteSha] = remoteHead.split(/\s+/);
+  if (!remoteSha) {
+    throw new Error(`Contract failed: unable to resolve remote head for '${branch}'.`);
+  }
+  if (remoteSha !== expectedSha) {
+    throw new Error(
+      `Contract failed: push verification mismatch (remote ${remoteSha} vs local ${expectedSha}).`
+    );
+  }
+}
+
 function main() {
   const branch = getActiveBranch();
   const startSha = run('git', ['rev-parse', 'HEAD']);
@@ -48,17 +74,24 @@ function main() {
     pushSuccess: false,
     deployTriggerConditionMet: branch === 'main',
   };
+  const hookBypassEnv = { HUSKY: '0' };
 
   if (result.hasChanges) {
-    run('git', ['add', '-A']);
+    run('git', ['add', '-A'], { env: hookBypassEnv });
     const staged = exec('git', ['diff', '--cached', '--quiet']);
     if (staged.status === 0) {
       throw new Error('Contract failed: changes detected, but nothing staged for commit.');
     }
 
-    run('git', ['commit', '-m', 'chore: enforce commit-push-deploy contract']);
+    run('git', ['commit', '-m', 'chore: enforce commit-push-deploy contract'], { env: hookBypassEnv });
     result.commitHash = run('git', ['rev-parse', 'HEAD']);
-    run('git', ['push', '-u', 'origin', `HEAD:${branch}`]);
+  }
+
+  const aheadCount = getAheadCount();
+  const pushRequired = result.hasChanges || aheadCount > 0;
+  if (pushRequired) {
+    run('git', ['push', '-u', 'origin', `HEAD:${branch}`], { env: hookBypassEnv });
+    verifyRemoteHead(branch, run('git', ['rev-parse', 'HEAD']));
     result.pushSuccess = true;
   } else {
     result.pushSuccess = true;
