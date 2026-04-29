@@ -123,7 +123,12 @@ async function verifyProductionUpdated(expectedFullSha) {
     // Fallback: if commit metadata is absent, accept explicit build-time change.
     const baselineBuiltAt = baseline ? String(baseline.builtAt ?? '') : '';
     const currentBuiltAt = String(version?.builtAt ?? '');
-    if (commit === 'local' && baselineBuiltAt && currentBuiltAt && currentBuiltAt !== baselineBuiltAt) {
+    if (
+      commit === 'local' &&
+      baselineBuiltAt &&
+      currentBuiltAt &&
+      currentBuiltAt !== baselineBuiltAt
+    ) {
       return {
         deployed: true,
         deployCheck: 'build-time-changed',
@@ -163,7 +168,9 @@ async function main() {
       throw new Error('Contract failed: changes detected, but nothing staged for commit.');
     }
 
-    run('git', ['commit', '-m', 'chore: enforce commit-push-deploy contract'], { env: hookBypassEnv });
+    run('git', ['commit', '-m', 'chore: enforce commit-push-deploy contract'], {
+      env: hookBypassEnv,
+    });
     result.commitHash = run('git', ['rev-parse', 'HEAD']);
   }
 
