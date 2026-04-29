@@ -12,12 +12,26 @@ function run(command, args, extraEnv = {}) {
   }
 }
 
+function resolveCommitSha() {
+  const envCommit =
+    process.env.GITHUB_SHA || process.env.CF_PAGES_COMMIT_SHA || process.env.GIT_COMMIT_SHA || '';
+  if (envCommit.trim()) {
+    return envCommit.trim();
+  }
+
+  const git = spawnSync('git', ['rev-parse', 'HEAD'], {
+    stdio: ['ignore', 'pipe', 'pipe'],
+    encoding: 'utf8',
+  });
+  if (git.status === 0) {
+    const sha = (git.stdout || '').trim();
+    if (sha) return sha;
+  }
+  return 'local';
+}
+
 const now = new Date().toISOString();
-const commit =
-  process.env.GITHUB_SHA ||
-  process.env.CF_PAGES_COMMIT_SHA ||
-  process.env.GIT_COMMIT_SHA ||
-  'local';
+const commit = resolveCommitSha();
 
 const trackedEnv = {
   NEXT_PUBLIC_GIT_SHA: commit,
