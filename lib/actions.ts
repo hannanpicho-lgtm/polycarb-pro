@@ -40,7 +40,12 @@ interface DeliveryResult {
 
 export type ActionResult<T = void> =
   | { success: true; data?: T; message?: string }
-  | { success: false; errors?: Record<string, string[]>; message?: string };
+  | {
+      success: false;
+      errors?: Record<string, string[]>;
+      message?: string;
+      values?: Record<string, string>;
+    };
 
 interface RequestContext {
   ip: string | null;
@@ -389,14 +394,23 @@ function blockedBySpamGuard(raw: Record<string, FormDataEntryValue>) {
   return false;
 }
 
+function stringifyFormValues(raw: Record<string, FormDataEntryValue>): Record<string, string> {
+  const values: Record<string, string> = {};
+  for (const [key, value] of Object.entries(raw)) {
+    values[key] = typeof value === 'string' ? value : '';
+  }
+  return values;
+}
+
 export async function submitQuoteRequest(
   _prevState: ActionResult<{ submissionId?: string; webhookDelivered: boolean }> | null,
   formData: FormData
 ): Promise<ActionResult<{ submissionId?: string; webhookDelivered: boolean }>> {
   const raw = Object.fromEntries(formData.entries());
+  const values = stringifyFormValues(raw);
 
   if (blockedBySpamGuard(raw)) {
-    return { success: false, message: 'Submission blocked. Please try again.' };
+    return { success: false, message: 'Submission blocked. Please try again.', values };
   }
 
   const requestContext = await getRequestContext();
@@ -405,6 +419,7 @@ export async function submitQuoteRequest(
     return {
       success: false,
       message: 'Too many requests. Please wait a few minutes before trying again.',
+      values,
     };
   }
 
@@ -418,6 +433,7 @@ export async function submitQuoteRequest(
       success: false,
       errors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
       message: 'Please correct the errors below.',
+      values,
     };
   }
 
@@ -550,6 +566,7 @@ export async function submitQuoteRequest(
     return {
       success: false,
       message: 'We could not submit your quote request right now. Please try again in a moment.',
+      values,
     };
   }
 }
@@ -559,9 +576,10 @@ export async function submitContactForm(
   formData: FormData
 ): Promise<ActionResult<{ submissionId?: string; webhookDelivered: boolean }>> {
   const raw = Object.fromEntries(formData.entries());
+  const values = stringifyFormValues(raw);
 
   if (blockedBySpamGuard(raw)) {
-    return { success: false, message: 'Submission blocked. Please try again.' };
+    return { success: false, message: 'Submission blocked. Please try again.', values };
   }
 
   const requestContext = await getRequestContext();
@@ -570,6 +588,7 @@ export async function submitContactForm(
     return {
       success: false,
       message: 'Too many requests. Please wait a few minutes before trying again.',
+      values,
     };
   }
 
@@ -580,6 +599,7 @@ export async function submitContactForm(
       success: false,
       errors: parsed.error.flatten().fieldErrors as Record<string, string[]>,
       message: 'Please correct the errors below.',
+      values,
     };
   }
 
@@ -742,6 +762,7 @@ export async function submitContactForm(
     return {
       success: false,
       message: 'Your message could not be delivered right now. Please try again in a moment.',
+      values,
     };
   }
 }

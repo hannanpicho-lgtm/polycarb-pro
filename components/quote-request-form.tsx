@@ -68,6 +68,8 @@ export function QuoteRequestForm({
   hiddenContext,
 }: QuoteRequestFormProps) {
   const [state, formAction] = useActionState<FormState, FormData>(submitQuoteRequest, null);
+  const enteredValues = !state?.success ? state?.values : undefined;
+  const getValue = (name: string, fallback = '') => enteredValues?.[name] ?? fallback;
 
   React.useEffect(() => {
     if (!state) return;
@@ -150,6 +152,7 @@ export function QuoteRequestForm({
             name="firstName"
             autoComplete="given-name"
             className="mt-1.5"
+            defaultValue={getValue('firstName')}
             required
           />
           <FieldError errors={errors['firstName']} />
@@ -161,6 +164,7 @@ export function QuoteRequestForm({
             name="lastName"
             autoComplete="family-name"
             className="mt-1.5"
+            defaultValue={getValue('lastName')}
             required
           />
           <FieldError errors={errors['lastName']} />
@@ -175,6 +179,7 @@ export function QuoteRequestForm({
           type="email"
           autoComplete="email"
           className="mt-1.5"
+          defaultValue={getValue('email')}
           required
         />
         <FieldError errors={errors['email']} />
@@ -187,6 +192,7 @@ export function QuoteRequestForm({
           name="company"
           autoComplete="organization"
           className="mt-1.5"
+          defaultValue={getValue('company')}
           required
         />
         <FieldError errors={errors['company']} />
@@ -199,7 +205,7 @@ export function QuoteRequestForm({
             id="product"
             name="product"
             className="mt-1.5"
-            defaultValue={initialProduct}
+            defaultValue={getValue('product', initialProduct)}
             required
           />
           <FieldError errors={errors['product']} />
@@ -210,6 +216,7 @@ export function QuoteRequestForm({
             id="quantity"
             name="quantity"
             className="mt-1.5"
+            defaultValue={getValue('quantity')}
             placeholder="e.g. 5,000 kg / month"
           />
           <FieldError errors={errors['quantity']} />
@@ -218,7 +225,13 @@ export function QuoteRequestForm({
 
       <div>
         <Label htmlFor="phone">Phone</Label>
-        <Input id="phone" name="phone" autoComplete="tel" className="mt-1.5" />
+        <Input
+          id="phone"
+          name="phone"
+          autoComplete="tel"
+          className="mt-1.5"
+          defaultValue={getValue('phone')}
+        />
         <FieldError errors={errors['phone']} />
       </div>
 
@@ -228,14 +241,20 @@ export function QuoteRequestForm({
           id="message"
           name="message"
           className="mt-1.5 min-h-36"
-          defaultValue={initialMessage}
+          defaultValue={getValue('message', initialMessage)}
           required
         />
         <FieldError errors={errors['message']} />
       </div>
 
       <label className="flex items-start gap-2 text-sm text-muted-foreground">
-        <input name="acceptTerms" type="checkbox" className="mt-1" required />
+        <input
+          name="acceptTerms"
+          type="checkbox"
+          className="mt-1"
+          defaultChecked={getValue('acceptTerms') === 'on'}
+          required
+        />
         <span>
           I confirm this request is for legitimate business procurement or technical evaluation.
         </span>

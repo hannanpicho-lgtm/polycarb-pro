@@ -68,6 +68,8 @@ export function ContactForm({
   hiddenContext,
 }: ContactFormProps) {
   const [state, formAction] = useActionState<FormState, FormData>(submitContactForm, null);
+  const enteredValues = !state?.success ? state?.values : undefined;
+  const getValue = (name: string, fallback = '') => enteredValues?.[name] ?? fallback;
 
   React.useEffect(() => {
     if (!state) return;
@@ -150,6 +152,7 @@ export function ContactForm({
             name="firstName"
             autoComplete="given-name"
             className="mt-1.5"
+            defaultValue={getValue('firstName')}
             required
           />
           <FieldError errors={errors['firstName']} />
@@ -161,6 +164,7 @@ export function ContactForm({
             name="lastName"
             autoComplete="family-name"
             className="mt-1.5"
+            defaultValue={getValue('lastName')}
             required
           />
           <FieldError errors={errors['lastName']} />
@@ -175,6 +179,7 @@ export function ContactForm({
           type="email"
           autoComplete="email"
           className="mt-1.5"
+          defaultValue={getValue('email')}
           required
         />
         <FieldError errors={errors['email']} />
@@ -182,7 +187,13 @@ export function ContactForm({
 
       <div>
         <Label htmlFor="company">Company</Label>
-        <Input id="company" name="company" autoComplete="organization" className="mt-1.5" />
+        <Input
+          id="company"
+          name="company"
+          autoComplete="organization"
+          className="mt-1.5"
+          defaultValue={getValue('company')}
+        />
       </div>
 
       <div>
@@ -191,7 +202,7 @@ export function ContactForm({
           id="subject"
           name="subject"
           className="mt-1.5"
-          defaultValue={initialSubject}
+          defaultValue={getValue('subject', initialSubject)}
           required
         />
         <FieldError errors={errors['subject']} />
@@ -203,7 +214,7 @@ export function ContactForm({
           id="message"
           name="message"
           className="mt-1.5 min-h-36"
-          defaultValue={initialMessage}
+          defaultValue={getValue('message', initialMessage)}
           required
         />
         <FieldError errors={errors['message']} />
