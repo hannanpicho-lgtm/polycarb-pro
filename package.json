@@ -70,7 +70,7 @@
     "*.{css,html,json,md,mdx,scss,yml,yaml}": "prettier --write"
   },
   "devDependencies": {
-    "@cloudflare/workers-types": "^4.20260420.1",
+    "@cloudflare/workers-types": "^4.20260504.1",
     "@eslint/eslintrc": "^3.3.5",
     "@opennextjs/cloudflare": "^1.19.1",
     "@types/node": "^22",
