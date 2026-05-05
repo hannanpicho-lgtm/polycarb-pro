@@ -366,7 +366,80 @@ ${btn('Track this order', `${SITE_URL}/track?ref=${opts.referenceId}`)}
   return { ok: !error, error: error?.message };
 }
 
-// ── 6. Magic link — customer portal ──────────────────────────────────────────
+// ── 6. Crypto payment instructions ────────────────────────────────────────────
+export async function sendCryptoPaymentInstructions(opts: {
+  to: string;
+  customerName: string;
+  referenceId: string;
+  amountFiat: number;
+  currency: string;
+  token: 'USDT';
+  network: 'TRC20';
+  walletAddress: string;
+  payUrl: string;
+}) {
+  if (!RESEND_KEY) return { ok: false, error: 'RESEND_API_KEY not set' };
+  const fmt = (n: number) =>
+    new Intl.NumberFormat('en-US', { style: 'currency', currency: opts.currency }).format(n);
+
+  const body = `
+<h1 style="margin:0 0 6px;font-size:22px;font-weight:800;color:#0f172a">Crypto Payment Instructions</h1>
+<p style="margin:0 0 20px;font-size:14px;color:#64748b">Hi ${opts.customerName.split(' ')[0]}, you can pay order ${refBadge(opts.referenceId)} via <strong>${opts.token} on ${opts.network}</strong>.</p>
+
+<table width="100%" cellpadding="0" cellspacing="0" style="border:1px solid #e2e8f0;border-radius:10px;overflow:hidden;margin-bottom:20px">
+  <tr><td style="padding:14px 20px;border-bottom:1px solid #f1f5f9;font-size:13px"><span style="color:#64748b;font-weight:600">Amount due</span><br><span style="font-weight:800;color:#0087C3;font-size:18px">${fmt(opts.amountFiat)}</span></td></tr>
+  <tr><td style="padding:14px 20px;border-bottom:1px solid #f1f5f9;font-size:13px"><span style="color:#64748b;font-weight:600">Network</span><br><span style="font-weight:700;color:#0f172a">${opts.network} (${opts.token})</span></td></tr>
+  <tr><td style="padding:14px 20px;font-size:13px"><span style="color:#64748b;font-weight:600">Wallet address</span><br><span style="font-family:monospace;font-size:12px;color:#0f172a;word-break:break-all">${opts.walletAddress}</span></td></tr>
+</table>
+
+<p style="margin:0 0 6px;font-size:13px;color:#475569">After sending payment, submit your transaction hash for verification:</p>
+${btn('Submit transaction hash', opts.payUrl)}
+
+<p style="margin:16px 0 0;font-size:12px;color:#94a3b8">Important: send only USDT on TRC20. Sending via another network may result in lost funds.</p>`;
+
+  const { error } = await resend().emails.send({
+    from: FROM_ORDERS,
+    to: [opts.to],
+    subject: `Crypto payment instructions — ${opts.referenceId}`,
+    html: wrap(body),
+  });
+  return { ok: !error, error: error?.message };
+}
+
+// ── 7. Crypto payment verified confirmation ───────────────────────────────────
+export async function sendCryptoPaymentVerifiedEmail(opts: {
+  to: string;
+  customerName: string;
+  referenceId: string;
+  txHash: string;
+  network: string;
+}) {
+  if (!RESEND_KEY) return { ok: false, error: 'RESEND_API_KEY not set' };
+  const txExplorer = `https://tronscan.org/#/transaction/${encodeURIComponent(opts.txHash)}`;
+  const body = `
+<h1 style="margin:0 0 6px;font-size:22px;font-weight:800;color:#0f172a">Payment Verified</h1>
+<p style="margin:0 0 20px;font-size:14px;color:#64748b">Hi ${opts.customerName.split(' ')[0]}, we've verified your crypto payment for order ${refBadge(opts.referenceId)}.</p>
+
+<div style="background:#f0fdf4;border:1px solid #86efac;border-radius:8px;padding:14px 16px;margin-bottom:20px">
+  <p style="margin:0;font-size:13px;color:#166534"><strong>Network:</strong> ${opts.network}</p>
+  <p style="margin:8px 0 0;font-size:13px;color:#166534"><strong>Transaction:</strong><br><span style="font-family:monospace;font-size:12px;word-break:break-all">${opts.txHash}</span></p>
+</div>
+
+${btn('View transaction', txExplorer)}
+${btn('Track my order', `${SITE_URL}/track?ref=${opts.referenceId}`)}
+
+<p style="margin:16px 0 0;font-size:12px;color:#94a3b8">Thank you. Our team will continue processing your order.</p>`;
+
+  const { error } = await resend().emails.send({
+    from: FROM_ORDERS,
+    to: [opts.to],
+    subject: `Payment verified — ${opts.referenceId}`,
+    html: wrap(body),
+  });
+  return { ok: !error, error: error?.message };
+}
+
+// ── 8. Magic link — customer portal ──────────────────────────────────────────
 export async function sendPortalMagicLink(opts: { to: string; token: string; ttlMinutes: number }) {
   if (!RESEND_KEY) return { ok: false, error: 'RESEND_API_KEY not set' };
   const link = `${SITE_URL}/portal/verify?token=${opts.token}`;
@@ -389,7 +462,7 @@ ${btn('Open my portal', link)}
   return { ok: !error, error: error?.message };
 }
 
-// ── 7. Magic link — distributor portal ───────────────────────────────────────
+// ── 9. Magic link — distributor portal ───────────────────────────────────────
 export async function sendDistributorMagicLink(opts: {
   to: string;
   token: string;
@@ -417,7 +490,7 @@ ${btn('Open distributor portal', link)}
   return { ok: !error, error: error?.message };
 }
 
-// ── 8. Distributor application emails (kept from original) ───────────────────
+// ── 10. Distributor application emails (kept from original) ───────────────────
 export async function sendDistributorApplicationEmails(opts: {
   to: string;
   fullName: string;
@@ -489,7 +562,7 @@ ${btn('View in Admin', `${SITE_URL}/admin/distributors`)}`;
   return { ok: !r1.error && !r2.error };
 }
 
-// ── 9. Contact form confirmation ─────────────────────────────────────────────
+// ── 11. Contact form confirmation ─────────────────────────────────────────────
 export async function sendContactConfirmationEmail(email: string, name: string) {
   if (!RESEND_KEY) return { ok: false, error: 'RESEND_API_KEY not set' };
 

@@ -26,6 +26,22 @@ interface Order {
   createdAt: string;
 }
 
+interface CryptoSubmission {
+  id: string;
+  orderId: string;
+  network: string;
+  txHash: string;
+  walletFrom?: string | null;
+  amountCrypto?: number | null;
+  proofUrl?: string | null;
+  status: 'pending' | 'verified' | 'rejected';
+  submittedAt: string;
+  reviewedAt?: string | null;
+  reviewedBy?: string | null;
+  rejectionReason?: string | null;
+  adminNotes?: string | null;
+}
+
 const ORDER_STATUS: Record<OrderStatus, string> = {
   pending: 'bg-amber-50 text-amber-700 border-amber-200',
   confirmed: 'bg-blue-50 text-blue-700 border-blue-200',
@@ -63,6 +79,11 @@ function OrdersContent() {
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [invoicingId, setInvoicingId] = useState<string | null>(null);
+  const [cryptoRequestingId, setCryptoRequestingId] = useState<string | null>(null);
+  const [cryptoReviewingId, setCryptoReviewingId] = useState<string | null>(null);
+  const [cryptoLoadingOrderId, setCryptoLoadingOrderId] = useState<string | null>(null);
+  const [cryptoByOrder, setCryptoByOrder] = useState<Record<string, CryptoSubmission[]>>({});
+  const [copiedTxHash, setCopiedTxHash] = useState<string | null>(null);
   const [invoiceResult, setInvoiceResult] = useState<{ id: string; url: string } | null>(null);
   const [notifyingId, setNotifyingId] = useState<string | null>(null);
   const [notifyNote, setNotifyNote] = useState<Record<string, string>>({});
@@ -93,6 +114,102 @@ function OrdersContent() {
   useEffect(() => {
     fetchOrders();
   }, [fetchOrders]);
+
+  useEffect(() => {
+    if (!expandedId) return;
+    const order = orders.find((o) => o.id === expandedId);
+    if (!order) return;
+    if (order.paymentStatus === 'paid') return;
+    fetchCryptoSubmissions(order.id);
+  }, [expandedId, orders]);
+
+  async function fetchCryptoSubmissions(orderId: string) {
+    setCryptoLoadingOrderId(orderId);
+    try {
+      const res = await fetch(`/api/admin/crypto?orderId=${encodeURIComponent(orderId)}`);
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Failed to load crypto submissions');
+      setCryptoByOrder((prev) => ({ ...prev, [orderId]: data.submissions ?? [] }));
+    } catch (err) {
+      alert(`Crypto fetch failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setCryptoLoadingOrderId(null);
+    }
+  }
+
+  async function requestCryptoInstructions(order: Order) {
+    setCryptoRequestingId(order.id);
+    try {
+      const res = await fetch('/api/admin/crypto', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ action: 'request_instructions', orderId: order.id }),
+      });
+      const data = await res.json();
+      if (!res.ok) throw new Error(data.error ?? 'Failed to send crypto instructions');
+      await fetchOrders();
+      await fetchCryptoSubmissions(order.id);
+      alert('Crypto payment instructions sent to customer.');
+    } catch (err) {
+      alert(`Crypto request failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setCryptoRequestingId(null);
+    }
+  }
+
+  async function reviewCrypto(
+    order: Order,
+    submission: CryptoSubmission,
+    action: 'verify' | 'reject',
+    confirmUnderpaid = false
+  ) {
+    setCryptoReviewingId(submission.id);
+    try {
+      const res = await fetch('/api/admin/crypto', {
+        method: 'PATCH',
+        headers: {
+          'Content-Type': 'application/json',
+          'x-admin-id': 'admin-dashboard',
+        },
+        body: JSON.stringify({
+          submissionId: submission.id,
+          action,
+          confirmUnderpaid,
+        }),
+      });
+      const data = await res.json();
+
+      if (!res.ok) {
+        if (res.status === 409 && data.requiresUnderpaidConfirmation && action === 'verify') {
+          const ok = window.confirm(
+            `Submitted amount (${data.submittedAmountCrypto}) is lower than order total (${data.orderTotal}). Confirm and mark as paid anyway?`
+          );
+          if (ok) {
+            await reviewCrypto(order, submission, 'verify', true);
+          }
+          return;
+        }
+        throw new Error(data.error ?? 'Failed to review crypto submission');
+      }
+
+      await fetchCryptoSubmissions(order.id);
+      await fetchOrders();
+    } catch (err) {
+      alert(`Crypto review failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
+    } finally {
+      setCryptoReviewingId(null);
+    }
+  }
+
+  async function copyTxHash(hash: string) {
+    try {
+      await navigator.clipboard.writeText(hash);
+      setCopiedTxHash(hash);
+      setTimeout(() => setCopiedTxHash(null), 1500);
+    } catch {
+      // Best-effort clipboard action.
+    }
+  }
 
   async function updateOrder(
     id: string,
@@ -263,6 +380,8 @@ function OrdersContent() {
               {orders.map((o) => {
                 const isExpanded = expandedId === o.id;
                 const next = nextStatus(o.status);
+                const cryptoRows = cryptoByOrder[o.id] ?? [];
+                const pendingCrypto = cryptoRows.filter((s) => s.status === 'pending');
                 return (
                   <>
                     <tr
@@ -404,6 +523,20 @@ function OrdersContent() {
                                   <button
                                     onClick={(e) => {
                                       e.stopPropagation();
+                                      requestCryptoInstructions(o);
+                                    }}
+                                    disabled={cryptoRequestingId === o.id}
+                                    className="px-3 py-1.5 text-xs font-medium bg-cyan-600 text-white rounded-lg hover:bg-cyan-700 transition-colors disabled:opacity-50"
+                                  >
+                                    {cryptoRequestingId === o.id
+                                      ? 'Sending…'
+                                      : '₮ Request Crypto Payment'}
+                                  </button>
+                                )}
+                                {o.paymentStatus === 'unpaid' && (
+                                  <button
+                                    onClick={(e) => {
+                                      e.stopPropagation();
                                       updateOrder(o.id, { paymentStatus: 'paid' });
                                     }}
                                     disabled={updatingId === o.id}
@@ -443,6 +576,113 @@ function OrdersContent() {
                                   🖨 Proforma PDF
                                 </a>
                               </div>
+
+                              {(o.paymentStatus === 'partial' || pendingCrypto.length > 0) && (
+                                <div className="bg-white border border-slate-200 rounded-xl p-3 mt-3 space-y-2">
+                                  <div className="flex items-center justify-between">
+                                    <p className="text-[10px] font-semibold uppercase tracking-wide text-slate-500">
+                                      Crypto Submissions
+                                    </p>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        fetchCryptoSubmissions(o.id);
+                                      }}
+                                      className="text-[10px] font-semibold text-slate-500 hover:text-slate-700"
+                                    >
+                                      Refresh
+                                    </button>
+                                  </div>
+                                  {cryptoLoadingOrderId === o.id ? (
+                                    <p className="text-xs text-slate-400">
+                                      Loading crypto submissions...
+                                    </p>
+                                  ) : pendingCrypto.length === 0 ? (
+                                    <p className="text-xs text-slate-400">
+                                      No pending crypto submissions yet.
+                                    </p>
+                                  ) : (
+                                    <div className="space-y-2">
+                                      {pendingCrypto.map((s) => (
+                                        <div
+                                          key={s.id}
+                                          className="rounded-lg border border-slate-200 p-2.5 bg-slate-50"
+                                        >
+                                          <p className="text-[11px] text-slate-700 font-medium">
+                                            {s.network} · submitted{' '}
+                                            {new Date(s.submittedAt).toLocaleString()}
+                                          </p>
+                                          <p className="text-[11px] text-slate-600 mt-1 break-all font-mono">
+                                            {s.txHash}
+                                          </p>
+                                          <div className="mt-1.5 flex flex-wrap gap-2 text-[11px] text-slate-600">
+                                            {s.amountCrypto !== null &&
+                                            s.amountCrypto !== undefined ? (
+                                              <span>Amount: {s.amountCrypto} USDT</span>
+                                            ) : null}
+                                            {s.walletFrom ? (
+                                              <span>From: {s.walletFrom}</span>
+                                            ) : null}
+                                          </div>
+                                          <div className="mt-2 flex flex-wrap gap-2">
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                copyTxHash(s.txHash);
+                                              }}
+                                              className="px-2.5 py-1 text-[11px] font-medium border border-slate-200 rounded bg-white hover:bg-slate-100"
+                                            >
+                                              {copiedTxHash === s.txHash
+                                                ? 'Copied ✓'
+                                                : 'Copy Tx Hash'}
+                                            </button>
+                                            <a
+                                              href={`https://tronscan.org/#/transaction/${encodeURIComponent(s.txHash)}`}
+                                              target="_blank"
+                                              rel="noopener noreferrer"
+                                              className="px-2.5 py-1 text-[11px] font-medium border border-cyan-200 text-cyan-700 rounded bg-white hover:bg-cyan-50"
+                                            >
+                                              Open in Tronscan
+                                            </a>
+                                            {s.proofUrl ? (
+                                              <a
+                                                href={s.proofUrl}
+                                                target="_blank"
+                                                rel="noopener noreferrer"
+                                                className="px-2.5 py-1 text-[11px] font-medium border border-slate-200 rounded bg-white hover:bg-slate-100"
+                                              >
+                                                Proof URL
+                                              </a>
+                                            ) : null}
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                reviewCrypto(o, s, 'verify');
+                                              }}
+                                              disabled={cryptoReviewingId === s.id}
+                                              className="px-2.5 py-1 text-[11px] font-medium bg-emerald-600 text-white rounded hover:bg-emerald-700 disabled:opacity-50"
+                                            >
+                                              {cryptoReviewingId === s.id
+                                                ? 'Checking…'
+                                                : 'Verify & Mark Paid'}
+                                            </button>
+                                            <button
+                                              onClick={(e) => {
+                                                e.stopPropagation();
+                                                reviewCrypto(o, s, 'reject');
+                                              }}
+                                              disabled={cryptoReviewingId === s.id}
+                                              className="px-2.5 py-1 text-[11px] font-medium border border-red-200 text-red-600 rounded hover:bg-red-50 disabled:opacity-50"
+                                            >
+                                              Reject
+                                            </button>
+                                          </div>
+                                        </div>
+                                      ))}
+                                    </div>
+                                  )}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </td>
