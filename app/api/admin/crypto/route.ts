@@ -44,7 +44,7 @@ async function resolveTrc20Wallet(db: D1Database): Promise<string | null> {
       .first<WalletRow>();
     if (row?.address?.trim()) return row.address.trim();
   } catch {
-    // Table is optional for now; env fallback remains primary for MVP.
+    // DB is now the primary source; env is a last-resort bootstrap fallback.
   }
   return process.env.USDT_TRC20_WALLET_ADDRESS?.trim() ?? null;
 }
