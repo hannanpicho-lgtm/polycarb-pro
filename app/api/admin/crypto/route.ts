@@ -141,23 +141,8 @@ export async function POST(request: NextRequest) {
     if (!walletAddress) return apiJsonError('Crypto wallet not configured', 503);
 
     const payUrl = `${process.env.NEXT_PUBLIC_SITE_URL ?? 'https://covestroppc.com'}/pay/${order.id}/crypto`;
-    const sendResult = await sendCryptoPaymentInstructions({
-      to: order.customerEmail,
-      customerName: order.customerName,
-      referenceId: order.referenceId,
-      amountFiat: order.total,
-      currency: order.currency,
-      token: 'USDT',
-      network: 'TRC20',
-      walletAddress,
-      payUrl,
-    });
-    if (!sendResult.ok) {
-      return apiJsonError('Failed to send crypto instructions email', 502, {
-        detail: sendResult.error,
-      });
-    }
 
+    // Update order status first — this always succeeds regardless of email outcome.
     const now = new Date().toISOString();
     await db
       .prepare(
@@ -166,7 +151,33 @@ export async function POST(request: NextRequest) {
       .bind(now, order.id)
       .run();
 
-    return NextResponse.json({ ok: true });
+    // Attempt email — degrade gracefully if it fails.
+    let emailSent = false;
+    let emailWarning: string | null = null;
+    try {
+      const sendResult = await sendCryptoPaymentInstructions({
+        to: order.customerEmail,
+        customerName: order.customerName,
+        referenceId: order.referenceId,
+        amountFiat: order.total,
+        currency: order.currency,
+        token: 'USDT',
+        network: 'TRC20',
+        walletAddress,
+        payUrl,
+      });
+      if (sendResult.ok) {
+        emailSent = true;
+      } else {
+        console.error('Crypto instructions email failed (soft):', sendResult.error);
+        emailWarning = 'Crypto payment link created, but email could not be sent.';
+      }
+    } catch (emailError) {
+      console.error('Crypto instructions email threw unexpectedly:', emailError);
+      emailWarning = 'Crypto payment link created, but email could not be sent.';
+    }
+
+    return NextResponse.json({ ok: true, payUrl, emailSent, emailWarning });
   } catch (error) {
     console.error('POST /api/admin/crypto failed', error);
     return apiJsonError('Failed to request crypto payment', 500);

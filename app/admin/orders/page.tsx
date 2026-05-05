@@ -80,6 +80,11 @@ function OrdersContent() {
   const [updatingId, setUpdatingId] = useState<string | null>(null);
   const [invoicingId, setInvoicingId] = useState<string | null>(null);
   const [cryptoRequestingId, setCryptoRequestingId] = useState<string | null>(null);
+  const [cryptoPayLink, setCryptoPayLink] = useState<{
+    orderId: string;
+    payUrl: string;
+    warning: string;
+  } | null>(null);
   const [cryptoReviewingId, setCryptoReviewingId] = useState<string | null>(null);
   const [cryptoLoadingOrderId, setCryptoLoadingOrderId] = useState<string | null>(null);
   const [cryptoByOrder, setCryptoByOrder] = useState<Record<string, CryptoSubmission[]>>({});
@@ -139,6 +144,7 @@ function OrdersContent() {
 
   async function requestCryptoInstructions(order: Order) {
     setCryptoRequestingId(order.id);
+    setCryptoPayLink(null);
     try {
       const res = await fetch('/api/admin/crypto', {
         method: 'POST',
@@ -149,7 +155,11 @@ function OrdersContent() {
       if (!res.ok) throw new Error(data.error ?? 'Failed to send crypto instructions');
       await fetchOrders();
       await fetchCryptoSubmissions(order.id);
-      alert('Crypto payment instructions sent to customer.');
+      if (data.emailSent) {
+        alert('Crypto payment instructions sent to customer.');
+      } else if (data.emailWarning && data.payUrl) {
+        setCryptoPayLink({ orderId: order.id, payUrl: data.payUrl, warning: data.emailWarning });
+      }
     } catch (err) {
       alert(`Crypto request failed: ${err instanceof Error ? err.message : 'Unknown error'}`);
     } finally {
@@ -576,6 +586,45 @@ function OrdersContent() {
                                   🖨 Proforma PDF
                                 </a>
                               </div>
+
+                              {cryptoPayLink?.orderId === o.id && (
+                                <div className="bg-amber-50 border border-amber-200 rounded-xl p-3 mt-3 space-y-2">
+                                  <p className="text-xs font-semibold text-amber-800">
+                                    ⚠ {cryptoPayLink.warning}
+                                  </p>
+                                  <p className="text-xs text-amber-700">
+                                    Share this link with the customer manually:
+                                  </p>
+                                  <div className="flex items-center gap-2 flex-wrap">
+                                    <span className="font-mono text-[11px] text-amber-900 break-all">
+                                      {cryptoPayLink.payUrl}
+                                    </span>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        navigator.clipboard
+                                          .writeText(cryptoPayLink.payUrl)
+                                          .catch(() => {});
+                                        setCryptoPayLink((prev) =>
+                                          prev ? { ...prev, warning: 'Link copied!' } : null
+                                        );
+                                      }}
+                                      className="px-2.5 py-1 text-[11px] font-semibold bg-amber-600 text-white rounded-lg hover:bg-amber-700 transition-colors whitespace-nowrap"
+                                    >
+                                      Copy payment link
+                                    </button>
+                                    <button
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        setCryptoPayLink(null);
+                                      }}
+                                      className="text-[11px] text-amber-600 hover:text-amber-800"
+                                    >
+                                      Dismiss
+                                    </button>
+                                  </div>
+                                </div>
+                              )}
 
                               {(o.paymentStatus === 'partial' || pendingCrypto.length > 0) && (
                                 <div className="bg-white border border-slate-200 rounded-xl p-3 mt-3 space-y-2">
