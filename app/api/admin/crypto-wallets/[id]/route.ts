@@ -1,8 +1,21 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { apiJsonError } from '@/lib/api-json-error';
 import { getD1 } from '@/lib/d1';
+import { SUPPORTED_NETWORKS, type SupportedNetwork } from '../route';
 
-const TRC20_RE = /^T[1-9A-HJ-NP-Za-km-z]{33}$/;
+const ADDRESS_RE: Record<SupportedNetwork, RegExp> = {
+  TRC20: /^T[1-9A-HJ-NP-Za-km-z]{33}$/,
+  ETH: /^0x[0-9a-fA-F]{40}$/,
+  USDC: /^0x[0-9a-fA-F]{40}$/,
+  BTC: /^(1[1-9A-HJ-NP-Za-km-z]{24,33}|3[1-9A-HJ-NP-Za-km-z]{24,33}|bc1[ac-hj-np-z02-9]{6,87})$/,
+};
+
+const ADDRESS_HINT: Record<SupportedNetwork, string> = {
+  TRC20: 'Must start with T and be exactly 34 Base58 characters',
+  ETH: 'Must be a valid Ethereum address (0x followed by 40 hex characters)',
+  USDC: 'Must be a valid Ethereum address (0x followed by 40 hex characters)',
+  BTC: 'Must be a valid Bitcoin address (P2PKH / P2SH / bech32)',
+};
 
 type WalletRow = {
   id: string;
@@ -38,11 +51,14 @@ export async function PATCH(request: NextRequest, { params }: { params: Promise<
     if (body.address !== undefined) {
       const addr = body.address.trim();
       if (!addr) return apiJsonError('address cannot be empty', 400);
-      if (wallet.network === 'TRC20' && !TRC20_RE.test(addr)) {
-        return apiJsonError(
-          'Invalid TRC20 address — must start with T and be exactly 34 Base58 characters',
-          400
-        );
+      if ((SUPPORTED_NETWORKS as readonly string[]).includes(wallet.network)) {
+        const re = ADDRESS_RE[wallet.network as SupportedNetwork];
+        if (!re.test(addr)) {
+          return apiJsonError(
+            `Invalid address — ${ADDRESS_HINT[wallet.network as SupportedNetwork]}`,
+            400
+          );
+        }
       }
     }
 

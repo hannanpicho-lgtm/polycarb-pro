@@ -2,8 +2,32 @@ import { NextRequest, NextResponse } from 'next/server';
 import { apiJsonError } from '@/lib/api-json-error';
 import { getD1 } from '@/lib/d1';
 
-// Base58 TRC20: starts with T, 34 chars total, Base58 alphabet (no 0, O, I, l)
-const TRC20_RE = /^T[1-9A-HJ-NP-Za-km-z]{33}$/;
+// Supported network keys and their address validation rules.
+// TRC20  = USDT on Tron
+// ETH    = Native Ether on Ethereum
+// USDC   = USDC on Ethereum (ERC-20)
+// BTC    = Bitcoin
+export const SUPPORTED_NETWORKS = ['TRC20', 'ETH', 'USDC', 'BTC'] as const;
+export type SupportedNetwork = (typeof SUPPORTED_NETWORKS)[number];
+
+const ADDRESS_RE: Record<SupportedNetwork, RegExp> = {
+  TRC20: /^T[1-9A-HJ-NP-Za-km-z]{33}$/, // Base58, 34 chars, starts with T
+  ETH: /^0x[0-9a-fA-F]{40}$/, // Hex, 42 chars
+  USDC: /^0x[0-9a-fA-F]{40}$/, // Same EVM format as ETH
+  BTC: /^(1[1-9A-HJ-NP-Za-km-z]{24,33}|3[1-9A-HJ-NP-Za-km-z]{24,33}|bc1[ac-hj-np-z02-9]{6,87})$/, // P2PKH / P2SH / bech32
+};
+
+const ADDRESS_HINT: Record<SupportedNetwork, string> = {
+  TRC20: 'Must start with T and be exactly 34 Base58 characters',
+  ETH: 'Must be a valid Ethereum address (0x followed by 40 hex characters)',
+  USDC: 'Must be a valid Ethereum address (0x followed by 40 hex characters)',
+  BTC: 'Must be a valid Bitcoin address (P2PKH starting with 1, P2SH starting with 3, or bech32 starting with bc1)',
+};
+
+function validateAddress(network: SupportedNetwork, address: string): string | null {
+  if (!ADDRESS_RE[network].test(address)) return ADDRESS_HINT[network];
+  return null;
+}
 
 export interface WalletSetting {
   id: string;
@@ -56,12 +80,12 @@ export async function POST(request: NextRequest) {
     if (!network) return apiJsonError('network is required', 400);
     if (!address) return apiJsonError('address is required', 400);
 
-    if (network === 'TRC20' && !TRC20_RE.test(address)) {
-      return apiJsonError(
-        'Invalid TRC20 address — must start with T and be exactly 34 Base58 characters',
-        400
-      );
+    if (!(SUPPORTED_NETWORKS as readonly string[]).includes(network)) {
+      return apiJsonError(`Unsupported network. Allowed: ${SUPPORTED_NETWORKS.join(', ')}`, 400);
     }
+
+    const addrError = validateAddress(network as SupportedNetwork, address);
+    if (addrError) return apiJsonError(`Invalid address — ${addrError}`, 400);
 
     const id = crypto.randomUUID();
     const now = new Date().toISOString();

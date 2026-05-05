@@ -3,7 +3,19 @@ import { apiJsonError } from '@/lib/api-json-error';
 import { getD1 } from '@/lib/d1';
 import type { D1Database } from '@cloudflare/workers-types';
 
-type WalletRow = { address: string };
+// Accepted network keys (must match payment_wallet_settings.network values)
+const SUPPORTED_NETWORKS = ['TRC20', 'ETH', 'USDC', 'BTC'] as const;
+type SupportedNetwork = (typeof SUPPORTED_NETWORKS)[number];
+
+// Human-readable token label per network, used in customer-facing responses
+const NETWORK_TOKEN: Record<SupportedNetwork, string> = {
+  TRC20: 'USDT',
+  ETH: 'ETH',
+  USDC: 'USDC',
+  BTC: 'BTC',
+};
+
+type ActiveWalletRow = { network: string; address: string };
 type OrderRow = {
   id: string;
   referenceId: string;
@@ -13,22 +25,44 @@ type OrderRow = {
   paymentStatus: string;
 };
 
-async function resolveTrc20Wallet(db: D1Database): Promise<string | null> {
+async function resolveActiveWallets(
+  db: D1Database
+): Promise<Array<{ network: SupportedNetwork; token: string; walletAddress: string }>> {
+  const wallets: Array<{ network: SupportedNetwork; token: string; walletAddress: string }> = [];
   try {
-    const row = await db
+    const rows = await db
       .prepare(
-        `SELECT address
+        `SELECT network, address
          FROM payment_wallet_settings
-         WHERE network = 'TRC20' AND isActive = 1
-         ORDER BY updatedAt DESC
-         LIMIT 1`
+         WHERE isActive = 1
+         ORDER BY updatedAt DESC`
       )
-      .first<WalletRow>();
-    if (row?.address?.trim()) return row.address.trim();
+      .all<ActiveWalletRow>();
+
+    for (const row of rows.results ?? []) {
+      if ((SUPPORTED_NETWORKS as readonly string[]).includes(row.network) && row.address?.trim()) {
+        const net = row.network as SupportedNetwork;
+        // Avoid duplicates (keep most-recently-updated per network)
+        if (!wallets.find((w) => w.network === net)) {
+          wallets.push({
+            network: net,
+            token: NETWORK_TOKEN[net],
+            walletAddress: row.address.trim(),
+          });
+        }
+      }
+    }
   } catch {
-    // Optional future table; fall back to env config if unavailable.
+    // DB may be unavailable during cold start; fall through to env fallback.
   }
-  return process.env.USDT_TRC20_WALLET_ADDRESS?.trim() ?? null;
+
+  // Env fallback for TRC20 if no DB row exists
+  if (!wallets.find((w) => w.network === 'TRC20')) {
+    const envAddr = process.env.USDT_TRC20_WALLET_ADDRESS?.trim();
+    if (envAddr) wallets.push({ network: 'TRC20', token: 'USDT', walletAddress: envAddr });
+  }
+
+  return wallets;
 }
 
 function parseAmountCrypto(value: unknown): number | null {
@@ -55,8 +89,8 @@ export async function GET(request: NextRequest) {
       .first<OrderRow>();
     if (!order) return apiJsonError('Order not found', 404);
 
-    const walletAddress = await resolveTrc20Wallet(db);
-    if (!walletAddress) return apiJsonError('Crypto wallet not configured', 503);
+    const wallets = await resolveActiveWallets(db);
+    if (wallets.length === 0) return apiJsonError('Crypto wallet not configured', 503);
 
     return NextResponse.json({
       ok: true,
@@ -68,11 +102,10 @@ export async function GET(request: NextRequest) {
         currency: order.currency,
         paymentStatus: order.paymentStatus,
       },
-      payment: {
-        network: 'TRC20',
-        token: 'USDT',
-        walletAddress,
-      },
+      // Return all active wallets so the customer can pick their preferred network
+      wallets,
+      // Legacy single-wallet field for backwards compatibility
+      payment: wallets[0],
     });
   } catch (error) {
     console.error('GET /api/crypto/submit failed', error);
@@ -98,7 +131,7 @@ export async function POST(request: NextRequest) {
     const orderId = body.orderId?.trim();
     const customerEmail = body.customerEmail?.trim().toLowerCase();
     const txHash = body.txHash?.trim();
-    const network = (body.network?.trim().toUpperCase() || 'TRC20') as 'TRC20';
+    const network = (body.network?.trim().toUpperCase() || 'TRC20') as SupportedNetwork;
     const walletFrom = body.walletFrom?.trim() || null;
     const proofUrl = body.proofUrl?.trim() || null;
     const amountCrypto = parseAmountCrypto(body.amountCrypto);
@@ -106,8 +139,8 @@ export async function POST(request: NextRequest) {
     if (!orderId || !customerEmail || !txHash) {
       return apiJsonError('orderId, customerEmail, and txHash are required', 400);
     }
-    if (network !== 'TRC20') {
-      return apiJsonError('Only USDT TRC20 is supported in this release', 400);
+    if (!(SUPPORTED_NETWORKS as readonly string[]).includes(network)) {
+      return apiJsonError(`Unsupported network. Allowed: ${SUPPORTED_NETWORKS.join(', ')}`, 400);
     }
     if (Number.isNaN(amountCrypto)) {
       return apiJsonError('amountCrypto must be a positive number when provided', 400);

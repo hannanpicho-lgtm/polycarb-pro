@@ -3,11 +3,29 @@
 import { useCallback, useEffect, useState } from 'react';
 import { useRouter } from 'next/navigation';
 
-// Base58 TRC20: starts with T, 34 chars total
-const TRC20_RE = /^T[1-9A-HJ-NP-Za-km-z]{33}$/;
-
-const SUPPORTED_NETWORKS = ['TRC20'] as const;
+const SUPPORTED_NETWORKS = ['TRC20', 'ETH', 'USDC', 'BTC'] as const;
 type Network = (typeof SUPPORTED_NETWORKS)[number];
+
+const NETWORK_LABEL: Record<Network, string> = {
+  TRC20: 'USDT (TRC20 / Tron)',
+  ETH: 'ETH (Ethereum)',
+  USDC: 'USDC (ERC-20 / Ethereum)',
+  BTC: 'BTC (Bitcoin)',
+};
+
+const ADDRESS_RE: Record<Network, RegExp> = {
+  TRC20: /^T[1-9A-HJ-NP-Za-km-z]{33}$/,
+  ETH: /^0x[0-9a-fA-F]{40}$/,
+  USDC: /^0x[0-9a-fA-F]{40}$/,
+  BTC: /^(1[1-9A-HJ-NP-Za-km-z]{24,33}|3[1-9A-HJ-NP-Za-km-z]{24,33}|bc1[ac-hj-np-z02-9]{6,87})$/,
+};
+
+const ADDRESS_PLACEHOLDER: Record<Network, string> = {
+  TRC20: 'T…',
+  ETH: '0x…',
+  USDC: '0x…',
+  BTC: '1… or 3… or bc1…',
+};
 
 interface WalletSetting {
   id: string;
@@ -31,8 +49,14 @@ const EMPTY_FORM: FormState = { network: 'TRC20', address: '', label: '', notes:
 
 function validateAddress(network: Network, address: string): string | null {
   if (!address.trim()) return 'Address is required';
-  if (network === 'TRC20' && !TRC20_RE.test(address.trim())) {
-    return 'Invalid TRC20 address — must start with T and be exactly 34 Base58 characters';
+  if (!ADDRESS_RE[network].test(address.trim())) {
+    const hints: Record<Network, string> = {
+      TRC20: 'Must start with T and be exactly 34 Base58 characters',
+      ETH: 'Must be 0x followed by 40 hex characters',
+      USDC: 'Must be 0x followed by 40 hex characters',
+      BTC: 'Must be a valid Bitcoin address (starts with 1, 3, or bc1)',
+    };
+    return `Invalid ${network} address — ${hints[network]}`;
   }
   return null;
 }
@@ -253,7 +277,7 @@ export default function CryptoWalletsPage() {
                 >
                   {SUPPORTED_NETWORKS.map((n) => (
                     <option key={n} value={n}>
-                      {n}
+                      {NETWORK_LABEL[n]}
                     </option>
                   ))}
                 </select>
@@ -266,7 +290,7 @@ export default function CryptoWalletsPage() {
                   type="text"
                   value={addForm.address}
                   onChange={(e) => setAddForm((f) => ({ ...f, address: e.target.value }))}
-                  placeholder="T…"
+                  placeholder={ADDRESS_PLACEHOLDER[addForm.network]}
                   className="w-full border border-slate-200 rounded-lg px-3 py-2 text-sm font-mono focus:outline-none focus:ring-2 focus:ring-brand-400"
                 />
               </div>
@@ -364,8 +388,8 @@ export default function CryptoWalletsPage() {
                   /* Inline edit row */
                   <tr key={wallet.id} className="bg-brand-50/50">
                     <td className="px-4 py-3">
-                      <span className="text-xs font-mono font-semibold text-slate-700">
-                        {wallet.network}
+                      <span className="text-xs font-semibold text-slate-700">
+                        {NETWORK_LABEL[wallet.network as Network] ?? wallet.network}
                       </span>
                     </td>
                     <td className="px-4 py-3" colSpan={2}>
@@ -421,8 +445,8 @@ export default function CryptoWalletsPage() {
                   /* Display row */
                   <tr key={wallet.id} className="hover:bg-slate-50 transition-colors">
                     <td className="px-4 py-3">
-                      <span className="text-xs font-mono font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded">
-                        {wallet.network}
+                      <span className="text-xs font-semibold text-slate-700 bg-slate-100 px-2 py-0.5 rounded whitespace-nowrap">
+                        {NETWORK_LABEL[wallet.network as Network] ?? wallet.network}
                       </span>
                     </td>
                     <td className="px-4 py-3">

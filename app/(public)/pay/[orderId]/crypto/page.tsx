@@ -8,6 +8,12 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { formatPrice } from '@/lib/pricing';
 
+interface WalletOption {
+  network: string;
+  token: string;
+  walletAddress: string;
+}
+
 interface PaymentData {
   order: {
     id: string;
@@ -17,12 +23,16 @@ interface PaymentData {
     currency: string;
     paymentStatus: string;
   };
-  payment: {
-    network: string;
-    token: string;
-    walletAddress: string;
-  };
+  wallets: WalletOption[];
+  payment: WalletOption; // legacy / first wallet
 }
+
+const EXPLORER_URL: Record<string, string> = {
+  TRC20: 'https://tronscan.org/#/transaction/',
+  ETH: 'https://etherscan.io/tx/',
+  USDC: 'https://etherscan.io/tx/',
+  BTC: 'https://mempool.space/tx/',
+};
 
 export default function CryptoPaymentPage() {
   const params = useParams<{ orderId: string }>();
@@ -33,11 +43,13 @@ export default function CryptoPaymentPage() {
   const [submitting, setSubmitting] = useState(false);
   const [done, setDone] = useState(false);
   const [data, setData] = useState<PaymentData | null>(null);
+  const [selectedNetwork, setSelectedNetwork] = useState<string>('');
   const [email, setEmail] = useState('');
   const [txHash, setTxHash] = useState('');
   const [walletFrom, setWalletFrom] = useState('');
   const [amountCrypto, setAmountCrypto] = useState('');
   const [proofUrl, setProofUrl] = useState('');
+  const [copied, setCopied] = useState(false);
 
   useEffect(() => {
     if (!orderId) return;
@@ -53,6 +65,9 @@ export default function CryptoPaymentPage() {
         if (cancelled) return;
         setData(payload);
         setEmail(payload.order.customerEmail ?? '');
+        // Pre-select first available network
+        const firstNet = (payload.wallets?.[0] ?? payload.payment)?.network;
+        if (firstNet) setSelectedNetwork(firstNet);
       } catch (e) {
         if (!cancelled) {
           setError(e instanceof Error ? e.message : 'Failed to load payment instructions');
@@ -68,10 +83,15 @@ export default function CryptoPaymentPage() {
     };
   }, [orderId]);
 
+  const activeWallet =
+    data?.wallets?.find((w) => w.network === selectedNetwork) ?? data?.payment ?? null;
+
   async function copyWalletAddress() {
-    if (!data?.payment.walletAddress) return;
+    if (!activeWallet?.walletAddress) return;
     try {
-      await navigator.clipboard.writeText(data.payment.walletAddress);
+      await navigator.clipboard.writeText(activeWallet.walletAddress);
+      setCopied(true);
+      setTimeout(() => setCopied(false), 2000);
     } catch {
       // Ignore clipboard failures gracefully.
     }
@@ -79,7 +99,7 @@ export default function CryptoPaymentPage() {
 
   async function onSubmit(event: React.FormEvent<HTMLFormElement>) {
     event.preventDefault();
-    if (!data) return;
+    if (!data || !activeWallet) return;
     setSubmitting(true);
     setSubmitError('');
     try {
@@ -89,7 +109,7 @@ export default function CryptoPaymentPage() {
         body: JSON.stringify({
           orderId: data.order.id,
           customerEmail: email,
-          network: 'TRC20',
+          network: activeWallet.network,
           txHash,
           walletFrom: walletFrom || undefined,
           amountCrypto: amountCrypto || undefined,
@@ -127,43 +147,58 @@ export default function CryptoPaymentPage() {
           <p className="text-[11px] font-bold uppercase tracking-[0.14em] text-brand-600 mb-2">
             Crypto Payment
           </p>
-          <h1 className="text-3xl font-bold text-foreground font-display">USDT (TRC20) Payment</h1>
+          <h1 className="text-3xl font-bold text-foreground font-display">Crypto Payment</h1>
           <p className="text-sm text-muted-foreground mt-2">
             Send payment for order <span className="font-mono">{data.order.referenceId}</span>, then
             submit your transaction hash for manual verification.
           </p>
         </div>
 
-        <div className="rounded-lg border border-border bg-card p-5 space-y-3">
-          <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">
-            Payment Instructions
-          </p>
-          <p className="text-sm text-foreground">
-            Amount due:{' '}
-            <span className="font-semibold">
+        <div className="rounded-lg border border-border bg-card p-5 space-y-4">
+          <div className="flex items-center justify-between">
+            <p className="text-xs uppercase tracking-wide text-muted-foreground font-semibold">
+              Payment Instructions
+            </p>
+            <p className="text-sm font-semibold text-foreground">
               {formatPrice(data.order.total, data.order.currency as 'USD' | 'AUD')}
-            </span>
-          </p>
-          <p className="text-sm text-foreground">
-            Network: <span className="font-semibold">TRC20</span> (USDT only)
-          </p>
-          <div className="rounded border border-border bg-muted/40 p-3">
-            <p className="text-[11px] uppercase tracking-wide text-muted-foreground mb-1">
-              Wallet Address
             </p>
-            <p className="font-mono text-xs break-all text-foreground">
-              {data.payment.walletAddress}
-            </p>
-            <Button
-              type="button"
-              variant="outline"
-              size="sm"
-              className="mt-2"
-              onClick={copyWalletAddress}
-            >
-              Copy Wallet Address
-            </Button>
           </div>
+
+          {/* Network selector tabs */}
+          {(data.wallets?.length ?? 0) > 1 && (
+            <div className="flex flex-wrap gap-2">
+              {data.wallets.map((w) => (
+                <button
+                  key={w.network}
+                  type="button"
+                  onClick={() => setSelectedNetwork(w.network)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-semibold border transition-colors ${
+                    selectedNetwork === w.network
+                      ? 'bg-brand-600 text-white border-brand-600'
+                      : 'bg-muted/40 text-muted-foreground border-border hover:bg-muted'
+                  }`}
+                >
+                  {w.token} ({w.network})
+                </button>
+              ))}
+            </div>
+          )}
+
+          {activeWallet && (
+            <div className="rounded border border-border bg-muted/40 p-3 space-y-2">
+              <p className="text-[11px] uppercase tracking-wide text-muted-foreground">
+                {activeWallet.token} ({activeWallet.network}) Wallet Address
+              </p>
+              <p className="font-mono text-xs break-all text-foreground">
+                {activeWallet.walletAddress}
+              </p>
+              <div className="flex gap-2">
+                <Button type="button" variant="outline" size="sm" onClick={copyWalletAddress}>
+                  {copied ? 'Copied!' : 'Copy Address'}
+                </Button>
+              </div>
+            </div>
+          )}
         </div>
 
         {done ? (
@@ -204,18 +239,32 @@ export default function CryptoPaymentPage() {
               />
             </div>
             <div>
-              <Label htmlFor="txHash">Transaction Hash *</Label>
+              <div className="flex items-center justify-between mb-1">
+                <Label htmlFor="txHash">Transaction Hash *</Label>
+                {txHash && activeWallet && EXPLORER_URL[activeWallet.network] && (
+                  <a
+                    href={`${EXPLORER_URL[activeWallet.network]}${txHash}`}
+                    target="_blank"
+                    rel="noopener noreferrer"
+                    className="text-[11px] text-brand-600 hover:underline"
+                  >
+                    View on explorer ↗
+                  </a>
+                )}
+              </div>
               <Input
                 id="txHash"
                 value={txHash}
                 onChange={(e) => setTxHash(e.target.value)}
-                placeholder="Paste blockchain transaction hash"
+                placeholder="Paste your transaction hash / TXID"
                 required
               />
             </div>
             <div className="grid md:grid-cols-2 gap-3">
               <div>
-                <Label htmlFor="amountCrypto">Amount Sent (USDT)</Label>
+                <Label htmlFor="amountCrypto">
+                  Amount Sent ({activeWallet?.token ?? 'Crypto'})
+                </Label>
                 <Input
                   id="amountCrypto"
                   type="number"
@@ -226,12 +275,12 @@ export default function CryptoPaymentPage() {
                 />
               </div>
               <div>
-                <Label htmlFor="walletFrom">Sender Wallet (optional)</Label>
+                <Label htmlFor="walletFrom">Your Sending Wallet (optional)</Label>
                 <Input
                   id="walletFrom"
                   value={walletFrom}
                   onChange={(e) => setWalletFrom(e.target.value)}
-                  placeholder="TRC20 wallet address"
+                  placeholder={`Your ${activeWallet?.network ?? ''} wallet address`}
                 />
               </div>
             </div>
